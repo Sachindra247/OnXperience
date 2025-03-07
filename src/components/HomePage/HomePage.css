@@ -32,7 +32,7 @@ html {
 /* Sidebar styling */
 .sidebar {
     width: 300px;
-    background-color: red;
+    background-color: #264770;
     padding: 20px;
     overflow-y: auto;
     height: 100%;
