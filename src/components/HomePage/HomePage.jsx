@@ -89,7 +89,7 @@
 
 // export default HomePage;
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMsal } from "@azure/msal-react";
 import { useNavigate, Link } from "react-router-dom";
 import Logo from "../Assets/logo.png";
@@ -98,12 +98,31 @@ import { PowerBIEmbed } from "powerbi-client-react";
 import { models } from "powerbi-client";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
+import axios from "axios"; // For making API calls to fetch the embed token
 
 const HomePage = () => {
   const { instance } = useMsal();
   const navigate = useNavigate();
   const activeAccount = instance.getActiveAccount();
   const [expandedSection, setExpandedSection] = useState(null);
+  const [embedToken, setEmbedToken] = useState(null); // State to store the embed token
+
+  // Fetch the embed token from your backend API
+  useEffect(() => {
+    const fetchEmbedToken = async () => {
+      try {
+        const response = await axios.get(
+          "https://powerbi-backend-cxhuswcym-sachindras-projects-95cdce12.vercel.app/api/powerbi/embed-token"
+        );
+        console.log("Embed Token Response:", response.data); // Log the response
+        setEmbedToken(response.data.embedToken); // Assuming the response contains { embedToken: "YOUR_TOKEN" }
+      } catch (error) {
+        console.error("Error fetching embed token:", error);
+      }
+    };
+
+    fetchEmbedToken();
+  }, []);
 
   const toggleSection = (section, event) => {
     event.stopPropagation();
@@ -193,33 +212,38 @@ const HomePage = () => {
         </aside>
 
         <main className="report-container">
-          <PowerBIEmbed
-            embedConfig={{
-              type: "report",
-              id: "173ee8b0-a668-4339-bfc5-ef7f26a9be73",
-              embedUrl:
-                "https://app.powerbi.com/reportEmbed?reportId=173ee8b0-a668-4339-bfc5-ef7f26a9be73&groupId=ca4d153f-d017-4ce7-b69a-68e32890ecb9",
-              accessToken: "YOUR_ACCESS_TOKEN",
-              tokenType: models.TokenType.Embed,
-              settings: {
-                panes: {
-                  filters: { expanded: false, visible: false },
+          {embedToken ? (
+            <PowerBIEmbed
+              embedConfig={{
+                type: "report",
+                id: "a1e79c84-1882-47af-a853-8fe202696ee4", // Replace with your report ID
+                embedUrl:
+                  "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f", // Replace with your embed URL
+                accessToken: embedToken, // Use the embed token fetched from the backend
+                tokenType: models.TokenType.Embed,
+                settings: {
+                  panes: {
+                    filters: { expanded: false, visible: false },
+                  },
+                  background: models.BackgroundType.Default,
                 },
-                background: models.BackgroundType.Default,
-              },
-            }}
-            eventHandlers={
-              new Map([
-                ["loaded", () => console.log("Report loaded")],
-                ["rendered", () => console.log("Report rendered")],
-                ["error", (event) => console.log(event.detail)],
-              ])
-            }
-            cssClassName={"home-report"}
-            getEmbeddedComponent={(embeddedReport) => {
-              window.report = embeddedReport;
-            }}
-          />
+                pageName: "HomePage", // Specify the page name you want to display
+              }}
+              eventHandlers={
+                new Map([
+                  ["loaded", () => console.log("Report loaded")],
+                  ["rendered", () => console.log("Report rendered")],
+                  ["error", (event) => console.log(event.detail)],
+                ])
+              }
+              cssClassName={"home-report"}
+              getEmbeddedComponent={(embeddedReport) => {
+                window.report = embeddedReport;
+              }}
+            />
+          ) : (
+            <p>Loading Power BI report...</p>
+          )}
         </main>
       </div>
     </div>
