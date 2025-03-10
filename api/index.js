@@ -1,5 +1,10 @@
 const axios = require("axios");
 
+// Load CORS settings from environment variables
+const CORS_ALLOWED_ORIGIN = process.env.CORS_ALLOWED_ORIGIN; // Allow * or specify your frontend URL
+const CORS_METHODS = process.env.CORS_METHODS || "GET, POST, OPTIONS";
+const CORS_HEADERS = process.env.CORS_HEADERS || "Content-Type, Authorization";
+
 // Azure Power BI Credentials (Ensure these are set in Vercel environment variables)
 const POWER_BI_CLIENT_ID = process.env.POWER_BI_CLIENT_ID;
 const POWER_BI_CLIENT_SECRET = process.env.POWER_BI_CLIENT_SECRET;
@@ -31,14 +36,17 @@ const getAccessToken = async () => {
 
 // API handler for Vercel
 module.exports = async (req, res) => {
+  // Enable CORS for frontend using environment variables
+  const origin = req.headers.origin;
+
+  if (origin && origin === CORS_ALLOWED_ORIGIN) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Methods", CORS_METHODS);
+    res.setHeader("Access-Control-Allow-Headers", CORS_HEADERS);
+  }
+
   // Handle preflight request for CORS
   if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
-    );
     return res.status(200).end();
   }
 
@@ -51,9 +59,7 @@ module.exports = async (req, res) => {
       const embedTokenResponse = await axios.post(
         embedTokenUrl,
         { accessLevel: "view" },
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
       console.log("Embed token generated successfully");
