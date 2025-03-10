@@ -1,0 +1,73 @@
+const axios = require("axios");
+
+// Azure Power BI Credentials (Ensure these are set in Vercel environment variables)
+const POWER_BI_CLIENT_ID = process.env.POWER_BI_CLIENT_ID;
+const POWER_BI_CLIENT_SECRET = process.env.POWER_BI_CLIENT_SECRET;
+const POWER_BI_TENANT_ID = process.env.POWER_BI_TENANT_ID;
+const POWER_BI_WORKSPACE_ID = process.env.POWER_BI_WORKSPACE_ID;
+const POWER_BI_REPORT_ID = process.env.POWER_BI_REPORT_ID;
+
+// Function to get access token from Azure
+const getAccessToken = async () => {
+  const url = `https://login.microsoftonline.com/${POWER_BI_TENANT_ID}/oauth2/v2.0/token`;
+  const params = new URLSearchParams();
+  params.append("grant_type", "client_credentials");
+  params.append("client_id", POWER_BI_CLIENT_ID);
+  params.append("client_secret", POWER_BI_CLIENT_SECRET);
+  params.append("scope", "https://analysis.windows.net/powerbi/api/.default");
+
+  try {
+    const response = await axios.post(url, params);
+    console.log("Access Token fetched successfully");
+    return response.data.access_token;
+  } catch (error) {
+    console.error(
+      "Error fetching access token:",
+      error.response?.data || error
+    );
+    throw new Error("Failed to get access token");
+  }
+};
+
+// API handler for Vercel
+module.exports = async (req, res) => {
+  // Handle preflight request for CORS
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
+    return res.status(200).end();
+  }
+
+  // Only handle GET requests for generating embed tokens
+  if (req.method === "GET") {
+    try {
+      const accessToken = await getAccessToken();
+      const embedTokenUrl = `https://api.powerbi.com/v1.0/myorg/groups/${POWER_BI_WORKSPACE_ID}/reports/${POWER_BI_REPORT_ID}/GenerateToken`;
+
+      const embedTokenResponse = await axios.post(
+        embedTokenUrl,
+        { accessLevel: "view" },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      console.log("Embed token generated successfully");
+
+      // Send embed token as JSON response
+      res.status(200).json({ embedToken: embedTokenResponse.data.token });
+    } catch (error) {
+      console.error(
+        "Error generating embed token:",
+        error.response?.data || error
+      );
+      res.status(500).json({ error: "Failed to generate embed token" });
+    }
+  } else {
+    res.status(405).json({ error: "Method Not Allowed" });
+  }
+};

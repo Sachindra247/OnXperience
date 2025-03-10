@@ -111,9 +111,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
-        const response = await axios.get(
-          "https://powerbi-backend-4dxmpapx5-sachindras-projects-95cdce12.vercel.app/api/powerbi/embed-token"
-        );
+        const response = await axios.get("/api/powerbi");
 
         console.log("Embed Token Response:", response.data); // Log the response
         setEmbedToken(response.data.embedToken); // Assuming the response contains { embedToken: "YOUR_TOKEN" }
