@@ -90,9 +90,9 @@
 // export default HomePage;
 
 import React, { useState, useEffect } from "react";
-import { useMsal } from "@azure/msal-react";
-import { useNavigate, Link } from "react-router-dom";
-import Logo from "../Assets/logo.png";
+//import { useMsal } from "@azure/msal-react";
+import { Link } from "react-router-dom";
+//import Logo from "../Assets/logo.png";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
 import { models } from "powerbi-client";
@@ -101,9 +101,9 @@ import Header from "../../components/Header/Header";
 import axios from "axios"; // For making API calls to fetch the embed token
 
 const HomePage = () => {
-  const { instance } = useMsal();
-  const navigate = useNavigate();
-  const activeAccount = instance.getActiveAccount();
+  //const { instance } = useMsal();
+  //const navigate = useNavigate();
+  //const activeAccount = instance.getActiveAccount();
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null); // State to store the embed token
 
