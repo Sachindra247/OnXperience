@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 // Load CORS settings from environment variables
-const CORS_ALLOWED_ORIGIN = process.env.CORS_ALLOWED_ORIGIN || "*"; // Allow all origins or specify frontend URL
+const CORS_ALLOWED_ORIGIN = process.env.CORS_ALLOWED_ORIGIN; // Allow all origins or specify frontend URL
 const CORS_METHODS = process.env.CORS_METHODS || "GET, POST, OPTIONS";
 const CORS_HEADERS = process.env.CORS_HEADERS || "Content-Type, Authorization";
 
