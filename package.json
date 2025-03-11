@@ -41,7 +41,11 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "replace-in-file": "^8.3.0"
   },
-  "homepage": "https://on-xperience.vercel.app"
+  "homepage": "https://on-xperience.vercel.app",
+  "scripts": {
+    "build": "react-scripts build && node fix-assets.js"
+  }
 }
