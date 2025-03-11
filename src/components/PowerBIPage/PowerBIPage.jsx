@@ -3,7 +3,7 @@ import { PowerBIEmbed } from "powerbi-client-react";
 import { models } from "powerbi-client";
 import axios from "axios";
 import Header from "../../components/Header/Header";
-//import "./PowerBIPage.css";
+import "./PowerBIPage.css";
 
 const PowerBIPage = ({ reportId, embedUrl, pageName }) => {
   const [embedToken, setEmbedToken] = useState(null);
