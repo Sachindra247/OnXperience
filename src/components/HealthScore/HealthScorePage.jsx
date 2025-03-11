@@ -1,17 +1,11 @@
-import React from "react";
-import Header from "../../components/Header/Header";
-import "./HealthScore.css";
+import PowerBIPage from "../../components/PowerBIPage/PowerBIPage";
 
-const HealthScorePage = () => {
-  return (
-    <div className="settings-container">
-      <Header /> {/* Use the Header component here */}
-      <div className="settings-content">
-        <h1>HealthScore Page</h1>
-        {/* Add your settings content here */}
-      </div>
-    </div>
-  );
-};
+const HealthScore = () => (
+  <PowerBIPage
+    reportId="a1e79c84-1882-47af-a853-8fe202696ee4"
+    embedUrl="https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f"
+    pageName="HealthScorePage"
+  />
+);
 
-export default HealthScorePage; // Ensure this line exists
+export default HealthScore;
