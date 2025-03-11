@@ -3,6 +3,7 @@ const path = require("path");
 
 // Set the homepage value manually here
 const homepage = "https://on-xperience.vercel.app";
+//const homepage = "http://localhost:3000";
 
 // Path to the build index.html
 const buildIndexPath = path.join(__dirname, "build", "index.html");

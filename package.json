@@ -17,10 +17,7 @@
     "web-vitals": "^4.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "build": "react-scripts build && node fix-assets.js"
   },
   "eslintConfig": {
     "extends": [
@@ -42,10 +39,8 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "replace-in-file": "^8.3.0"
+    "replace-in-file": "^8.3.0",
+    "serve": "^14.2.4"
   },
-  "homepage": "https://on-xperience.vercel.app",
-  "scripts": {
-    "build": "react-scripts build && node fix-assets.js"
-  }
+  "homepage": "/"
 }
