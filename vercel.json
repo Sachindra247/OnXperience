@@ -18,10 +18,6 @@
     {
       "src": "/(.*)",
       "dest": "/build/$1"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/build/manifest.json"
     }
   ]
 }
