@@ -289,12 +289,13 @@ import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
+// Reports configuration
 const reports = {
   homepage: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "3e32d72242a124759baf",
+    pageId: "3e32d72242a124759baf", // Home page ID
   },
   growth: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -306,18 +307,23 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "8e9801e82496355a41ee",
+    pageId: "8e9801e82496355a41ee", // Adoption page ID
   },
 };
 
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [selectedColumn, setSelectedColumn] = useState("End Customer");
-  const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
-  const [powerBiReport, setPowerBiReport] = useState(null);
 
+  // Search state
+  const [searchColumn, setSearchColumn] = useState("");
+  const [searchText, setSearchText] = useState("");
+
+  // Available columns (Replace with actual Power BI table columns)
+  const availableColumns = ["Customer Name", "Product", "Region", "Revenue"];
+
+  // Fetch Power BI embed token
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
@@ -335,29 +341,36 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
+  // Get the correct report based on the route
+  const currentRoute = location.pathname.split("/")[1]; // Extract first segment
+  const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
 
-  const applyFilter = async () => {
-    if (!powerBiReport || !searchQuery) return;
-
-    const filter = {
-      $schema: "http://powerbi.com/product/schema#basic",
-      target: {
-        table: "subscriptions",
-        column: selectedColumn,
-      },
-      operator: "Contains",
-      values: [searchQuery],
-    };
+  // Handle Search Functionality
+  const handleSearch = async () => {
+    if (!searchColumn || !searchText) {
+      alert("Please select a column and enter a search term.");
+      return;
+    }
 
     try {
-      await powerBiReport.updateFilters(models.FiltersOperations.Replace, [
-        filter,
-      ]);
-      console.log(
-        `Applied filter: ${selectedColumn} contains '${searchQuery}'`
-      );
+      const report = window.powerBiReport;
+      if (!report) {
+        console.error("Power BI report is not loaded yet.");
+        return;
+      }
+
+      const filter = {
+        $schema: "http://powerbi.com/product/schema#basic",
+        target: {
+          table: "YourTableName", // Replace with actual Power BI table name
+          column: searchColumn,
+        },
+        operator: "Contains",
+        values: [searchText],
+      };
+
+      await report.setFilters([filter]);
+      console.log(`Applied filter: ${searchColumn} contains "${searchText}"`);
     } catch (error) {
       console.error("Error applying filter:", error);
     }
@@ -379,6 +392,19 @@ const HomePage = () => {
                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
                 </span>
                 <Link to="/healthscore"> Health Score</Link>
+                {expandedSection === "healthScore" && (
+                  <ul
+                    className="submenu expanded"
+                    style={{ display: "block", border: "none" }}
+                  >
+                    <li>
+                      <Link to="/growth">Growth</Link>
+                    </li>
+                    <li>
+                      <Link to="/adoption">Adoption</Link>
+                    </li>
+                  </ul>
+                )}
               </li>
             </ul>
           </nav>
@@ -388,22 +414,23 @@ const HomePage = () => {
           {(currentRoute === "growth" || currentRoute === "adoption") && (
             <div className="search-container">
               <select
-                value={selectedColumn}
-                onChange={(e) => setSelectedColumn(e.target.value)}
+                value={searchColumn}
+                onChange={(e) => setSearchColumn(e.target.value)}
               >
-                {["End Customer", "Subscription ID", "Status"].map((column) => (
-                  <option key={column} value={column}>
-                    {column}
+                <option value="">Select Column</option>
+                {availableColumns.map((col) => (
+                  <option key={col} value={col}>
+                    {col}
                   </option>
                 ))}
               </select>
               <input
                 type="text"
-                placeholder={`Search ${selectedColumn}`}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Enter search term"
               />
-              <button onClick={applyFilter}>Search</button>
+              <button onClick={handleSearch}>Search</button>
             </div>
           )}
 
@@ -420,16 +447,19 @@ const HomePage = () => {
                   background: models.BackgroundType.Default,
                   navContentPaneEnabled: false,
                 },
-                pageName: currentReport.pageId,
+                pageName: currentReport.pageId, // Set page when embedding
               }}
               eventHandlers={{
                 loaded: (event) => {
                   console.log("Report Loaded");
-                  setPowerBiReport(event.detail);
+                  window.powerBiReport = event.detail; // Store report reference
                 },
+                rendered: () => console.log("Report Rendered"),
+                error: (event) =>
+                  console.error("Power BI Error:", event.detail),
               }}
               cssClassName="home-report"
-              key={location.pathname}
+              key={location.pathname} // Forces re-render on navigation
             />
           ) : (
             <p>Loading Power BI report...</p>
