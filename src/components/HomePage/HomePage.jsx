@@ -282,7 +282,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
 import { models } from "powerbi-client";
 import { FaPlus, FaMinus } from "react-icons/fa";
@@ -292,33 +291,25 @@ import axios from "axios";
 // Reports configuration
 const reports = {
   homepage: {
-    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "3e32d72242a124759baf",
+    /* ... your homepage config ... */
   },
   growth: {
-    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "34c6fffab0536014a095",
+    /* ... your growth config ... */
   },
   adoption: {
-    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "8e9801e82496355a41ee",
+    /* ... your adoption config ... */
   },
 };
 
 const HomePage = () => {
+  const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
   const location = useLocation();
   const powerBIRef = useRef(null);
 
-  const [columns, setColumns] = useState([]); // Store dynamically loaded columns
   const [searchColumn, setSearchColumn] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [availableColumns, setAvailableColumns] = useState([]);
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -332,52 +323,44 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
-  // Function to fetch column names dynamically from the Power BI dataset
-  const loadTableColumns = async () => {
-    try {
-      const report = powerBIRef.current;
-      if (!report) {
-        console.error("Power BI report is not loaded yet.");
-        return;
-      }
-
-      // Get available fields from the report dataset
-      const pages = await report.getPages();
-      const activePage = pages.find((page) => page.isActive);
-      const visuals = await activePage.getVisuals();
-
-      let foundColumns = [];
-
-      for (const visual of visuals) {
-        if (visual.type === "table") {
-          const tableData = await visual.getData();
-          if (tableData) {
-            foundColumns = tableData.columns.map(
-              (col) => col.queryName.split(".")[1]
-            ); // Extract column names
-            break;
-          }
-        }
-      }
-
-      if (foundColumns.length > 0) {
-        setColumns(foundColumns);
-      } else {
-        console.warn("No table visuals found in the dataset.");
-      }
-    } catch (error) {
-      console.error("Error fetching column names:", error);
-    }
-  };
-
-  // Load columns after the report is loaded
+  // Fetch column names dynamically
   useEffect(() => {
-    if (powerBIRef.current) {
-      loadTableColumns();
-    }
+    const fetchColumns = async () => {
+      try {
+        const report = powerBIRef.current;
+        if (!report) return;
+
+        const pages = await report.getPages();
+        if (!pages.length) return;
+
+        const datasetInfo = await report.getDataset();
+        const tables = datasetInfo.tables;
+        const subscriptionsTable = tables.find(
+          (table) => table.name === "subscriptions"
+        );
+
+        if (subscriptionsTable) {
+          const columns = subscriptionsTable.columns.map((col) => col.name);
+          setAvailableColumns(columns);
+        } else {
+          console.warn("Table 'subscriptions' not found.");
+        }
+      } catch (error) {
+        console.error("Error fetching columns:", error);
+      }
+    };
+
+    fetchColumns();
   }, [embedToken]);
 
-  // Search function to filter Power BI report
+  const toggleSection = (section, event) => {
+    event.stopPropagation();
+    setExpandedSection((prev) => (prev === section ? null : section));
+  };
+
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
+
   const handleSearch = async () => {
     if (!searchColumn || !searchText) {
       alert("Please select a column and enter a search term.");
@@ -408,9 +391,6 @@ const HomePage = () => {
     }
   };
 
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
-
   return (
     <div className="homepage-container">
       <Header />
@@ -419,15 +399,27 @@ const HomePage = () => {
           <nav className="nav-menu">
             <ul className="tree-menu">
               <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("healthScore", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
+                </span>
                 <Link to="/healthscore"> Health Score</Link>
-                <ul className="submenu">
-                  <li>
-                    <Link to="/growth">Growth</Link>
-                  </li>
-                  <li>
-                    <Link to="/adoption">Adoption</Link>
-                  </li>
-                </ul>
+                {expandedSection === "healthScore" && (
+                  <ul
+                    className="submenu expanded"
+                    style={{ display: "block", border: "none" }}
+                  >
+                    <li>
+                      <Link to="/growth">Growth</Link>
+                    </li>
+                    <li>
+                      <Link to="/adoption">Adoption</Link>
+                    </li>
+                  </ul>
+                )}
               </li>
             </ul>
           </nav>
@@ -441,7 +433,7 @@ const HomePage = () => {
                 onChange={(e) => setSearchColumn(e.target.value)}
               >
                 <option value="">Select Column</option>
-                {columns.map((col) => (
+                {availableColumns.map((col) => (
                   <option key={col} value={col}>
                     {col}
                   </option>
@@ -479,7 +471,6 @@ const HomePage = () => {
                     (event) => {
                       console.log("Report Loaded");
                       powerBIRef.current = event.detail;
-                      loadTableColumns();
                     },
                   ],
                   ["rendered", () => console.log("Report Rendered")],
