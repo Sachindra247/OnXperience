@@ -132,8 +132,7 @@ const reports = {
   },
 };
 
-const HomePage = () => {
-  const location = useLocation();
+const HomePage = ({ route }) => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
 
@@ -154,9 +153,8 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  const pathKey =
-    location.pathname === "/" ? "homepage" : location.pathname.replace("/", "");
-  const currentReport = reports[pathKey] || reports.homepage;
+  // Use the route prop to fetch the appropriate report.
+  const currentReport = reports[route] || reports.homepage;
 
   return (
     <div className="homepage-container">
