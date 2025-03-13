@@ -288,6 +288,7 @@ const HomePage = () => {
                 },
               ]}
               cssClassName="home-report"
+              key={location.pathname} // This will force the component to re-render when the route changes
             />
           ) : (
             <p>Loading Power BI report...</p>
