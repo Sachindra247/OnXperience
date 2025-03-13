@@ -37,6 +37,7 @@ const PowerBIPage = ({ reportId, embedUrl, pageName }) => {
                   filters: { expanded: false, visible: false },
                 },
                 background: models.BackgroundType.Default,
+                navContentPaneEnabled: false, // Hides the page navigation tabs
               },
               pageName: pageName,
             }}
