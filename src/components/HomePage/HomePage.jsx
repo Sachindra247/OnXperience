@@ -282,12 +282,20 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
 import { models } from "powerbi-client";
-import axios from "axios";
+import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
+import axios from "axios";
 
 const reports = {
+  homepage: {
+    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
+    embedUrl:
+      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
+    pageId: "3e32d72242a124759baf",
+  },
   growth: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
@@ -303,8 +311,8 @@ const reports = {
 };
 
 const HomePage = () => {
+  const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [selectedColumn, setSelectedColumn] = useState("customerName");
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
 
@@ -320,66 +328,82 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute];
-
-  const applyFilter = (embed) => {
-    if (embed && searchQuery) {
-      const filter = {
-        $schema: "http://powerbi.com/product/schema#basic",
-        target: {
-          table: "subscriptions", // Replace with actual table name
-          column: selectedColumn,
-        },
-        operator: "Contains",
-        values: [searchQuery],
-      };
-      embed
-        .setFilters([filter])
-        .catch((error) => console.error("Error applying filter:", error));
-    }
+  const toggleSection = (section, event) => {
+    event.stopPropagation();
+    setExpandedSection((prev) => (prev === section ? null : section));
   };
+
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
 
   return (
     <div className="homepage-container">
       <Header />
-      <div className="search-container">
-        <select
-          value={selectedColumn}
-          onChange={(e) => setSelectedColumn(e.target.value)}
-        >
-          <option value="customerName">Customer Name</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-      <div className="report-container">
-        {embedToken && currentReport ? (
-          <PowerBIEmbed
-            embedConfig={{
-              type: "report",
-              id: currentReport.id,
-              embedUrl: currentReport.embedUrl,
-              accessToken: embedToken,
-              tokenType: models.TokenType.Embed,
-              settings: {
-                panes: { filters: { expanded: false, visible: false } },
-                background: models.BackgroundType.Default,
-              },
-              pageName: currentReport.pageId,
-            }}
-            cssClassName="home-report"
-            eventHandlers={{
-              loaded: (event) => applyFilter(event.detail.embed),
-            }}
-          />
-        ) : (
-          <p>Loading Power BI report...</p>
-        )}
+      <div className="content">
+        <aside className="sidebar">
+          <nav className="nav-menu">
+            <ul className="tree-menu">
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("healthScore", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/healthscore"> Health Score</Link>
+                {expandedSection === "healthScore" && (
+                  <ul
+                    className="submenu expanded"
+                    style={{ display: "block", border: "none" }}
+                  >
+                    <li>
+                      <Link to="/growth">Growth</Link>
+                    </li>
+                    <li>
+                      <Link to="/adoption">Adoption</Link>
+                    </li>
+                  </ul>
+                )}
+              </li>
+            </ul>
+          </nav>
+        </aside>
+
+        <main className="report-container">
+          {(currentRoute === "growth" || currentRoute === "adoption") && (
+            <div className="search-bar">
+              <input
+                type="text"
+                placeholder="Search Customer Name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          )}
+
+          {embedToken ? (
+            <PowerBIEmbed
+              embedConfig={{
+                type: "report",
+                id: currentReport.id,
+                embedUrl: currentReport.embedUrl,
+                accessToken: embedToken,
+                tokenType: models.TokenType.Embed,
+                settings: {
+                  panes: { filters: { expanded: false, visible: false } },
+                  background: models.BackgroundType.Default,
+                  navContentPaneEnabled: false,
+                },
+                pageName: currentReport.pageId,
+              }}
+              cssClassName="home-report"
+              key={location.pathname}
+            />
+          ) : (
+            <p>Loading Power BI report...</p>
+          )}
+        </main>
       </div>
     </div>
   );
