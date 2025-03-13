@@ -136,7 +136,6 @@ const HomePage = () => {
   const location = useLocation();
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [powerBiReport, setPowerBiReport] = useState(null);
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -167,18 +166,6 @@ const HomePage = () => {
   ].includes(pathKey);
 
   const currentReport = isPowerBIRoute ? reports[pathKey] : null;
-
-  // Function to change the page inside the embedded report
-  const onEmbed = (report) => {
-    setPowerBiReport(report); // Keep track of the embedded report
-
-    if (report && currentReport.pageName) {
-      // Change the page within the embedded report when it loads
-      report.setPage(currentReport.pageName).catch((error) => {
-        console.error("Error setting Power BI report page:", error);
-      });
-    }
-  };
 
   return (
     <div className="homepage-container">
@@ -216,7 +203,47 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
-              {/* Other menu items */}
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("renewals", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/renewals">Renewals</Link>
+                {expandedSection === "renewals" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
+              </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("financials", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/financials">Financials</Link>
+                {expandedSection === "financials" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
+              </li>
+              <li>
+                <Link to="/statistics">Statistics</Link>
+              </li>
+            </ul>
+            <ul className="tree-menu bottom-links">
+              <li>
+                <Link to="/settings">Settings</Link>
+              </li>
+              <li>
+                <Link to="/help">Help</Link>
+              </li>
             </ul>
           </nav>
         </aside>
@@ -225,7 +252,6 @@ const HomePage = () => {
           {embedToken ? (
             isPowerBIRoute ? (
               <PowerBIEmbed
-                key={currentReport.pageName} // This ensures re-rendering when the page changes
                 embedConfig={{
                   type: "report",
                   id: currentReport.id,
@@ -239,12 +265,15 @@ const HomePage = () => {
                   },
                   pageName: currentReport.pageName,
                 }}
-                onEmbed={onEmbed} // Trigger the onEmbed function when the report is loaded
                 cssClassName="home-report"
               />
             ) : (
-              // For other routes like /renewals, /financials, etc., render a placeholder or a different component
-              <p>Select a report to view</p>
+              // Render different content for non-Power BI routes
+              <div>
+                <h2>Page Content for {pathKey}</h2>
+                {/* Add specific content here for pages like Renewals, Financials, etc. */}
+                <p>Content for {pathKey} page goes here.</p>
+              </div>
             )
           ) : (
             <p>Loading Power BI report...</p>
