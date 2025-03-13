@@ -91,196 +91,7 @@
 
 //my current homepage
 
-// import React, { useState, useEffect, useRef } from "react";
-// import { Link, useLocation } from "react-router-dom";
-// import "./HomePage.css";
-// import { PowerBIEmbed } from "powerbi-client-react";
-// import { models } from "powerbi-client";
-// import { FaPlus, FaMinus } from "react-icons/fa";
-// import Header from "../../components/Header/Header";
-// import axios from "axios";
-
-// // Reports configuration
-// const reports = {
-//   homepage: {
-//     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-//     pageId: "3e32d72242a124759baf", // Home page ID
-//   },
-//   growth: {
-//     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-//     pageId: "34c6fffab0536014a095",
-//   },
-//   adoption: {
-//     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-//     pageId: "8e9801e82496355a41ee", // Adoption page ID
-//   },
-//   engagement: {
-//     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-//     pageId: "1a80fca4b9d06e022019",
-//   },
-//   feedback: {
-//     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-//     pageId: "2bc6242386de992b4428",
-//   },
-//   healthscore: {
-//     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-//     pageId: "42339bb3bbdb295ed7c8",
-//   },
-// };
-
-// const HomePage = () => {
-//   const [expandedSection, setExpandedSection] = useState(null);
-//   const [embedToken, setEmbedToken] = useState(null);
-//   const location = useLocation();
-
-//   // Fetch Power BI embed token
-//   useEffect(() => {
-//     const fetchEmbedToken = async () => {
-//       try {
-//         const response = await axios.get("https://on-xperience.vercel.app/api");
-//         setEmbedToken(response.data.embedToken);
-//       } catch (error) {
-//         console.error("Error fetching embed token:", error);
-//       }
-//     };
-//     fetchEmbedToken();
-//   }, []);
-
-//   const toggleSection = (section, event) => {
-//     event.stopPropagation();
-//     setExpandedSection((prev) => (prev === section ? null : section));
-//   };
-
-//   // Get the correct report based on the route
-//   const currentRoute = location.pathname.split("/")[1]; // Extract first segment
-//   const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
-
-//   return (
-//     <div className="homepage-container">
-//       <Header />
-//       <div className="content">
-//         <aside className="sidebar">
-//           <nav className="nav-menu">
-//             <ul className="tree-menu">
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("healthScore", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/healthscore"> Health Score</Link>
-//                 {expandedSection === "healthScore" && (
-//                   <ul
-//                     className="submenu expanded"
-//                     style={{ display: "block", border: "none" }}
-//                   >
-//                     <li>
-//                       <Link to="/growth">Growth</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/adoption">Adoption</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/engagement">Engagement</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/feedback">Feedback</Link>
-//                     </li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("renewals", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/renewals">Renewals</Link>
-//                 {expandedSection === "renewals" && (
-//                   <ul className="submenu expanded">
-//                     <li>Dummy Page</li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("financials", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/financials">Financials</Link>
-//                 {expandedSection === "financials" && (
-//                   <ul className="submenu expanded">
-//                     <li>Dummy Page</li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <Link to="/statistics">Statistics</Link>
-//               </li>
-//             </ul>
-//             <ul className="tree-menu bottom-links">
-//               <li>
-//                 <Link to="/settings">Settings</Link>
-//               </li>
-//               <li>
-//                 <Link to="/help">Help</Link>
-//               </li>
-//             </ul>
-//           </nav>
-//         </aside>
-
-//         <main className="report-container">
-//           {embedToken ? (
-//             <PowerBIEmbed
-//               embedConfig={{
-//                 type: "report",
-//                 id: currentReport.id,
-//                 embedUrl: currentReport.embedUrl,
-//                 accessToken: embedToken,
-//                 tokenType: models.TokenType.Embed,
-//                 settings: {
-//                   panes: { filters: { expanded: false, visible: false } },
-//                   background: models.BackgroundType.Default,
-//                   navContentPaneEnabled: false,
-//                 },
-//                 pageName: currentReport.pageId, // Set page when embedding
-//               }}
-//               cssClassName="home-report"
-//               key={location.pathname} // Forces re-render on navigation
-//             />
-//           ) : (
-//             <p>Loading Power BI report...</p>
-//           )}
-//         </main>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default HomePage;
-
-//changing the page for search functionality....
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
@@ -332,9 +143,6 @@ const reports = {
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [reportInstance, setReportInstance] = useState(null);
-  const [searchColumn, setSearchColumn] = useState(""); // Selected column for search
-  const [searchTerm, setSearchTerm] = useState(""); // Search term
   const location = useLocation();
 
   // Fetch Power BI embed token
@@ -358,64 +166,6 @@ const HomePage = () => {
   // Get the correct report based on the route
   const currentRoute = location.pathname.split("/")[1]; // Extract first segment
   const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
-
-  // Handle report load event
-  const handleReportLoad = async (event) => {
-    const report = event.detail;
-    setReportInstance(report);
-
-    // Get the active page
-    const page = await report.getActivePage();
-
-    // Get all visuals on the active page
-    const visuals = await page.getVisuals();
-
-    // Log visual names and types to the console
-    visuals.forEach((visual) => {
-      console.log("Visual Name:", visual.name);
-      console.log("Visual Type:", visual.type);
-      console.log("-----------------------------");
-    });
-  };
-
-  // Apply search filter to the Power BI visual
-  const applySearchFilter = async () => {
-    if (reportInstance && searchColumn && searchTerm) {
-      try {
-        // Get the active page
-        const page = await reportInstance.getActivePage();
-
-        // Get all visuals on the active page
-        const visuals = await page.getVisuals();
-
-        // Find the table visual by name (replace "VisualContainer1" with the actual visual name)
-        const tableVisual = visuals.find(
-          (visual) => visual.name === "VisualContainer1"
-        );
-
-        if (tableVisual) {
-          // Create a basic filter
-          const filter = {
-            $schema: "http://powerbi.com/product/schema#basic",
-            target: {
-              table: "YourTableName", // Replace with your table name
-              column: searchColumn, // Column to filter
-            },
-            operator: "Contains",
-            values: [searchTerm], // Search term
-          };
-
-          // Apply the filter to the table visual
-          await tableVisual.applyFilters([filter]);
-          console.log("Filter applied successfully");
-        } else {
-          console.error("Table visual not found");
-        }
-      } catch (error) {
-        console.error("Error applying filter:", error);
-      }
-    }
-  };
 
   return (
     <div className="homepage-container">
@@ -499,27 +249,6 @@ const HomePage = () => {
         </aside>
 
         <main className="report-container">
-          {/* Search UI */}
-          <div className="search-container">
-            <select
-              value={searchColumn}
-              onChange={(e) => setSearchColumn(e.target.value)}
-            >
-              <option value="">Select Column</option>
-              <option value="CustomerName">Customer Name</option>
-              <option value="ProductName">Product Name</option>
-              {/* Add more columns as needed */}
-            </select>
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button onClick={applySearchFilter}>Search</button>
-          </div>
-
-          {/* Power BI Report */}
           {embedToken ? (
             <PowerBIEmbed
               embedConfig={{
@@ -535,9 +264,6 @@ const HomePage = () => {
                 },
                 pageName: currentReport.pageId, // Set page when embedding
               }}
-              eventHandlers={{
-                loaded: handleReportLoad,
-              }}
               cssClassName="home-report"
               key={location.pathname} // Forces re-render on navigation
             />
@@ -551,3 +277,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
+//changing the page for search functionality....
