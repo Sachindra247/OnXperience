@@ -100,7 +100,7 @@ import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
-// Update the reports object to use pageId instead of pageName
+// Reports configuration
 const reports = {
   homepage: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -112,7 +112,7 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "34c6fffab0536014a095", // Growth page ID
+    pageId: "your-growth-page-id-here",
   },
   adoption: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -124,30 +124,28 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "your-engagement-page-id-here", // Engagement page ID
+    pageId: "your-engagement-page-id-here",
   },
   feedback: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "your-feedback-page-id-here", // Feedback page ID
+    pageId: "your-feedback-page-id-here",
   },
   healthscore: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "your-healthscore-page-id-here", // Health Score page ID
+    pageId: "your-healthscore-page-id-here",
   },
 };
 
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [reportInstance, setReportInstance] = useState(null);
   const location = useLocation();
-  const reportRef = useRef(null);
 
-  // Fetch embed token when component mounts
+  // Fetch Power BI embed token
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
@@ -165,47 +163,10 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Dynamically determine the current report based on the URL
-  const currentRoute = location.pathname.split("/")[1]; // Gets the first part of the URL
-  const currentReport = reports[currentRoute] || reports.homepage; // Fallback to homepage if no route matches
+  // Get the correct report based on the route
+  const currentRoute = location.pathname.split("/")[1]; // Extract first segment
+  const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
 
-  // Handle the loaded report and ensure page navigation
-  const handleReportLoad = (embed) => {
-    if (embed) {
-      setReportInstance(embed);
-    }
-  };
-
-  // Update the page based on route change
-  useEffect(() => {
-    if (reportInstance) {
-      const currentReport = reports[currentRoute] || reports.homepage; // Get the correct report page
-
-      reportInstance
-        .getPages()
-        .then((pages) => {
-          const targetPage = pages.find(
-            (page) => page.name === currentReport.pageId
-          );
-
-          if (targetPage) {
-            targetPage.setActive();
-            console.log(
-              `Navigated to ${currentRoute} page: ${currentReport.pageId}`
-            );
-          } else {
-            console.error(
-              `Page ID ${currentReport.pageId} not found in the report`
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Error navigating to Power BI page:", error);
-        });
-    }
-  }, [location.pathname, reportInstance, currentRoute]);
-
-  // This ensures the PowerBIEmbed component re-renders every time the location changes.
   return (
     <div className="homepage-container">
       <Header />
@@ -301,15 +262,10 @@ const HomePage = () => {
                   background: models.BackgroundType.Default,
                   navContentPaneEnabled: false,
                 },
+                pageName: currentReport.pageId, // Set page when embedding
               }}
-              eventHandlers={[
-                {
-                  eventName: "loaded",
-                  callback: (event) => handleReportLoad(event.detail),
-                },
-              ]}
               cssClassName="home-report"
-              key={location.pathname} // This forces re-render when route changes
+              key={location.pathname} // Forces re-render on navigation
             />
           ) : (
             <p>Loading Power BI report...</p>
