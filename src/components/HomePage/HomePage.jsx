@@ -124,19 +124,19 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "your-engagement-page-id-here", // Replace with the actual page ID for Engagement
+    pageId: "your-engagement-page-id-here", // Engagement page ID
   },
   feedback: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "your-feedback-page-id-here", // Replace with the actual page ID for Feedback
+    pageId: "your-feedback-page-id-here", // Feedback page ID
   },
   healthscore: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "your-healthscore-page-id-here", // Replace with the actual page ID for Health Score
+    pageId: "your-healthscore-page-id-here", // Health Score page ID
   },
 };
 
@@ -195,6 +195,7 @@ const HomePage = () => {
     }
   }, [location.pathname, reportInstance, currentRoute]);
 
+  // This ensures the PowerBIEmbed component re-renders every time the location changes.
   return (
     <div className="homepage-container">
       <Header />
