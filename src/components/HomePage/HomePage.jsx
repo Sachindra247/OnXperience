@@ -332,9 +332,10 @@ const reports = {
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [reportInstance, setReportInstance] = useState(null);
+  const [searchColumn, setSearchColumn] = useState(""); // Selected column for search
+  const [searchTerm, setSearchTerm] = useState(""); // Search term
   const location = useLocation();
-  const reportRef = useRef(null);
 
   // Fetch Power BI embed token
   useEffect(() => {
@@ -354,36 +355,51 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Apply search filter on growth page
-  useEffect(() => {
-    if (reportRef.current && location.pathname === "/growth") {
-      const applyFilter = async () => {
-        try {
-          if (searchTerm) {
-            const filter = {
-              $schema: "http://powerbi.com/product/schema#basic",
-              target: {
-                table: "TableName",
-                column: "Customer name",
-              },
-              operator: "Contains",
-              values: [searchTerm],
-            };
-            await reportRef.current.setFilters([filter]);
-          } else {
-            await reportRef.current.removeFilters();
-          }
-        } catch (error) {
-          console.error("Error applying filter:", error);
-        }
-      };
-      applyFilter();
-    }
-  }, [searchTerm, location.pathname]);
-
   // Get the correct report based on the route
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
+  const currentRoute = location.pathname.split("/")[1]; // Extract first segment
+  const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
+
+  // Handle report load event
+  const handleReportLoad = (event) => {
+    setReportInstance(event.detail);
+  };
+
+  // Apply search filter to the Power BI visual
+  const applySearchFilter = async () => {
+    if (reportInstance && searchColumn && searchTerm) {
+      try {
+        // Get all visuals on the current page
+        const page = await reportInstance.getActivePage();
+        const visuals = await page.getVisuals();
+
+        // Find the specific visual by name or ID
+        const targetVisual = visuals.find(
+          (visual) => visual.name === "YourVisualName"
+        ); // Replace with your visual name
+
+        if (targetVisual) {
+          // Create a basic filter
+          const filter = {
+            $schema: "http://powerbi.com/product/schema#basic",
+            target: {
+              table: "YourTableName", // Replace with your table name
+              column: searchColumn, // Column to filter
+            },
+            operator: "Contains",
+            values: [searchTerm], // Search term
+          };
+
+          // Apply the filter to the visual
+          await targetVisual.applyFilters([filter]);
+          console.log("Filter applied successfully");
+        } else {
+          console.error("Visual not found");
+        }
+      } catch (error) {
+        console.error("Error applying filter:", error);
+      }
+    }
+  };
 
   return (
     <div className="homepage-container">
@@ -421,20 +437,73 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("renewals", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/renewals">Renewals</Link>
+                {expandedSection === "renewals" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
+              </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("financials", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/financials">Financials</Link>
+                {expandedSection === "financials" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
+              </li>
+              <li>
+                <Link to="/statistics">Statistics</Link>
+              </li>
+            </ul>
+            <ul className="tree-menu bottom-links">
+              <li>
+                <Link to="/settings">Settings</Link>
+              </li>
+              <li>
+                <Link to="/help">Help</Link>
+              </li>
             </ul>
           </nav>
         </aside>
 
         <main className="report-container">
-          {location.pathname === "/growth" && (
+          {/* Search UI */}
+          <div className="search-container">
+            <select
+              value={searchColumn}
+              onChange={(e) => setSearchColumn(e.target.value)}
+            >
+              <option value="">Select Column</option>
+              <option value="CustomerName">Customer Name</option>
+              <option value="ProductName">Product Name</option>
+              {/* Add more columns as needed */}
+            </select>
             <input
               type="text"
-              placeholder="Search by Customer name"
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-          )}
+            <button onClick={applySearchFilter}>Search</button>
+          </div>
 
+          {/* Power BI Report */}
           {embedToken ? (
             <PowerBIEmbed
               embedConfig={{
@@ -448,11 +517,13 @@ const HomePage = () => {
                   background: models.BackgroundType.Default,
                   navContentPaneEnabled: false,
                 },
-                pageName: currentReport.pageId,
+                pageName: currentReport.pageId, // Set page when embedding
+              }}
+              eventHandlers={{
+                loaded: handleReportLoad,
               }}
               cssClassName="home-report"
-              key={location.pathname}
-              reportRef={reportRef}
+              key={location.pathname} // Forces re-render on navigation
             />
           ) : (
             <p>Loading Power BI report...</p>
