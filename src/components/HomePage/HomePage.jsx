@@ -130,12 +130,6 @@ const reports = {
     embedUrl: "your-feedback-embed-url",
     pageName: "Feedback",
   },
-  homepage: {
-    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "HomePage",
-  },
 };
 
 const HomePage = () => {
@@ -161,9 +155,13 @@ const HomePage = () => {
   };
 
   // Extract last part of the pathname to determine the report type
-  const pathKey =
-    location.pathname === "/" ? "homepage" : location.pathname.replace("/", "");
-  const currentReport = reports[pathKey] || reports.homepage;
+  const pathKey = location.pathname.replace("/", "") || "healthscore";
+  const currentReport = reports[pathKey] || {
+    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
+    embedUrl:
+      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
+    pageName: "HomePage",
+  };
 
   return (
     <div className="homepage-container">
@@ -182,7 +180,10 @@ const HomePage = () => {
                 </span>
                 <Link to="/healthscore"> Health Score</Link>
                 {expandedSection === "healthScore" && (
-                  <ul className="submenu expanded">
+                  <ul
+                    className="submenu expanded"
+                    style={{ display: "block", border: "none" }}
+                  >
                     <li>
                       <Link to="/growth">Growth</Link>
                     </li>
@@ -195,6 +196,36 @@ const HomePage = () => {
                     <li>
                       <Link to="/feedback">Feedback</Link>
                     </li>
+                  </ul>
+                )}
+              </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("renewals", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/renewals">Renewals</Link>
+                {expandedSection === "renewals" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
+              </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("financials", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/financials">Financials</Link>
+                {expandedSection === "financials" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
                   </ul>
                 )}
               </li>
@@ -223,9 +254,11 @@ const HomePage = () => {
                 accessToken: embedToken,
                 tokenType: models.TokenType.Embed,
                 settings: {
-                  panes: { filters: { expanded: false, visible: false } },
+                  panes: {
+                    filters: { expanded: false, visible: false },
+                  },
                   background: models.BackgroundType.Default,
-                  navContentPaneEnabled: false,
+                  navContentPaneEnabled: false, // Hides the page navigation tabs
                 },
                 pageName: currentReport.pageName,
               }}
