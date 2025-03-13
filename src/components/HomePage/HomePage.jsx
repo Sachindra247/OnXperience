@@ -100,36 +100,37 @@ import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
+// Update the reports object to use pageId instead of pageName
 const reports = {
   homepage: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "HomePage",
+    pageId: "34c6fffab0536014a095", // Use the page ID for the HomePage
   },
   growth: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "Growth",
+    pageId: "34c6fffab0536014a095", // Replace with the actual page ID for Growth
   },
   adoption: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "Adoption",
+    pageId: "8e9801e82496355a41ee", // Replace with the actual page ID for Adoption
   },
   engagement: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "Engagement",
+    pageId: "your-engagement-page-id-here", // Replace with the actual page ID for Engagement
   },
   feedback: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "Feedback",
+    pageId: "your-feedback-page-id-here", // Replace with the actual page ID for Feedback
   },
 };
 
@@ -157,6 +158,7 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
+  // Set the current report based on the URL
   const currentReport =
     reports[location.pathname.split("/")[1]] || reports.homepage;
 
@@ -173,12 +175,12 @@ const HomePage = () => {
       const currentReport =
         reports[location.pathname.split("/")[1]] || reports.homepage;
 
-      // Ensure page navigation after the report is loaded
+      // Navigate using pageId instead of pageName
       reportInstance
-        .setPage(currentReport.pageName)
+        .setPage(currentReport.pageId)
         .then(() => {
           console.log(
-            `Navigated to ${currentReport.pageName} page in Power BI report`
+            `Navigated to page with ID ${currentReport.pageId} in Power BI report`
           );
         })
         .catch((error) => {
