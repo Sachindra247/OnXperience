@@ -106,19 +106,19 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "34c6fffab0536014a095", // Use the page ID for the HomePage
+    pageId: "34c6fffab0536014a095", // Home page ID
   },
   growth: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "34c6fffab0536014a095", // Replace with the actual page ID for Growth
+    pageId: "34c6fffab0536014a095", // Growth page ID
   },
   adoption: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "8e9801e82496355a41ee", // Replace with the actual page ID for Adoption
+    pageId: "8e9801e82496355a41ee", // Adoption page ID
   },
   engagement: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -147,6 +147,7 @@ const HomePage = () => {
   const location = useLocation();
   const reportRef = useRef(null);
 
+  // Fetch embed token when component mounts
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
@@ -164,24 +165,23 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Set the current report based on the URL
-  const currentReport =
-    reports[location.pathname.split("/")[1]] || reports.homepage;
+  // Dynamically determine the current report based on the URL
+  const currentRoute = location.pathname.split("/")[1]; // Gets the first part of the URL
+  const currentReport = reports[currentRoute] || reports.homepage; // Fallback to homepage if no route matches
 
-  // Function to handle when the report is loaded
+  // Handle the loaded report and ensure page navigation
   const handleReportLoad = (embed) => {
     if (embed) {
       setReportInstance(embed);
     }
   };
 
-  // Whenever location changes, navigate to the correct page in the report
+  // Update the page based on route change
   useEffect(() => {
     if (reportInstance) {
-      const currentReport =
-        reports[location.pathname.split("/")[1]] || reports.homepage;
+      const currentReport = reports[currentRoute] || reports.homepage; // Get the report based on route
 
-      // Navigate using pageId instead of pageName
+      // Navigate to the correct page based on the pageId
       reportInstance
         .setPage(currentReport.pageId)
         .then(() => {
@@ -193,7 +193,7 @@ const HomePage = () => {
           console.error("Error navigating to page:", error);
         });
     }
-  }, [location.pathname, reportInstance]);
+  }, [location.pathname, reportInstance, currentRoute]);
 
   return (
     <div className="homepage-container">
@@ -298,7 +298,7 @@ const HomePage = () => {
                 },
               ]}
               cssClassName="home-report"
-              key={location.pathname} // This will force the component to re-render when the route changes
+              key={location.pathname} // This forces re-render when route changes
             />
           ) : (
             <p>Loading Power BI report...</p>
