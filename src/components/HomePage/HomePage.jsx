@@ -319,8 +319,7 @@ const HomePage = () => {
 
   const [searchColumn, setSearchColumn] = useState("");
   const [searchText, setSearchText] = useState("");
-
-  const availableColumns = ["Customer Name", "Product", "Region", "Revenue"];
+  const [columns, setColumns] = useState([]);
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -332,6 +331,22 @@ const HomePage = () => {
       }
     };
     fetchEmbedToken();
+  }, []);
+
+  const fetchColumns = async () => {
+    try {
+      // Fetch available columns for the "subscriptions" table
+      const response = await axios.get(
+        "https://on-xperience.vercel.app/api/columns"
+      );
+      setColumns(response.data.columns || []);
+    } catch (error) {
+      console.error("Error fetching columns:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchColumns();
   }, []);
 
   const toggleSection = (section, event) => {
@@ -414,7 +429,7 @@ const HomePage = () => {
                 onChange={(e) => setSearchColumn(e.target.value)}
               >
                 <option value="">Select Column</option>
-                {availableColumns.map((col) => (
+                {columns.map((col) => (
                   <option key={col} value={col}>
                     {col}
                   </option>
