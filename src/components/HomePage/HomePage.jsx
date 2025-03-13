@@ -91,7 +91,7 @@
 
 //my current homepage
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
@@ -133,9 +133,12 @@ const reports = {
   },
 };
 
-const HomePage = ({ route }) => {
+const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
+  const [reportInstance, setReportInstance] = useState(null);
+  const location = useLocation();
+  const reportRef = useRef(null);
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -154,14 +157,23 @@ const HomePage = ({ route }) => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Dynamically set the current report based on the route prop
-  const currentReport = reports[route] || reports.homepage;
+  const currentReport =
+    reports[location.pathname.split("/")[1]] || reports.homepage;
 
   // Function to handle when the report is loaded
   const handleReportLoad = (embed) => {
     if (embed) {
-      embed
-        .page(currentReport.pageName)
+      setReportInstance(embed);
+    }
+  };
+
+  // Whenever location changes, navigate to the correct page in the report
+  useEffect(() => {
+    if (reportInstance) {
+      const currentReport =
+        reports[location.pathname.split("/")[1]] || reports.homepage;
+      reportInstance
+        .setPage(currentReport.pageName)
         .then(() => {
           console.log(
             `Navigated to ${currentReport.pageName} page in Power BI report`
@@ -171,7 +183,7 @@ const HomePage = ({ route }) => {
           console.error("Error navigating to page:", error);
         });
     }
-  };
+  }, [location.pathname, reportInstance]);
 
   return (
     <div className="homepage-container">
