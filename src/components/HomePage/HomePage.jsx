@@ -422,6 +422,7 @@ const HomePage = () => {
                     filters: { expanded: false, visible: false },
                   },
                   background: models.BackgroundType.Default,
+                  navContentPaneEnabled: false, // Hides the page navigation tabs
                 },
                 pageName: currentReport.pageName,
               }}
