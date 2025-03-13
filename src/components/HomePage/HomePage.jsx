@@ -295,7 +295,7 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "3e32d72242a124759baf", // Home page ID
+    pageId: "3e32d72242a124759baf",
   },
   growth: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -307,7 +307,7 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "8e9801e82496355a41ee", // Adoption page ID
+    pageId: "8e9801e82496355a41ee",
   },
 };
 
@@ -315,16 +315,13 @@ const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
   const location = useLocation();
-  const powerBIRef = useRef(null); // Reference to Power BI report
+  const powerBIRef = useRef(null);
 
-  // Search state
   const [searchColumn, setSearchColumn] = useState("");
   const [searchText, setSearchText] = useState("");
 
-  // Available columns (Replace with actual Power BI table columns)
   const availableColumns = ["Customer Name", "Product", "Region", "Revenue"];
 
-  // Fetch Power BI embed token
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
@@ -342,11 +339,9 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Get the correct report based on the route
-  const currentRoute = location.pathname.split("/")[1]; // Extract first segment
-  const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
 
-  // Handle Search Functionality
   const handleSearch = async () => {
     if (!searchColumn || !searchText) {
       alert("Please select a column and enter a search term.");
@@ -363,7 +358,7 @@ const HomePage = () => {
       const filter = {
         $schema: "http://powerbi.com/product/schema#basic",
         target: {
-          table: "YourTableName", // Replace with actual Power BI table name
+          table: "subscriptions",
           column: searchColumn,
         },
         operator: "Contains",
@@ -448,19 +443,26 @@ const HomePage = () => {
                   background: models.BackgroundType.Default,
                   navContentPaneEnabled: false,
                 },
-                pageName: currentReport.pageId, // Set page when embedding
+                pageName: currentReport.pageId,
               }}
-              eventHandlers={{
-                loaded: (event) => {
-                  console.log("Report Loaded");
-                  powerBIRef.current = event.detail; // Store report reference
-                },
-                rendered: () => console.log("Report Rendered"),
-                error: (event) =>
-                  console.error("Power BI Error:", event.detail),
-              }}
+              eventHandlers={
+                new Map([
+                  [
+                    "loaded",
+                    (event) => {
+                      console.log("Report Loaded");
+                      powerBIRef.current = event.detail;
+                    },
+                  ],
+                  ["rendered", () => console.log("Report Rendered")],
+                  [
+                    "error",
+                    (event) => console.error("Power BI Error:", event.detail),
+                  ],
+                ])
+              }
               cssClassName="home-report"
-              key={location.pathname} // Forces re-render on navigation
+              key={location.pathname}
             />
           ) : (
             <p>Loading Power BI report...</p>
