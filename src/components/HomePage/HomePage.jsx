@@ -280,7 +280,7 @@
 
 //changing the page for search functionality....
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
@@ -315,6 +315,7 @@ const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
   const location = useLocation();
+  const powerBIRef = useRef(null); // Reference to Power BI report
 
   // Search state
   const [searchColumn, setSearchColumn] = useState("");
@@ -353,7 +354,7 @@ const HomePage = () => {
     }
 
     try {
-      const report = window.powerBiReport;
+      const report = powerBIRef.current;
       if (!report) {
         console.error("Power BI report is not loaded yet.");
         return;
@@ -362,7 +363,7 @@ const HomePage = () => {
       const filter = {
         $schema: "http://powerbi.com/product/schema#basic",
         target: {
-          table: "subscriptions", // Replace with actual Power BI table name
+          table: "YourTableName", // Replace with actual Power BI table name
           column: searchColumn,
         },
         operator: "Contains",
@@ -452,7 +453,7 @@ const HomePage = () => {
               eventHandlers={{
                 loaded: (event) => {
                   console.log("Report Loaded");
-                  window.powerBiReport = event.detail; // Store report reference
+                  powerBIRef.current = event.detail; // Store report reference
                 },
                 rendered: () => console.log("Report Rendered"),
                 error: (event) =>
