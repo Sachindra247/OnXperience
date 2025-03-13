@@ -311,11 +311,77 @@ const reports = {
   },
 };
 
+// List of columns in the 'subscriptions' table
+const subscriptionColumns = [
+  "End Customer",
+  "Offer Name",
+  "Consumption Status",
+  "Over Consumed TF Groups",
+  "TF Groups",
+  "True Forward Effective Date",
+  "Pending True Forward Effective Date",
+  "Next True Forward",
+  "Subscription ID",
+  "Status",
+  "Start Date",
+  "End Date",
+  "Initial Term",
+  "Renewal Date",
+  "Currency",
+  "Monthly Charge",
+  "TF Overage",
+  "Auto Renewal Term",
+  "Billing Model",
+  "Purchase Order Number",
+  "WebOrderID",
+  "Buying Program ID",
+  "Site URL",
+  "Customer Success Manager",
+  "Partner Success Manager",
+  "Sales Specialist",
+  "Customer Success Manager Email",
+  "Partner Success Manager Email",
+  "Sales Specialist Email",
+  "Days Until Renewal",
+  "Bill To Customer",
+  "Bill To Id",
+  "Bill To Country",
+  "Primary Billing Contact Name",
+  "Primary Billing Contact Email",
+  "Primary Billing Contact Phone",
+  "Primary Billing Contact Fax",
+  "Service To Contact Name",
+  "Service To Contact Email",
+  "Service To Contact Phone",
+  "Service To Contact Fax",
+  "End Customer Country",
+  "End Customer Contact Name",
+  "End Customer Contact Email",
+  "End Customer Contact Phone",
+  "End Customer Contact Fax",
+  "Duration",
+  "Bill Day",
+  "Billing Preference",
+  "Payment Method",
+  "Payment Term",
+  "Order Submitted Date",
+  "Smart Account Name",
+  "Do Not Transact",
+  "Do Not Transact Reason",
+  "Renewal Manager",
+  "Renewal Manager Email",
+  "Provisioning Status",
+  "Consumed Suite Value (%)",
+  "Customer Cancellation Reason",
+  "Enterprise Agreement Motion",
+  "Entitlement Type",
+];
+
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [selectedColumn, setSelectedColumn] = useState("Customer Name");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedColumn, setSelectedColumn] = useState("End Customer"); // Default column for search
+  const [searchQuery, setSearchQuery] = useState(""); // Search term
   const location = useLocation();
 
   // Fetch Power BI embed token
@@ -340,12 +406,6 @@ const HomePage = () => {
   const currentRoute = location.pathname.split("/")[1]; // Extract first segment
   const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
 
-  // Event Handlers Fix for PowerBIEmbed
-  const eventHandlers = new Map([
-    ["loaded", () => console.log("Report Loaded")],
-    ["rendered", () => console.log("Report Rendered")],
-  ]);
-
   // Function to apply search filter to Power BI report
   const applyFilter = async (report) => {
     if (!searchQuery) return; // Do nothing if search is empty
@@ -353,11 +413,11 @@ const HomePage = () => {
     const filter = {
       $schema: "http://powerbi.com/product/schema#basic",
       target: {
-        table: "subscriptions", // Replace with your actual table name
-        column: selectedColumn,
+        table: "subscriptions", // Table name
+        column: selectedColumn, // Column to filter
       },
       operator: "Contains",
-      values: [searchQuery],
+      values: [searchQuery], // Search term
     };
 
     try {
@@ -412,7 +472,11 @@ const HomePage = () => {
                 value={selectedColumn}
                 onChange={(e) => setSelectedColumn(e.target.value)}
               >
-                <option value="Customer Name">Customer Name</option>
+                {subscriptionColumns.map((column) => (
+                  <option key={column} value={column}>
+                    {column}
+                  </option>
+                ))}
               </select>
               <input
                 type="text"
@@ -442,12 +506,14 @@ const HomePage = () => {
                 },
                 pageName: currentReport.pageId,
               }}
-              eventHandlers={eventHandlers} // Fixed the eventHandlers issue
+              eventHandlers={{
+                loaded: (event) => {
+                  console.log("Report Loaded");
+                  window.powerBiReport = event.detail; // Store report reference
+                },
+              }}
               cssClassName="home-report"
               key={location.pathname} // Forces re-render on navigation
-              getEmbeddedComponent={(embed) => {
-                window.powerBiReport = embed; // Store report reference
-              }}
             />
           ) : (
             <p>Loading Power BI report...</p>
