@@ -312,14 +312,13 @@ const reports = {
 };
 
 const HomePage = () => {
-  const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
   const location = useLocation();
   const powerBIRef = useRef(null);
 
+  const [columns, setColumns] = useState([]); // Store dynamically loaded columns
   const [searchColumn, setSearchColumn] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [columns, setColumns] = useState([]);
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -333,30 +332,52 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
-  const fetchColumns = async () => {
+  // Function to fetch column names dynamically from the Power BI dataset
+  const loadTableColumns = async () => {
     try {
-      // Fetch available columns for the "subscriptions" table
-      const response = await axios.get(
-        "https://on-xperience.vercel.app/api/columns"
-      );
-      setColumns(response.data.columns || []);
+      const report = powerBIRef.current;
+      if (!report) {
+        console.error("Power BI report is not loaded yet.");
+        return;
+      }
+
+      // Get available fields from the report dataset
+      const pages = await report.getPages();
+      const activePage = pages.find((page) => page.isActive);
+      const visuals = await activePage.getVisuals();
+
+      let foundColumns = [];
+
+      for (const visual of visuals) {
+        if (visual.type === "table") {
+          const tableData = await visual.getData();
+          if (tableData) {
+            foundColumns = tableData.columns.map(
+              (col) => col.queryName.split(".")[1]
+            ); // Extract column names
+            break;
+          }
+        }
+      }
+
+      if (foundColumns.length > 0) {
+        setColumns(foundColumns);
+      } else {
+        console.warn("No table visuals found in the dataset.");
+      }
     } catch (error) {
-      console.error("Error fetching columns:", error);
+      console.error("Error fetching column names:", error);
     }
   };
 
+  // Load columns after the report is loaded
   useEffect(() => {
-    fetchColumns();
-  }, []);
+    if (powerBIRef.current) {
+      loadTableColumns();
+    }
+  }, [embedToken]);
 
-  const toggleSection = (section, event) => {
-    event.stopPropagation();
-    setExpandedSection((prev) => (prev === section ? null : section));
-  };
-
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
-
+  // Search function to filter Power BI report
   const handleSearch = async () => {
     if (!searchColumn || !searchText) {
       alert("Please select a column and enter a search term.");
@@ -387,6 +408,9 @@ const HomePage = () => {
     }
   };
 
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
+
   return (
     <div className="homepage-container">
       <Header />
@@ -395,27 +419,15 @@ const HomePage = () => {
           <nav className="nav-menu">
             <ul className="tree-menu">
               <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("healthScore", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
-                </span>
                 <Link to="/healthscore"> Health Score</Link>
-                {expandedSection === "healthScore" && (
-                  <ul
-                    className="submenu expanded"
-                    style={{ display: "block", border: "none" }}
-                  >
-                    <li>
-                      <Link to="/growth">Growth</Link>
-                    </li>
-                    <li>
-                      <Link to="/adoption">Adoption</Link>
-                    </li>
-                  </ul>
-                )}
+                <ul className="submenu">
+                  <li>
+                    <Link to="/growth">Growth</Link>
+                  </li>
+                  <li>
+                    <Link to="/adoption">Adoption</Link>
+                  </li>
+                </ul>
               </li>
             </ul>
           </nav>
@@ -467,6 +479,7 @@ const HomePage = () => {
                     (event) => {
                       console.log("Report Loaded");
                       powerBIRef.current = event.detail;
+                      loadTableColumns();
                     },
                   ],
                   ["rendered", () => console.log("Report Rendered")],
