@@ -290,31 +290,23 @@ import Header from "../../components/Header/Header";
 import axios from "axios";
 
 const reports = {
-  homepage: {
-    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "3e32d72242a124759baf",
-  },
   growth: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
     pageId: "34c6fffab0536014a095",
   },
   adoption: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
     pageId: "8e9801e82496355a41ee",
   },
 };
 
 const HomePage = () => {
-  const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute];
+  const [report, setReport] = useState(null);
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -328,13 +320,16 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
-  const toggleSection = (section, event) => {
-    event.stopPropagation();
-    setExpandedSection((prev) => (prev === section ? null : section));
+  const applyFilter = async () => {
+    if (!report || !searchQuery) return;
+    const filter = {
+      $schema: "http://powerbi.com/product/schema#basic",
+      target: { table: "YourTableName", column: "Customer Name" },
+      operator: "Contains",
+      values: [searchQuery],
+    };
+    await report.updateFilters(models.FiltersOperations.Replace, [filter]);
   };
-
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
 
   return (
     <div className="homepage-container">
@@ -344,61 +339,43 @@ const HomePage = () => {
           <nav className="nav-menu">
             <ul className="tree-menu">
               <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("healthScore", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/healthscore"> Health Score</Link>
-                {expandedSection === "healthScore" && (
-                  <ul
-                    className="submenu expanded"
-                    style={{ display: "block", border: "none" }}
-                  >
-                    <li>
-                      <Link to="/growth">Growth</Link>
-                    </li>
-                    <li>
-                      <Link to="/adoption">Adoption</Link>
-                    </li>
-                  </ul>
-                )}
+                <Link to="/growth">Growth</Link>
+              </li>
+              <li>
+                <Link to="/adoption">Adoption</Link>
               </li>
             </ul>
           </nav>
         </aside>
-
         <main className="report-container">
-          {(currentRoute === "growth" || currentRoute === "adoption") && (
-            <div className="search-bar">
+          {currentReport && (
+            <div className="search-container">
+              <select>
+                <option>Customer Name</option>
+              </select>
               <input
                 type="text"
-                placeholder="Search Customer Name..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              <button onClick={applyFilter}>Search</button>
             </div>
           )}
-
-          {embedToken ? (
+          {embedToken && currentReport ? (
             <PowerBIEmbed
               embedConfig={{
                 type: "report",
                 id: currentReport.id,
-                embedUrl: currentReport.embedUrl,
+                embedUrl: `https://app.powerbi.com/reportEmbed?reportId=${currentReport.id}`,
                 accessToken: embedToken,
                 tokenType: models.TokenType.Embed,
-                settings: {
-                  panes: { filters: { expanded: false, visible: false } },
-                  background: models.BackgroundType.Default,
-                  navContentPaneEnabled: false,
-                },
-                pageName: currentReport.pageId,
+                settings: { background: models.BackgroundType.Default },
+              }}
+              eventHandlers={{
+                loaded: (event) => setReport(event.detail.report),
               }}
               cssClassName="home-report"
-              key={location.pathname}
             />
           ) : (
             <p>Loading Power BI report...</p>
