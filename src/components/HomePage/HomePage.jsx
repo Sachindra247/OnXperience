@@ -295,7 +295,7 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "3e32d72242a124759baf",
+    pageId: "3e32d72242a124759baf", // Home page ID
   },
   growth: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -307,7 +307,7 @@ const reports = {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageId: "8e9801e82496355a41ee",
+    pageId: "8e9801e82496355a41ee", // Adoption page ID
   },
   engagement: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -336,14 +336,6 @@ const HomePage = () => {
   const location = useLocation();
   const reportRef = useRef(null);
 
-  const searchablePages = [
-    "healthscore",
-    "growth",
-    "adoption",
-    "engagement",
-    "feedback",
-  ];
-
   // Fetch Power BI embed token
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -362,31 +354,36 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
+  // Apply search filter on growth page
+  useEffect(() => {
+    if (reportRef.current && location.pathname === "/growth") {
+      const applyFilter = async () => {
+        try {
+          if (searchTerm) {
+            const filter = {
+              $schema: "http://powerbi.com/product/schema#basic",
+              target: {
+                table: "TableName",
+                column: "Customer name",
+              },
+              operator: "Contains",
+              values: [searchTerm],
+            };
+            await reportRef.current.setFilters([filter]);
+          } else {
+            await reportRef.current.removeFilters();
+          }
+        } catch (error) {
+          console.error("Error applying filter:", error);
+        }
+      };
+      applyFilter();
+    }
+  }, [searchTerm, location.pathname]);
+
+  // Get the correct report based on the route
   const currentRoute = location.pathname.split("/")[1];
   const currentReport = reports[currentRoute] || reports.homepage;
-
-  // Apply search filter
-  const applySearchFilter = () => {
-    if (reportRef.current && searchTerm) {
-      reportRef.current.setFilters([
-        {
-          $schema: "http://powerbi.com/product/schema#basic",
-          target: {
-            table: "YourTableName",
-            column: "CustomerName",
-          },
-          operator: "Contains",
-          values: [searchTerm],
-        },
-      ]);
-    }
-  };
-
-  useEffect(() => {
-    if (searchablePages.includes(currentRoute)) {
-      applySearchFilter();
-    }
-  }, [searchTerm, currentRoute]);
 
   return (
     <div className="homepage-container">
@@ -429,10 +426,10 @@ const HomePage = () => {
         </aside>
 
         <main className="report-container">
-          {searchablePages.includes(currentRoute) && (
+          {location.pathname === "/growth" && (
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search by Customer name"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -455,7 +452,7 @@ const HomePage = () => {
               }}
               cssClassName="home-report"
               key={location.pathname}
-              ref={reportRef}
+              reportRef={reportRef}
             />
           ) : (
             <p>Loading Power BI report...</p>
