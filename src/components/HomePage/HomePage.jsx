@@ -91,170 +91,6 @@
 
 //my current homepage
 
-// import React, { useState, useEffect } from "react";
-// //import { useMsal } from "@azure/msal-react";
-// import { Link } from "react-router-dom";
-// //import Logo from "../Assets/logo.png";
-// import "./HomePage.css";
-// import { PowerBIEmbed } from "powerbi-client-react";
-// import { models } from "powerbi-client";
-// import { FaPlus, FaMinus } from "react-icons/fa";
-// import Header from "../../components/Header/Header";
-// import axios from "axios"; // For making API calls to fetch the embed token
-
-// const HomePage = () => {
-//   //const { instance } = useMsal();
-//   //const navigate = useNavigate();
-//   //const activeAccount = instance.getActiveAccount();
-//   const [expandedSection, setExpandedSection] = useState(null);
-//   const [embedToken, setEmbedToken] = useState(null); // State to store the embed token
-
-//   // Fetch the embed token from your backend API
-//   useEffect(() => {
-//     const fetchEmbedToken = async () => {
-//       try {
-//         const response = await axios.get("https://on-xperience.vercel.app/api");
-
-//         console.log("Embed Token Response:", response.data); // Log the response
-//         setEmbedToken(response.data.embedToken); // Assuming the response contains { embedToken: "YOUR_TOKEN" }
-//       } catch (error) {
-//         console.error("Error fetching embed token:", error);
-//       }
-//     };
-
-//     fetchEmbedToken();
-//   }, []);
-
-//   const toggleSection = (section, event) => {
-//     event.stopPropagation();
-//     setExpandedSection((prev) => (prev === section ? null : section));
-//   };
-
-//   return (
-//     <div className="homepage-container">
-//       <Header />
-
-//       <div className="content">
-//         <aside className="sidebar">
-//           <nav className="nav-menu">
-//             <ul className="tree-menu">
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("healthScore", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/healthscore"> Health Score</Link>
-//                 {expandedSection === "healthScore" && (
-//                   <ul
-//                     className="submenu expanded"
-//                     style={{ display: "block", border: "none" }}
-//                   >
-//                     <li>
-//                       <Link to="/growth">Growth</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/adoption">Adoption</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/engagement">Engagement</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/feedback">Feedback</Link>
-//                     </li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("renewals", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/renewals">Renewals</Link>
-//                 {expandedSection === "renewals" && (
-//                   <ul className="submenu expanded">
-//                     <li>Dummy Page</li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("financials", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/financials">Financials</Link>
-//                 {expandedSection === "financials" && (
-//                   <ul className="submenu expanded">
-//                     <li>Dummy Page</li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <Link to="/statistics">Statistics</Link>
-//               </li>
-//             </ul>
-//             <ul className="tree-menu bottom-links">
-//               <li>
-//                 <Link to="/settings">Settings</Link>
-//               </li>
-//               <li>
-//                 <Link to="/help">Help</Link>
-//               </li>
-//             </ul>
-//           </nav>
-//         </aside>
-
-//         <main className="report-container">
-//           {embedToken ? (
-//             <PowerBIEmbed
-//               embedConfig={{
-//                 type: "report",
-//                 id: "a1e79c84-1882-47af-a853-8fe202696ee4", // Replace with your report ID
-//                 embedUrl:
-//                   "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f", // Replace with your embed URL
-//                 accessToken: embedToken, // Use the embed token fetched from the backend
-//                 tokenType: models.TokenType.Embed,
-//                 settings: {
-//                   panes: {
-//                     filters: { expanded: false, visible: false },
-//                   },
-//                   background: models.BackgroundType.Default,
-//                 },
-//                 pageName: "HomePage", // Specify the page name you want to display
-//               }}
-//               eventHandlers={
-//                 new Map([
-//                   ["loaded", () => console.log("Report loaded")],
-//                   ["rendered", () => console.log("Report rendered")],
-//                   ["error", (event) => console.log(event.detail)],
-//                 ])
-//               }
-//               cssClassName={"home-report"}
-//               getEmbeddedComponent={(embeddedReport) => {
-//                 window.report = embeddedReport;
-//               }}
-//             />
-//           ) : (
-//             <p>Loading Power BI report...</p>
-//           )}
-//         </main>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default HomePage;
-
-//changing the homepage
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
@@ -294,6 +130,12 @@ const reports = {
     embedUrl: "your-feedback-embed-url",
     pageName: "Feedback",
   },
+  homepage: {
+    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
+    embedUrl:
+      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
+    pageName: "HomePage",
+  },
 };
 
 const HomePage = () => {
@@ -319,13 +161,9 @@ const HomePage = () => {
   };
 
   // Extract last part of the pathname to determine the report type
-  const pathKey = location.pathname.replace("/", "") || "healthscore";
-  const currentReport = reports[pathKey] || {
-    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "HomePage",
-  };
+  const pathKey =
+    location.pathname === "/" ? "homepage" : location.pathname.replace("/", "");
+  const currentReport = reports[pathKey] || reports.homepage;
 
   return (
     <div className="homepage-container">
@@ -344,10 +182,7 @@ const HomePage = () => {
                 </span>
                 <Link to="/healthscore"> Health Score</Link>
                 {expandedSection === "healthScore" && (
-                  <ul
-                    className="submenu expanded"
-                    style={{ display: "block", border: "none" }}
-                  >
+                  <ul className="submenu expanded">
                     <li>
                       <Link to="/growth">Growth</Link>
                     </li>
@@ -360,36 +195,6 @@ const HomePage = () => {
                     <li>
                       <Link to="/feedback">Feedback</Link>
                     </li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("renewals", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/renewals">Renewals</Link>
-                {expandedSection === "renewals" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("financials", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/financials">Financials</Link>
-                {expandedSection === "financials" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
                   </ul>
                 )}
               </li>
@@ -418,11 +223,9 @@ const HomePage = () => {
                 accessToken: embedToken,
                 tokenType: models.TokenType.Embed,
                 settings: {
-                  panes: {
-                    filters: { expanded: false, visible: false },
-                  },
+                  panes: { filters: { expanded: false, visible: false } },
                   background: models.BackgroundType.Default,
-                  navContentPaneEnabled: false, // Hides the page navigation tabs
+                  navContentPaneEnabled: false,
                 },
                 pageName: currentReport.pageName,
               }}
@@ -448,3 +251,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
+//changing the page for search functionality....
