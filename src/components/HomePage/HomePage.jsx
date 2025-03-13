@@ -362,7 +362,7 @@ const HomePage = () => {
       const filter = {
         $schema: "http://powerbi.com/product/schema#basic",
         target: {
-          table: "YourTableName", // Replace with actual Power BI table name
+          table: "subscriptions", // Replace with actual Power BI table name
           column: searchColumn,
         },
         operator: "Contains",
