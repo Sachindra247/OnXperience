@@ -153,8 +153,24 @@ const HomePage = ({ route }) => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Use the route prop to fetch the appropriate report.
+  // Dynamically set the current report based on the route prop
   const currentReport = reports[route] || reports.homepage;
+
+  // Function to handle when the report is loaded
+  const handleReportLoad = (embed) => {
+    if (embed) {
+      embed
+        .page(currentReport.pageName)
+        .then(() => {
+          console.log(
+            `Navigated to ${currentReport.pageName} page in Power BI report`
+          );
+        })
+        .catch((error) => {
+          console.error("Error navigating to page:", error);
+        });
+    }
+  };
 
   return (
     <div className="homepage-container">
@@ -251,8 +267,13 @@ const HomePage = ({ route }) => {
                   background: models.BackgroundType.Default,
                   navContentPaneEnabled: false,
                 },
-                pageName: currentReport.pageName,
               }}
+              eventHandlers={[
+                {
+                  eventName: "loaded",
+                  callback: (event) => handleReportLoad(event.detail),
+                },
+              ]}
               cssClassName="home-report"
             />
           ) : (
