@@ -179,18 +179,28 @@ const HomePage = () => {
   // Update the page based on route change
   useEffect(() => {
     if (reportInstance) {
-      const currentReport = reports[currentRoute] || reports.homepage; // Get the report based on route
+      const currentReport = reports[currentRoute] || reports.homepage; // Get the correct report page
 
-      // Navigate to the correct page based on the pageId
       reportInstance
-        .setPage(currentReport.pageId)
-        .then(() => {
-          console.log(
-            `Navigated to page with ID ${currentReport.pageId} in Power BI report`
+        .getPages()
+        .then((pages) => {
+          const targetPage = pages.find(
+            (page) => page.name === currentReport.pageId
           );
+
+          if (targetPage) {
+            targetPage.setActive();
+            console.log(
+              `Navigated to ${currentRoute} page: ${currentReport.pageId}`
+            );
+          } else {
+            console.error(
+              `Page ID ${currentReport.pageId} not found in the report`
+            );
+          }
         })
         .catch((error) => {
-          console.error("Error navigating to page:", error);
+          console.error("Error navigating to Power BI page:", error);
         });
     }
   }, [location.pathname, reportInstance, currentRoute]);
