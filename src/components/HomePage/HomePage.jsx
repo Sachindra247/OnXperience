@@ -280,7 +280,7 @@
 
 //changing the page for search functionality....
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
@@ -360,24 +360,40 @@ const HomePage = () => {
   const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
 
   // Handle report load event
-  const handleReportLoad = (event) => {
-    setReportInstance(event.detail);
+  const handleReportLoad = async (event) => {
+    const report = event.detail;
+    setReportInstance(report);
+
+    // Get the active page
+    const page = await report.getActivePage();
+
+    // Get all visuals on the active page
+    const visuals = await page.getVisuals();
+
+    // Log visual names and types to the console
+    visuals.forEach((visual) => {
+      console.log("Visual Name:", visual.name);
+      console.log("Visual Type:", visual.type);
+      console.log("-----------------------------");
+    });
   };
 
   // Apply search filter to the Power BI visual
   const applySearchFilter = async () => {
     if (reportInstance && searchColumn && searchTerm) {
       try {
-        // Get all visuals on the current page
+        // Get the active page
         const page = await reportInstance.getActivePage();
+
+        // Get all visuals on the active page
         const visuals = await page.getVisuals();
 
-        // Find the specific visual by name or ID
-        const targetVisual = visuals.find(
-          (visual) => visual.name === "YourVisualName"
-        ); // Replace with your visual name
+        // Find the table visual by name (replace "VisualContainer1" with the actual visual name)
+        const tableVisual = visuals.find(
+          (visual) => visual.name === "VisualContainer1"
+        );
 
-        if (targetVisual) {
+        if (tableVisual) {
           // Create a basic filter
           const filter = {
             $schema: "http://powerbi.com/product/schema#basic",
@@ -389,11 +405,11 @@ const HomePage = () => {
             values: [searchTerm], // Search term
           };
 
-          // Apply the filter to the visual
-          await targetVisual.applyFilters([filter]);
+          // Apply the filter to the table visual
+          await tableVisual.applyFilters([filter]);
           console.log("Filter applied successfully");
         } else {
-          console.error("Visual not found");
+          console.error("Table visual not found");
         }
       } catch (error) {
         console.error("Error applying filter:", error);
