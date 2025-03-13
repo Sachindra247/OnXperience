@@ -289,7 +289,6 @@ import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
-// Reports configuration
 const reports = {
   homepage: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -317,8 +316,8 @@ const HomePage = () => {
   const [selectedColumn, setSelectedColumn] = useState("End Customer");
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
+  const [powerBiReport, setPowerBiReport] = useState(null);
 
-  // Fetch Power BI embed token
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
@@ -336,13 +335,11 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Get the correct report based on the route
   const currentRoute = location.pathname.split("/")[1];
   const currentReport = reports[currentRoute] || reports.homepage;
 
-  // Function to apply search filter to Power BI report
-  const applyFilter = async (report) => {
-    if (!searchQuery) return;
+  const applyFilter = async () => {
+    if (!powerBiReport || !searchQuery) return;
 
     const filter = {
       $schema: "http://powerbi.com/product/schema#basic",
@@ -355,32 +352,15 @@ const HomePage = () => {
     };
 
     try {
-      await report.updateFilters(models.FiltersOperations.Replace, [filter]);
+      await powerBiReport.updateFilters(models.FiltersOperations.Replace, [
+        filter,
+      ]);
       console.log(
         `Applied filter: ${selectedColumn} contains '${searchQuery}'`
       );
     } catch (error) {
       console.error("Error applying filter:", error);
     }
-  };
-
-  // Function to set event handlers
-  const setEventHandlers = (report, eventHandlers) => {
-    if (!report || !eventHandlers || typeof eventHandlers !== "object") {
-      console.error("Invalid event handlers:", eventHandlers);
-      return;
-    }
-
-    Object.entries(eventHandlers).forEach(([eventName, handler]) => {
-      if (typeof handler === "function") {
-        report.on(eventName, handler);
-      } else {
-        console.error(
-          `Handler for event '${eventName}' is not a function:`,
-          handler
-        );
-      }
-    });
   };
 
   return (
@@ -399,19 +379,6 @@ const HomePage = () => {
                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
                 </span>
                 <Link to="/healthscore"> Health Score</Link>
-                {expandedSection === "healthScore" && (
-                  <ul
-                    className="submenu expanded"
-                    style={{ display: "block", border: "none" }}
-                  >
-                    <li>
-                      <Link to="/growth">Growth</Link>
-                    </li>
-                    <li>
-                      <Link to="/adoption">Adoption</Link>
-                    </li>
-                  </ul>
-                )}
               </li>
             </ul>
           </nav>
@@ -436,13 +403,10 @@ const HomePage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <button onClick={() => applyFilter(window.powerBiReport)}>
-                Search
-              </button>
+              <button onClick={applyFilter}>Search</button>
             </div>
           )}
 
-          {/* Power BI Report */}
           {embedToken ? (
             <PowerBIEmbed
               embedConfig={{
@@ -461,12 +425,7 @@ const HomePage = () => {
               eventHandlers={{
                 loaded: (event) => {
                   console.log("Report Loaded");
-                  const report = event.detail;
-                  window.powerBiReport = report;
-                  setEventHandlers(report, {
-                    rendered: () => console.log("Report Rendered"),
-                    error: (error) => console.error("Power BI Error:", error),
-                  });
+                  setPowerBiReport(event.detail);
                 },
               }}
               cssClassName="home-report"
