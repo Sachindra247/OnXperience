@@ -156,16 +156,7 @@ const HomePage = () => {
 
   const pathKey =
     location.pathname === "/" ? "homepage" : location.pathname.replace("/", "");
-
-  // Only map Power BI related pages for specific routes
-  const isPowerBIRoute = [
-    "growth",
-    "adoption",
-    "engagement",
-    "feedback",
-  ].includes(pathKey);
-
-  const currentReport = isPowerBIRoute ? reports[pathKey] : null;
+  const currentReport = reports[pathKey] || reports.homepage;
 
   return (
     <div className="homepage-container">
@@ -250,31 +241,22 @@ const HomePage = () => {
 
         <main className="report-container">
           {embedToken ? (
-            isPowerBIRoute ? (
-              <PowerBIEmbed
-                embedConfig={{
-                  type: "report",
-                  id: currentReport.id,
-                  embedUrl: currentReport.embedUrl,
-                  accessToken: embedToken,
-                  tokenType: models.TokenType.Embed,
-                  settings: {
-                    panes: { filters: { expanded: false, visible: false } },
-                    background: models.BackgroundType.Default,
-                    navContentPaneEnabled: false,
-                  },
-                  pageName: currentReport.pageName,
-                }}
-                cssClassName="home-report"
-              />
-            ) : (
-              // Render different content for non-Power BI routes
-              <div>
-                <h2>Page Content for {pathKey}</h2>
-                {/* Add specific content here for pages like Renewals, Financials, etc. */}
-                <p>Content for {pathKey} page goes here.</p>
-              </div>
-            )
+            <PowerBIEmbed
+              embedConfig={{
+                type: "report",
+                id: currentReport.id,
+                embedUrl: currentReport.embedUrl,
+                accessToken: embedToken,
+                tokenType: models.TokenType.Embed,
+                settings: {
+                  panes: { filters: { expanded: false, visible: false } },
+                  background: models.BackgroundType.Default,
+                  navContentPaneEnabled: false,
+                },
+                pageName: currentReport.pageName,
+              }}
+              cssClassName="home-report"
+            />
           ) : (
             <p>Loading Power BI report...</p>
           )}
