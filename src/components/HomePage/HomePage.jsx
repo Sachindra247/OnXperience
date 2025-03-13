@@ -127,8 +127,7 @@ const reports = {
   },
   feedback: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
+    embedUrl: "your-feedback-embed-url",
     pageName: "Feedback",
   },
 };
@@ -136,6 +135,9 @@ const reports = {
 const HomePage = ({ route }) => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
+  const [currentPage, setCurrentPage] = useState(route); // Track the current route/page
+
+  const location = useLocation();
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -149,29 +151,18 @@ const HomePage = ({ route }) => {
     fetchEmbedToken();
   }, []);
 
+  useEffect(() => {
+    // Update current page when the route changes
+    const routeName = location.pathname.split("/")[1]; // Get the part of the URL after "/"
+    setCurrentPage(routeName); // Update the page based on the route
+  }, [location.pathname]);
+
   const toggleSection = (section, event) => {
     event.stopPropagation();
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Dynamically set the current report based on the route prop
-  const currentReport = reports[route] || reports.homepage;
-
-  // Function to handle when the report is loaded
-  const handleReportLoad = (embed) => {
-    if (embed) {
-      embed
-        .page(currentReport.pageName)
-        .then(() => {
-          console.log(
-            `Navigated to ${currentReport.pageName} page in Power BI report`
-          );
-        })
-        .catch((error) => {
-          console.error("Error navigating to page:", error);
-        });
-    }
-  };
+  const currentReport = reports[currentPage] || reports.homepage;
 
   return (
     <div className="homepage-container">
@@ -190,10 +181,7 @@ const HomePage = ({ route }) => {
                 </span>
                 <Link to="/healthscore"> Health Score</Link>
                 {expandedSection === "healthScore" && (
-                  <ul
-                    className="submenu expanded"
-                    style={{ display: "block", border: "none" }}
-                  >
+                  <ul className="submenu expanded">
                     <li>
                       <Link to="/growth">Growth</Link>
                     </li>
@@ -210,45 +198,13 @@ const HomePage = ({ route }) => {
                 )}
               </li>
               <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("renewals", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-                </span>
                 <Link to="/renewals">Renewals</Link>
-                {expandedSection === "renewals" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
               </li>
               <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("financials", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-                </span>
                 <Link to="/financials">Financials</Link>
-                {expandedSection === "financials" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
               </li>
               <li>
                 <Link to="/statistics">Statistics</Link>
-              </li>
-            </ul>
-            <ul className="tree-menu bottom-links">
-              <li>
-                <Link to="/settings">Settings</Link>
-              </li>
-              <li>
-                <Link to="/help">Help</Link>
               </li>
             </ul>
           </nav>
@@ -268,13 +224,8 @@ const HomePage = ({ route }) => {
                   background: models.BackgroundType.Default,
                   navContentPaneEnabled: false,
                 },
+                pageName: currentReport.pageName, // Dynamically set page name
               }}
-              eventHandlers={[
-                {
-                  eventName: "loaded",
-                  callback: (event) => handleReportLoad(event.detail),
-                },
-              ]}
               cssClassName="home-report"
             />
           ) : (
