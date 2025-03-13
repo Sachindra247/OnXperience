@@ -311,77 +311,11 @@ const reports = {
   },
 };
 
-// List of columns in the 'subscriptions' table
-const subscriptionColumns = [
-  "End Customer",
-  "Offer Name",
-  "Consumption Status",
-  "Over Consumed TF Groups",
-  "TF Groups",
-  "True Forward Effective Date",
-  "Pending True Forward Effective Date",
-  "Next True Forward",
-  "Subscription ID",
-  "Status",
-  "Start Date",
-  "End Date",
-  "Initial Term",
-  "Renewal Date",
-  "Currency",
-  "Monthly Charge",
-  "TF Overage",
-  "Auto Renewal Term",
-  "Billing Model",
-  "Purchase Order Number",
-  "WebOrderID",
-  "Buying Program ID",
-  "Site URL",
-  "Customer Success Manager",
-  "Partner Success Manager",
-  "Sales Specialist",
-  "Customer Success Manager Email",
-  "Partner Success Manager Email",
-  "Sales Specialist Email",
-  "Days Until Renewal",
-  "Bill To Customer",
-  "Bill To Id",
-  "Bill To Country",
-  "Primary Billing Contact Name",
-  "Primary Billing Contact Email",
-  "Primary Billing Contact Phone",
-  "Primary Billing Contact Fax",
-  "Service To Contact Name",
-  "Service To Contact Email",
-  "Service To Contact Phone",
-  "Service To Contact Fax",
-  "End Customer Country",
-  "End Customer Contact Name",
-  "End Customer Contact Email",
-  "End Customer Contact Phone",
-  "End Customer Contact Fax",
-  "Duration",
-  "Bill Day",
-  "Billing Preference",
-  "Payment Method",
-  "Payment Term",
-  "Order Submitted Date",
-  "Smart Account Name",
-  "Do Not Transact",
-  "Do Not Transact Reason",
-  "Renewal Manager",
-  "Renewal Manager Email",
-  "Provisioning Status",
-  "Consumed Suite Value (%)",
-  "Customer Cancellation Reason",
-  "Enterprise Agreement Motion",
-  "Entitlement Type",
-];
-
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [selectedColumn, setSelectedColumn] = useState("End Customer"); // Default column for search
-  const [searchQuery, setSearchQuery] = useState(""); // Search term
+  const [selectedColumn, setSelectedColumn] = useState("End Customer");
+  const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
 
   // Fetch Power BI embed token
@@ -403,21 +337,21 @@ const HomePage = () => {
   };
 
   // Get the correct report based on the route
-  const currentRoute = location.pathname.split("/")[1]; // Extract first segment
-  const currentReport = reports[currentRoute] || reports.homepage; // Default to homepage if not found
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
 
   // Function to apply search filter to Power BI report
   const applyFilter = async (report) => {
-    if (!searchQuery) return; // Do nothing if search is empty
+    if (!searchQuery) return;
 
     const filter = {
       $schema: "http://powerbi.com/product/schema#basic",
       target: {
-        table: "subscriptions", // Table name
-        column: selectedColumn, // Column to filter
+        table: "subscriptions",
+        column: selectedColumn,
       },
       operator: "Contains",
-      values: [searchQuery], // Search term
+      values: [searchQuery],
     };
 
     try {
@@ -428,6 +362,25 @@ const HomePage = () => {
     } catch (error) {
       console.error("Error applying filter:", error);
     }
+  };
+
+  // Function to set event handlers
+  const setEventHandlers = (report, eventHandlers) => {
+    if (!report || !eventHandlers || typeof eventHandlers !== "object") {
+      console.error("Invalid event handlers:", eventHandlers);
+      return;
+    }
+
+    Object.entries(eventHandlers).forEach(([eventName, handler]) => {
+      if (typeof handler === "function") {
+        report.on(eventName, handler);
+      } else {
+        console.error(
+          `Handler for event '${eventName}' is not a function:`,
+          handler
+        );
+      }
+    });
   };
 
   return (
@@ -465,14 +418,13 @@ const HomePage = () => {
         </aside>
 
         <main className="report-container">
-          {/* Search UI for Growth & Adoption pages */}
           {(currentRoute === "growth" || currentRoute === "adoption") && (
             <div className="search-container">
               <select
                 value={selectedColumn}
                 onChange={(e) => setSelectedColumn(e.target.value)}
               >
-                {subscriptionColumns.map((column) => (
+                {["End Customer", "Subscription ID", "Status"].map((column) => (
                   <option key={column} value={column}>
                     {column}
                   </option>
@@ -509,11 +461,16 @@ const HomePage = () => {
               eventHandlers={{
                 loaded: (event) => {
                   console.log("Report Loaded");
-                  window.powerBiReport = event.detail; // Store report reference
+                  const report = event.detail;
+                  window.powerBiReport = report;
+                  setEventHandlers(report, {
+                    rendered: () => console.log("Report Rendered"),
+                    error: (error) => console.error("Power BI Error:", error),
+                  });
                 },
               }}
               cssClassName="home-report"
-              key={location.pathname} // Forces re-render on navigation
+              key={location.pathname}
             />
           ) : (
             <p>Loading Power BI report...</p>
