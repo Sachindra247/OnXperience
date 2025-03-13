@@ -136,6 +136,7 @@ const HomePage = () => {
   const location = useLocation();
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
+  const [powerBiReport, setPowerBiReport] = useState(null);
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -156,7 +157,28 @@ const HomePage = () => {
 
   const pathKey =
     location.pathname === "/" ? "homepage" : location.pathname.replace("/", "");
-  const currentReport = reports[pathKey] || reports.homepage;
+
+  // Only map Power BI related pages for specific routes
+  const isPowerBIRoute = [
+    "growth",
+    "adoption",
+    "engagement",
+    "feedback",
+  ].includes(pathKey);
+
+  const currentReport = isPowerBIRoute ? reports[pathKey] : null;
+
+  // Function to change the page inside the embedded report
+  const onEmbed = (report) => {
+    setPowerBiReport(report); // Keep track of the embedded report
+
+    if (report && currentReport.pageName) {
+      // Change the page within the embedded report when it loads
+      report.setPage(currentReport.pageName).catch((error) => {
+        console.error("Error setting Power BI report page:", error);
+      });
+    }
+  };
 
   return (
     <div className="homepage-container">
@@ -201,23 +223,29 @@ const HomePage = () => {
 
         <main className="report-container">
           {embedToken ? (
-            <PowerBIEmbed
-              key={currentReport.pageName} // This ensures re-rendering when the page changes
-              embedConfig={{
-                type: "report",
-                id: currentReport.id,
-                embedUrl: currentReport.embedUrl,
-                accessToken: embedToken,
-                tokenType: models.TokenType.Embed,
-                settings: {
-                  panes: { filters: { expanded: false, visible: false } },
-                  background: models.BackgroundType.Default,
-                  navContentPaneEnabled: false,
-                },
-                pageName: currentReport.pageName,
-              }}
-              cssClassName="home-report"
-            />
+            isPowerBIRoute ? (
+              <PowerBIEmbed
+                key={currentReport.pageName} // This ensures re-rendering when the page changes
+                embedConfig={{
+                  type: "report",
+                  id: currentReport.id,
+                  embedUrl: currentReport.embedUrl,
+                  accessToken: embedToken,
+                  tokenType: models.TokenType.Embed,
+                  settings: {
+                    panes: { filters: { expanded: false, visible: false } },
+                    background: models.BackgroundType.Default,
+                    navContentPaneEnabled: false,
+                  },
+                  pageName: currentReport.pageName,
+                }}
+                onEmbed={onEmbed} // Trigger the onEmbed function when the report is loaded
+                cssClassName="home-report"
+              />
+            ) : (
+              // For other routes like /renewals, /financials, etc., render a placeholder or a different component
+              <p>Select a report to view</p>
+            )
           ) : (
             <p>Loading Power BI report...</p>
           )}
