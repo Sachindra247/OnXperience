@@ -101,11 +101,11 @@ import Header from "../../components/Header/Header";
 import axios from "axios";
 
 const reports = {
-  healthscore: {
+  homepage: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "HealthScorePage",
+    pageName: "HomePage",
   },
   growth: {
     id: "a1e79c84-1882-47af-a853-8fe202696ee4",
@@ -154,14 +154,9 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Extract last part of the pathname to determine the report type
-  const pathKey = location.pathname.replace("/", "") || "healthscore";
-  const currentReport = reports[pathKey] || {
-    id: "a1e79c84-1882-47af-a853-8fe202696ee4",
-    embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=a1e79c84-1882-47af-a853-8fe202696ee4&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
-    pageName: "HomePage",
-  };
+  const pathKey =
+    location.pathname === "/" ? "homepage" : location.pathname.replace("/", "");
+  const currentReport = reports[pathKey] || reports.homepage;
 
   return (
     <div className="homepage-container">
@@ -254,25 +249,13 @@ const HomePage = () => {
                 accessToken: embedToken,
                 tokenType: models.TokenType.Embed,
                 settings: {
-                  panes: {
-                    filters: { expanded: false, visible: false },
-                  },
+                  panes: { filters: { expanded: false, visible: false } },
                   background: models.BackgroundType.Default,
-                  navContentPaneEnabled: false, // Hides the page navigation tabs
+                  navContentPaneEnabled: false,
                 },
                 pageName: currentReport.pageName,
               }}
-              eventHandlers={
-                new Map([
-                  ["loaded", () => console.log("Report loaded")],
-                  ["rendered", () => console.log("Report rendered")],
-                  ["error", (event) => console.log(event.detail)],
-                ])
-              }
               cssClassName="home-report"
-              getEmbeddedComponent={(embeddedReport) => {
-                window.report = embeddedReport;
-              }}
             />
           ) : (
             <p>Loading Power BI report...</p>
