@@ -172,6 +172,8 @@ const HomePage = () => {
     if (reportInstance) {
       const currentReport =
         reports[location.pathname.split("/")[1]] || reports.homepage;
+
+      // Ensure page navigation after the report is loaded
       reportInstance
         .setPage(currentReport.pageName)
         .then(() => {
