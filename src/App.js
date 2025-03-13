@@ -87,73 +87,20 @@
 
 //my new App.js
 
-import "./App.css";
-import HomePage from "./components/HomePage/HomePage";
-import HealthScore from "./components/HealthScore/HealthScorePage";
-import Growth from "./components/Growth/GrowthPage";
-import Adoption from "./components/Adoption/AdoptionPage";
-import Engagement from "./components/Engagement/EngagementPage";
-import Feedback from "./components/Feedback/FeedbackPage";
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
-import "./global.css"; // Import global styles
-
-// Helper component to detect current route
-const RouteWrapper = ({ children }) => {
-  const location = useLocation();
-  return children(location.pathname);
-};
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import HomePage from "./components/HomePage/HomePage";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage route="home" />} />
-        <Route
-          path="/healthscore"
-          element={
-            <RouteWrapper>
-              {(path) => <HomePage route="healthscore" path={path} />}
-            </RouteWrapper>
-          }
-        />
-        <Route
-          path="/growth"
-          element={
-            <RouteWrapper>
-              {(path) => <HomePage route="growth" path={path} />}
-            </RouteWrapper>
-          }
-        />
-        <Route
-          path="/adoption"
-          element={
-            <RouteWrapper>
-              {(path) => <HomePage route="adoption" path={path} />}
-            </RouteWrapper>
-          }
-        />
-        <Route
-          path="/engagement"
-          element={
-            <RouteWrapper>
-              {(path) => <HomePage route="engagement" path={path} />}
-            </RouteWrapper>
-          }
-        />
-        <Route
-          path="/feedback"
-          element={
-            <RouteWrapper>
-              {(path) => <HomePage route="feedback" path={path} />}
-            </RouteWrapper>
-          }
-        />
+        <Route path="/" element={<HomePage route="homepage" />} />
+        <Route path="/healthscore" element={<HomePage route="healthscore" />} />
+        <Route path="/growth" element={<HomePage route="growth" />} />
+        <Route path="/adoption" element={<HomePage route="adoption" />} />
+        <Route path="/engagement" element={<HomePage route="engagement" />} />
+        <Route path="/feedback" element={<HomePage route="feedback" />} />
       </Routes>
     </Router>
   );
