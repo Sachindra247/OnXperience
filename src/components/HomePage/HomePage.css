@@ -182,7 +182,7 @@ html {
 /* Report container styling */
 .report-container {
     flex: 1;
-    padding: 20px;
+    padding: 0;
     background-color: #fff;
     overflow-y: auto;
     width: calc(100% - 300px);
