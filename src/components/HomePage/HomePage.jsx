@@ -194,47 +194,7 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("renewals", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/renewals">Renewals</Link>
-                {expandedSection === "renewals" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("financials", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/financials">Financials</Link>
-                {expandedSection === "financials" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <Link to="/statistics">Statistics</Link>
-              </li>
-            </ul>
-            <ul className="tree-menu bottom-links">
-              <li>
-                <Link to="/settings">Settings</Link>
-              </li>
-              <li>
-                <Link to="/help">Help</Link>
-              </li>
+              {/* Other menu items */}
             </ul>
           </nav>
         </aside>
@@ -242,6 +202,7 @@ const HomePage = () => {
         <main className="report-container">
           {embedToken ? (
             <PowerBIEmbed
+              key={currentReport.pageName} // This ensures re-rendering when the page changes
               embedConfig={{
                 type: "report",
                 id: currentReport.id,
