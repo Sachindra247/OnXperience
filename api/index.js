@@ -80,6 +80,6 @@ module.exports = async (req, res) => {
       "Error generating embed token:",
       error.response?.data || error
     );
-    res.status(500).json({ error: "Failed to generate embed token" });
+    res.status(500).json({ error: "Failed to generate embed token1" });
   }
 };
