@@ -7,7 +7,7 @@ const CORS_HEADERS = process.env.CORS_HEADERS || "Content-Type, Authorization";
 
 // Azure Power BI Credentials (Ensure these are set in Vercel environment variables)
 const POWER_BI_CLIENT_ID = process.env.POWER_BI_CLIENT_ID;
-const POWER_BI_CLIENT_SECRET = process.env.POWER_BI_CLIENT_SECRET;
+const POWER_BI_CLIENT_SECRET = process.env.POWER_BI_CLIENT_SECRET; //added
 const POWER_BI_TENANT_ID = process.env.POWER_BI_TENANT_ID;
 const POWER_BI_WORKSPACE_ID = process.env.POWER_BI_WORKSPACE_ID;
 const POWER_BI_REPORT_ID = process.env.POWER_BI_REPORT_ID;
