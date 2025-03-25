@@ -10,14 +10,7 @@ const POWER_BI_CLIENT_ID = process.env.POWER_BI_CLIENT_ID;
 const POWER_BI_CLIENT_SECRET = process.env.POWER_BI_CLIENT_SECRET;
 const POWER_BI_TENANT_ID = process.env.POWER_BI_TENANT_ID;
 const POWER_BI_WORKSPACE_ID = process.env.POWER_BI_WORKSPACE_ID;
-const POWER_BI_REPORT_ID = process.env.POWER_BI_REPORT_I;
-
-// Azure Power BI Credentials (Ensure these are set in Vercel environment variables)
-// const POWER_BI_CLIENT_ID = "04ae1923-9fc9-4944-afa6-4c679be5c0e0";
-// const POWER_BI_CLIENT_SECRET = "tRM8Q~4wrG~KB2gw5YyBa.B.VQLEdqWlfECd3bdd";
-// const POWER_BI_TENANT_ID = "d2637727-dad5-4caa-8aa6-d4cff6580e02";
-// const POWER_BI_WORKSPACE_ID = "599772eb-f174-4a90-8ff5-5023a4b7f72a";
-// const POWER_BI_REPORT_ID = "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431";
+const POWER_BI_REPORT_ID = process.env.POWER_BI_REPORT_ID;
 
 // Function to get access token from Azure
 const getAccessToken = async () => {
