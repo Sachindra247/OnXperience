@@ -103,39 +103,39 @@ import axios from "axios";
 // Reports configuration
 const reports = {
   homepage: {
-    id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+    id: "4cb0e33b-fb74-4a43-841d-cca02e8b6e39",
     embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-    pageId: "", // Home page ID
+      "https://app.powerbi.com/reportEmbed?reportId=4cb0e33b-fb74-4a43-841d-cca02e8b6e39&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
+    pageId: "3e32d72242a124759baf", // Home page ID
   },
   growth: {
-    id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+    id: "4cb0e33b-fb74-4a43-841d-cca02e8b6e39",
     embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+      "https://app.powerbi.com/reportEmbed?reportId=4cb0e33b-fb74-4a43-841d-cca02e8b6e39&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
     pageId: "34c6fffab0536014a095",
   },
   adoption: {
-    id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+    id: "4cb0e33b-fb74-4a43-841d-cca02e8b6e39",
     embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+      "https://app.powerbi.com/reportEmbed?reportId=4cb0e33b-fb74-4a43-841d-cca02e8b6e39&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
     pageId: "8e9801e82496355a41ee", // Adoption page ID
   },
   engagement: {
-    id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+    id: "4cb0e33b-fb74-4a43-841d-cca02e8b6e39",
     embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+      "https://app.powerbi.com/reportEmbed?reportId=4cb0e33b-fb74-4a43-841d-cca02e8b6e39&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
     pageId: "1a80fca4b9d06e022019",
   },
   feedback: {
-    id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+    id: "4cb0e33b-fb74-4a43-841d-cca02e8b6e39",
     embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+      "https://app.powerbi.com/reportEmbed?reportId=4cb0e33b-fb74-4a43-841d-cca02e8b6e39&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
     pageId: "2bc6242386de992b4428",
   },
   healthscore: {
-    id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+    id: "4cb0e33b-fb74-4a43-841d-cca02e8b6e39",
     embedUrl:
-      "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+      "https://app.powerbi.com/reportEmbed?reportId=4cb0e33b-fb74-4a43-841d-cca02e8b6e39&groupId=8a6e72c9-e6d2-4c79-8ea1-41b4994c811f",
     pageId: "42339bb3bbdb295ed7c8",
   },
 };
