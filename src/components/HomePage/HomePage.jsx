@@ -106,7 +106,7 @@ const reports = {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-    pageId: "3e32d72242a124759baf", // Home page ID
+    pageId: "42339bb3bbdb295ed7c8", // Home page ID
   },
   growth: {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
