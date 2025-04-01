@@ -13,11 +13,11 @@ const Login = () => {
   //   try {
   //     console.log("Checking for an active session...");
 
-  //     // Ensure no active session before login
+  //     // Ensuring no active session before login...
   //     const activeAccount = instance.getActiveAccount();
   //     if (activeAccount) {
   //       console.log("Logging out current user:", activeAccount.username);
-  //       await instance.logoutPopup(); // Log the user out first
+  //       await instance.logoutPopup();
   //     }
 
   //     console.log("Starting new login process...");
@@ -34,7 +34,7 @@ const Login = () => {
   //     instance.setActiveAccount(loginResponse.account);
   //     console.log("User logged in successfully:", loginResponse.account);
 
-  //     // Get Microsoft Graph access token
+  //     // Getting Microsoft Graph access token....
   //     const graphToken = await instance.acquireTokenSilent({
   //       scopes: ["https://graph.microsoft.com/.default"],
   //       account: loginResponse.account,
@@ -42,7 +42,7 @@ const Login = () => {
 
   //     console.log("Graph API access token acquired:", graphToken.accessToken);
 
-  //     // Fetch user's license details from Microsoft Graph
+  //     // Fetching user's license details from Microsoft Graph...
   //     const licenseResponse = await fetch(
   //       "https://graph.microsoft.com/v1.0/me/licenseDetails",
   //       {
@@ -61,45 +61,45 @@ const Login = () => {
   //       throw new Error("Invalid license data received.");
   //     }
 
-  //     // Check if user has Power BI Premium Per User (PPU) or Pro license
+  //     // Checking if user has Power BI Premium Per User (PPU) or Pro license...
   //     const hasPowerBILicense = licenseData.value.some(
   //       (license) =>
-  //         license.skuId === "c1d032e0-5619-4761-9b5c-75b6831e1711" || // PPU License SKU ID
-  //         license.skuPartNumber === "PBI_PREMIUM_PER_USER" || // PPU License Part Number
-  //         license.skuPartNumber === "POWER_BI_PRO" // Pro License Part Number
+  //         license.skuId === "c1d032e0-5619-4761-9b5c-75b6831e1711" ||
+  //         license.skuPartNumber === "PBI_PREMIUM_PER_USER" ||
+  //         license.skuPartNumber === "POWER_BI_PRO"
   //     );
 
   //     if (hasPowerBILicense) {
   //       console.log(
   //         "✅ User has a valid Power BI license. Redirecting to home..."
   //       );
-  //       navigate("/home"); // Allow user to proceed to the home page
+  //       navigate("/home");
   //     } else {
   //       console.log("❌ User does not have a Power BI license.");
 
-  //       // Show alert for users without the Power BI license
+  //
   //       alert(
   //         "You do not have a Power BI Pro or Premium Per User (PPU) license."
   //       );
 
-  //       // Log the user out immediately after the alert
+  //       // Logging the user out immediately after the alert...
   //       instance.logoutRedirect({
-  //         postLogoutRedirectUri: window.location.origin + "?prompt=none", // Attempting to bypass the account chooser
+  //         postLogoutRedirectUri: window.location.origin + "?prompt=none",
   //       });
 
   //       console.log("User session cleared. Ready for new login.");
 
-  //       // Manually clear session data and localStorage
-  //       instance.setActiveAccount(null); // Explicitly clear active account
-  //       sessionStorage.clear(); // Clear sessionStorage if needed
-  //       localStorage.clear(); // Clear localStorage if needed
+  //       // session data and localStorage clearance...
+  //       instance.setActiveAccount(null);
+  //       sessionStorage.clear();
+  //       localStorage.clear();
 
-  //       // Redirect to the login page for a fresh login attempt
-  //       window.location.href = "/"; // Force full page reload and reset session
+  //       // Redirecting user to the login page for a fresh login attempt
+  //       window.location.href = "/";
   //     }
   //   } catch (error) {
   //     console.error("Login error:", error);
-  //     // Prevent the error alert from showing for users without Power BI license
+  //     // Preventing the error alert from showing for users without Power BI license
   //     if (error.errorCode === "interaction_required") {
   //       await instance.loginPopup({
   //         scopes: ["User.Read", "openid", "profile", "offline_access"],

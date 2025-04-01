@@ -11,12 +11,12 @@
 // import Adoption from "./components/Adoption/AdoptionPage";
 // import Engagement from "./components/Engagement/EngagementPage";
 // import Feedback from "./components/Feedback/FeedbackPage";
-// import "./global.css"; // Import global styles
+// import "./global.css";
 
 // function App() {
 //   // const { accounts, instance } = useMsal();
 //   // const [isAuthorized, setIsAuthorized] = useState(() => {
-//   //   return localStorage.getItem("isAuthorized") === "true"; // Get from localStorage
+//   //   return localStorage.getItem("isAuthorized") === "true";
 //   // });
 //   // const navigate = useNavigate();
 //   // const checkPowerBILicense = useCallback(async () => {
@@ -32,7 +32,7 @@
 //   //       account: activeAccount,
 //   //     });
 //   //     console.log("Access Token acquired:", accessToken.accessToken);
-//   //     // Call Microsoft Graph API to check the user's licenses
+//   //
 //   //     const response = await fetch(
 //   //       `https://graph.microsoft.com/v1.0/me/licenseDetails`,
 //   //       {
@@ -42,8 +42,8 @@
 //   //       }
 //   //     );
 //   //     const data = await response.json();
-//   //     console.log("License Details:", data); // Log license details for debugging
-//   //     // Check for Power BI Premium Per User license (using the SKU ID and SKU Part Number)
+//   //     console.log("License Details:", data);
+//   //     // Checking for Power BI Premium Per User license (using the SKU ID and SKU Part Number)
 //   //     const powerBILicense = data.value.some(
 //   //       (license) =>
 //   //         license.skuId === "c1d032e0-5619-4761-9b5c-75b6831e1711" || // SKU ID for Power BI Premium Per User
@@ -63,7 +63,7 @@
 //   //   }
 //   // }, [instance, navigate]);
 //   // useEffect(() => {
-//   //   console.log("useEffect triggered with accounts:", accounts); // ✅ Log accounts array
+//   //   console.log("useEffect triggered with accounts:", accounts);
 //   //   if (accounts.length > 0) {
 //   //     checkPowerBILicense();
 //   //   }
@@ -85,7 +85,7 @@
 
 // export default App;
 
-//my new App.js
+//current App.js
 
 import "./App.css";
 import HomePage from "./components/HomePage/HomePage";
@@ -101,9 +101,8 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
-import "./global.css"; // Import global styles
+import "./global.css";
 
-// Helper component to detect current route
 const RouteWrapper = ({ children }) => {
   const location = useLocation();
   return children(location.pathname);

@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Import Link
+import { Link } from "react-router-dom";
 import Logo from "../Assets/logo.png";
 //import SearchBar from "../SearchBar/SearchBar";
 

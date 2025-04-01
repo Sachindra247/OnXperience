@@ -6,7 +6,7 @@
 // import { MsalProvider } from "@azure/msal-react";
 // import { PublicClientApplication } from "@azure/msal-browser";
 // import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import HomePage from "./components/HomePage/HomePage"; // HomePage component
+// import HomePage from "./components/HomePage/HomePage";
 // import ContractView from "./components/ContractView/ContractView";
 
 // const msalConfig = {
@@ -14,13 +14,13 @@
 //     clientId: "04ae1923-9fc9-4944-afa6-4c679be5c0e0",
 //     authority:
 //       "https://login.microsoftonline.com/d2637727-dad5-4caa-8aa6-d4cff6580e02",
-//     redirectUri: "http://localhost:3000", // Your redirect URI
+//     redirectUri: "http://localhost:3000",
 //   },
 // };
 
 // const pca = new PublicClientApplication(msalConfig);
 
-// // Ensure MSAL is initialized before rendering
+// // Ensuring MSAL is initialized before rendering...
 // pca.initialize().then(() => {
 //   const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -55,13 +55,12 @@ const msalConfig = {
     clientId: "04ae1923-9fc9-4944-afa6-4c679be5c0e0",
     authority:
       "https://login.microsoftonline.com/d2637727-dad5-4caa-8aa6-d4cff6580e02",
-    redirectUri: "http://localhost:3000", // Your redirect URI
+    redirectUri: "http://localhost:3000",
   },
 };
 
 const pca = new PublicClientApplication(msalConfig);
 
-// Ensure MSAL is initialized before rendering
 pca.initialize().then(() => {
   const root = ReactDOM.createRoot(document.getElementById("root"));
 

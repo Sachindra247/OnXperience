@@ -11,7 +11,7 @@ const ContractView = () => {
 
   const handleLogout = () => {
     instance.logoutPopup().then(() => {
-      navigate("/"); // Redirect to login page after logout
+      navigate("/");
     });
   };
 
