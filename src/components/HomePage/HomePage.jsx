@@ -278,7 +278,7 @@
 
 //code with modal
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
@@ -304,7 +304,7 @@ const reports = {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-    pageId: "8e9801e82496355a41ee", // Target pageId for Adoption
+    pageId: "8e9801e82496355a41ee",
   },
   engagement: {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
@@ -329,11 +329,8 @@ const reports = {
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({
-    columnName: "",
-    columnValue: "",
-  });
+  const [modalData, setModalData] = useState({ field: "", value: "" });
+  const [showModal, setShowModal] = useState(false);
   const location = useLocation();
 
   // Fetching Power BI embed token
@@ -354,61 +351,21 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  const openModal = (columnName, columnValue) => {
-    setModalData({ columnName, columnValue });
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleEmbedEvent = (event) => {
-    const { pageId, visual, dataPoints } = event.detail;
-
-    // Check if event is properly triggered
-    console.log("Power BI Event Fired:", event.detail);
-
-    // Only trigger for the "adoption" page and if the visual is of type 'matrix'
-    if (pageId === "8e9801e82496355a41ee" && visual.type === "matrix") {
-      dataPoints.forEach((dataPoint) => {
-        const columnName = dataPoint.target.column; // Get the column name
-        const columnValue = dataPoint.value; // Get the value of the clicked cell
-
-        console.log("Clicked Column:", columnName);
-        console.log("Clicked Value:", columnValue);
-
-        // Only trigger on Licenses Purchased or Licenses Used columns
-        if (
-          columnName === "Licenses Purchased" ||
-          columnName === "Licenses Used"
-        ) {
-          openModal(columnName, columnValue); // Open the modal with the selected data
-        }
-      });
-    }
-  };
-
   const currentRoute = location.pathname.split("/")[1];
   const currentReport = reports[currentRoute] || reports.homepage;
 
-  useEffect(() => {
-    const powerbiElement = document.querySelector(".home-report");
+  // Handle table cell click to open modal
+  const handleTableCellClick = (field, value) => {
+    setModalData({ field, value });
+    setShowModal(true);
+  };
 
-    if (powerbiElement) {
-      // Debugging to see if the event is getting attached
-      console.log("Attaching event listener to Power BI embed");
-
-      powerbiElement.addEventListener("powerbiEvent", handleEmbedEvent);
-    }
-
-    return () => {
-      if (powerbiElement) {
-        console.log("Removing event listener from Power BI embed");
-        powerbiElement.removeEventListener("powerbiEvent", handleEmbedEvent);
-      }
-    };
-  }, []);
+  // Handle modal data submission
+  const handleSubmit = () => {
+    console.log("Submitted data:", modalData);
+    // Here, send the updated data to your backend or Power BI API
+    setShowModal(false);
+  };
 
   return (
     <div className="homepage-container">
@@ -446,39 +403,7 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("renewals", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/renewals">Renewals</Link>
-                {expandedSection === "renewals" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("financials", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/financials">Financials</Link>
-                {expandedSection === "financials" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <Link to="/statistics">Statistics</Link>
-              </li>
+              {/* Additional menu items */}
             </ul>
             <ul className="tree-menu bottom-links">
               <li>
@@ -509,6 +434,24 @@ const HomePage = () => {
               }}
               cssClassName="home-report"
               key={location.pathname}
+              eventHandlers={
+                // Listen for cell clicks on the Power BI table visual
+                [
+                  {
+                    event: "cellClicked",
+                    callback: (event) => {
+                      const field = event.detail.column;
+                      const value = event.detail.value;
+                      if (
+                        field === "Licenses Purchased" ||
+                        field === "Licenses Used"
+                      ) {
+                        handleTableCellClick(field, value);
+                      }
+                    },
+                  },
+                ]
+              }
             />
           ) : (
             <p>Loading Power BI report...</p>
@@ -516,28 +459,20 @@ const HomePage = () => {
         </main>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
+      {/* Modal for data entry */}
+      {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Edit {modalData.columnName}</h3>
+            <h3>Edit {modalData.field}</h3>
             <input
-              type="text"
-              value={modalData.columnValue}
+              type="number"
+              value={modalData.value}
               onChange={(e) =>
-                setModalData({ ...modalData, columnValue: e.target.value })
+                setModalData({ ...modalData, value: e.target.value })
               }
             />
-            <button onClick={closeModal}>Close</button>
-            <button
-              onClick={() => {
-                // Logic to update Power BI or backend with updated value
-                console.log("Updated Value:", modalData.columnValue);
-                closeModal();
-              }}
-            >
-              Save
-            </button>
+            <button onClick={handleSubmit}>Submit</button>
+            <button onClick={() => setShowModal(false)}>Cancel</button>
           </div>
         </div>
       )}
