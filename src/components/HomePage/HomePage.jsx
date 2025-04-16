@@ -426,10 +426,35 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  const handlePopupSubmit = (newValue) => {
+  const updateLicenseValue = async (columnName, newValue, dataPoint) => {
+    try {
+      const payload = {
+        columnName,
+        newValue,
+        dataPoint,
+      };
+      await axios.post(
+        "https://on-xperience.vercel.app/api/updateLicense",
+        payload
+      );
+      console.log("Successfully updated license value in the database.");
+    } catch (error) {
+      console.error("Failed to update license value:", error);
+    }
+  };
+
+  const handlePopupSubmit = async (newValue) => {
     console.log(`Updating ${popupData.columnName} to ${newValue}`);
     setShowPopup(false);
-    // Add backend update logic here
+    if (popupData.dataPoint) {
+      await updateLicenseValue(
+        popupData.columnName,
+        newValue,
+        popupData.dataPoint
+      );
+    } else {
+      console.warn("No dataPoint available for update.");
+    }
   };
 
   const currentRoute = location.pathname.split("/")[1];
