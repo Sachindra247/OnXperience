@@ -374,7 +374,6 @@ const HomePage = () => {
     console.log("Clicked Value:", value);
     console.log("Entire Data Point:", point);
 
-    // Check if the selected column is "Licenses Purchased" or "Licenses Used"
     if (
       (columnName === "Licenses Purchased" || columnName === "Licenses Used") &&
       currentRoute === "adoption" &&
@@ -493,42 +492,49 @@ const HomePage = () => {
             <PowerBIEmbed
               embedConfig={{
                 type: "report",
-                id: currentReport.id,
                 embedUrl: currentReport.embedUrl,
+                id: currentReport.id,
                 accessToken: embedToken,
-                tokenType: models.TokenType.Embed,
+                pageView: models.PageViewType.FitToWidth,
                 settings: {
-                  panes: { filters: { expanded: false, visible: false } },
-                  background: models.BackgroundType.Default,
+                  filterPaneEnabled: false,
                   navContentPaneEnabled: false,
                 },
-                pageName: currentReport.pageId,
               }}
-              cssClassName="powerbi-embed"
-              onEmbedded={(event) => handleEmbed(event)}
+              eventHandlers={
+                currentReport.pageId === "8e9801e82496355a41ee"
+                  ? [
+                      {
+                        event: "loaded",
+                        handler: () => console.log("Report loaded"),
+                      },
+                    ]
+                  : []
+              }
+              getEmbeddedComponent={handleEmbed}
             />
           ) : (
-            <p>Loading...</p>
+            <div>Loading...</div>
           )}
         </main>
-
-        <Modal
-          isOpen={modalIsOpen}
-          onRequestClose={() => setModalIsOpen(false)}
-        >
-          <h2>Edit {modalData.field}</h2>
-          <label>
-            New Value:
-            <input
-              type="text"
-              value={newValue}
-              onChange={(e) => setNewValue(e.target.value)}
-            />
-          </label>
-          <button onClick={handleModalSubmit}>Submit</button>
-          <button onClick={() => setModalIsOpen(false)}>Close</button>
-        </Modal>
       </div>
+
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={() => setModalIsOpen(false)}
+        contentLabel="Edit Licenses"
+      >
+        <h2>Edit {modalData.field}</h2>
+        <p>Current Value: {modalData.currentValue}</p>
+        <input
+          type="number"
+          placeholder="Enter new value"
+          value={newValue}
+          onChange={(e) => setNewValue(e.target.value)}
+        />
+        <button onClick={handleModalSubmit}>Submit</button>
+        <button onClick={() => setModalIsOpen(false)}>Cancel</button>
+      </Modal>
     </div>
   );
 };
