@@ -336,9 +336,12 @@ const HomePage = () => {
     currentValue: "",
     row: {},
   });
+  const [newValue, setNewValue] = useState("");
   const location = useLocation();
   const reportRef = useRef(null);
-  const [newValue, setNewValue] = useState("");
+
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -357,9 +360,6 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
-
   const handleDataSelected = (event) => {
     const data = event.detail;
     console.log("DATA SELECTED EVENT:", data);
@@ -374,7 +374,11 @@ const HomePage = () => {
     console.log("Clicked Value:", value);
     console.log("Entire Data Point:", point);
 
-    if (columnName === "Licenses Purchased" || columnName === "Licenses Used") {
+    if (
+      (columnName === "Licenses Purchased" || columnName === "Licenses Used") &&
+      currentRoute === "adoption" &&
+      currentReport.pageId === "8e9801e82496355a41ee"
+    ) {
       setModalData({ field: columnName, currentValue: value, row: point });
       setModalIsOpen(true);
     }
@@ -384,9 +388,12 @@ const HomePage = () => {
     reportRef.current = report;
     console.log("Current pageId:", currentReport.pageId);
 
-    if (currentRoute === "adoption") {
+    if (
+      currentRoute === "adoption" &&
+      currentReport.pageId === "8e9801e82496355a41ee"
+    ) {
       report.on("dataSelected", handleDataSelected);
-      console.log("Listening for dataSelected event");
+      console.log("Listening for dataSelected event on Adoption page");
     }
   };
 
@@ -394,7 +401,7 @@ const HomePage = () => {
     console.log("Submitting new value:", newValue);
     console.log("For field:", modalData.field);
     console.log("Full Row Data:", modalData.row);
-    // Later: make POST/PUT request to backend/Azure SQL here
+    // Future: Send to Azure SQL here
     setModalIsOpen(false);
     setNewValue("");
   };
