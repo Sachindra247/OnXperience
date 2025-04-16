@@ -278,7 +278,7 @@
 
 //code with modal
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
@@ -368,17 +368,19 @@ const HomePage = () => {
   };
 
   const handleSubmit = () => {
-    // Here you can send newValue and selectedCell to your API or backend.
     console.log(`Updated ${selectedCell.column}:`, newValue);
     closeModal();
   };
 
   const handleEmbedEvent = (event) => {
-    if (event.detail && event.detail.eventType === "cellClicked") {
-      const { column, value } = event.detail;
-      if (column === "Licenses Purchased" || column === "Licenses Used") {
-        openModal(column, value);
-      }
+    const clickedCell = event.detail;
+    if (
+      clickedCell &&
+      clickedCell.column &&
+      (clickedCell.column === "Licenses Purchased" ||
+        clickedCell.column === "Licenses Used")
+    ) {
+      openModal(clickedCell.column, clickedCell.value);
     }
   };
 
