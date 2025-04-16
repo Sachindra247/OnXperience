@@ -287,6 +287,7 @@ import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
+// Popup component for editing licenses
 const LicensePopup = ({ onClose, onSubmit, columnName, currentValue }) => {
   const [value, setValue] = useState(currentValue || "");
 
@@ -318,6 +319,7 @@ const LicensePopup = ({ onClose, onSubmit, columnName, currentValue }) => {
   );
 };
 
+// Define reports and their embed configuration
 const reports = {
   homepage: {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
@@ -369,6 +371,7 @@ const HomePage = () => {
   const reportRef = useRef(null);
   const location = useLocation();
 
+  // Fetch embed token
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
@@ -381,7 +384,11 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
+  // Handle visual click event
   const handleVisualClick = (event) => {
+    console.log("visualClicked event:", event);
+
+    // Check for the pageId
     if (event.detail?.pageName !== "8e9801e82496355a41ee") return;
 
     const dataPoints = event.detail?.dataPoints;
@@ -409,12 +416,15 @@ const HomePage = () => {
     }
   };
 
+  // On report loaded, setup event listener for visual clicks
   const handleReportLoaded = async () => {
+    console.log("Report loaded!");
     try {
       const report = reportRef.current;
       if (report && typeof report.on === "function") {
         report.off("visualClicked"); // Remove any existing listeners
-        report.on("visualClicked", handleVisualClick);
+        report.on("visualClicked", handleVisualClick); // Add the new listener
+        console.log("visualClicked event wired!");
       }
     } catch (error) {
       console.error("Error setting up visualClicked handler:", error);
@@ -426,35 +436,10 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  const updateLicenseValue = async (columnName, newValue, dataPoint) => {
-    try {
-      const payload = {
-        columnName,
-        newValue,
-        dataPoint,
-      };
-      await axios.post(
-        "https://on-xperience.vercel.app/api/updateLicense",
-        payload
-      );
-      console.log("Successfully updated license value in the database.");
-    } catch (error) {
-      console.error("Failed to update license value:", error);
-    }
-  };
-
-  const handlePopupSubmit = async (newValue) => {
+  const handlePopupSubmit = (newValue) => {
     console.log(`Updating ${popupData.columnName} to ${newValue}`);
     setShowPopup(false);
-    if (popupData.dataPoint) {
-      await updateLicenseValue(
-        popupData.columnName,
-        newValue,
-        popupData.dataPoint
-      );
-    } else {
-      console.warn("No dataPoint available for update.");
-    }
+    // Add backend update logic here
   };
 
   const currentRoute = location.pathname.split("/")[1];
@@ -564,6 +549,10 @@ const HomePage = () => {
                 onLoad={handleReportLoaded}
                 getEmbeddedComponent={(embeddedReport) => {
                   reportRef.current = embeddedReport;
+                  console.log("Power BI embedded!");
+                  embeddedReport.off("visualClicked");
+                  embeddedReport.on("visualClicked", handleVisualClick);
+                  console.log("visualClicked event wired!");
                 }}
               />
               {showPopup && (
