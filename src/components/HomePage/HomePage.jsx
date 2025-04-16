@@ -387,33 +387,47 @@ const HomePage = () => {
   const handleVisualClick = (event) => {
     console.log("visualClicked event:", event);
 
-    // Check if 'detail' exists and has the required properties
-    if (event.detail && event.detail.visual) {
-      const dataPoints = event.detail.visual.dataPoints;
-      console.log("dataPoints:", dataPoints);
+    // Check if 'detail' exists
+    if (event.detail) {
+      console.log("Event Detail:", event.detail);
 
-      if (dataPoints && dataPoints.length > 0) {
-        const dataPoint = dataPoints[0];
-        const identities = dataPoint.identity;
+      // If the visual is available in event.detail, inspect it further
+      if (event.detail.visual) {
+        const visual = event.detail.visual;
+        console.log("Visual clicked:", visual);
 
-        if (identities && identities.length > 0) {
-          const column = identities[0].equals?.toString() || "";
+        // Check if the visual has dataPoints
+        const dataPoints = visual.dataPoints || [];
+        console.log("Data points:", dataPoints);
 
-          if (
-            column.includes("Licenses Used") ||
-            column.includes("Licenses Purchased")
-          ) {
-            setPopupData({
-              columnName: column.includes("Licenses used")
-                ? "Licenses Used"
-                : "Licenses Purchased",
-              currentValue: dataPoint.value,
-              dataPoint: dataPoint,
-            });
-            setShowPopup(true);
+        if (dataPoints.length > 0) {
+          const dataPoint = dataPoints[0];
+          console.log("Data point clicked:", dataPoint);
+
+          const identities = dataPoint.identity || [];
+          if (identities.length > 0) {
+            const column = identities[0].equals?.toString() || "";
+            console.log("Column info:", column);
+
+            // Now handle if it's one of the target columns
+            if (
+              column.includes("Licenses used") ||
+              column.includes("Licenses Purchased")
+            ) {
+              setPopupData({
+                columnName: column.includes("Licenses used")
+                  ? "Licenses used"
+                  : "Licenses Purchased",
+                currentValue: dataPoint.value,
+                dataPoint: dataPoint,
+              });
+              setShowPopup(true);
+            }
           }
         }
       }
+    } else {
+      console.error("No detail in event.");
     }
   };
 
