@@ -102,6 +102,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import "./global.css";
+import AzureTablePage from "./components/AzureTable/AzureTablePage";
 
 const RouteWrapper = ({ children }) => {
   const location = useLocation();
@@ -150,6 +151,14 @@ function App() {
           element={
             <RouteWrapper>
               {(path) => <HomePage route="feedback" path={path} />}
+            </RouteWrapper>
+          }
+        />
+        <Route
+          path="/azure-sql-table"
+          element={
+            <RouteWrapper>
+              {(path) => <HomePage route="azure-sql-table" path={path} />}
             </RouteWrapper>
           }
         />
