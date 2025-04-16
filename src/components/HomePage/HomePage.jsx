@@ -495,7 +495,7 @@ const HomePage = () => {
                 embedUrl: currentReport.embedUrl,
                 id: currentReport.id,
                 accessToken: embedToken,
-                pageView: models.PageViewType.FitToWidth,
+                pageView: models.PageViewType?.FitToWidth ?? "FitToWidth", // Fallback to string
                 settings: {
                   filterPaneEnabled: false,
                   navContentPaneEnabled: false,
@@ -514,7 +514,7 @@ const HomePage = () => {
               getEmbeddedComponent={handleEmbed}
             />
           ) : (
-            <div>Loading...</div>
+            <p>Loading embed token...</p>
           )}
         </main>
       </div>
@@ -522,18 +522,16 @@ const HomePage = () => {
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={() => setModalIsOpen(false)}
-        contentLabel="Edit Licenses"
+        contentLabel="Edit Data"
       >
         <h2>Edit {modalData.field}</h2>
         <p>Current Value: {modalData.currentValue}</p>
         <input
-          type="number"
-          placeholder="Enter new value"
+          type="text"
           value={newValue}
           onChange={(e) => setNewValue(e.target.value)}
         />
         <button onClick={handleModalSubmit}>Submit</button>
-        <button onClick={() => setModalIsOpen(false)}>Cancel</button>
       </Modal>
     </div>
   );
