@@ -557,9 +557,6 @@ const HomePage = () => {
                 cssClassName="home-report"
                 key={location.pathname}
                 ref={powerBiRef}
-                getEmbeddedComponent={(embeddedReport) => {
-                  powerBiRef.current = embeddedReport;
-                }}
               />
               {showPopup && (
                 <LicensePopup
