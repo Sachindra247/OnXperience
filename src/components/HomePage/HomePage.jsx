@@ -431,18 +431,46 @@ const HomePage = () => {
     }
   };
 
-  // On report loaded, setup event listener for visual clicks
   const handleReportLoaded = async () => {
     console.log("Report loaded!");
     try {
       const report = reportRef.current;
       if (report && typeof report.on === "function") {
-        report.off("visualClicked"); // Remove any existing listeners
-        report.on("visualClicked", handleVisualClick); // Add the new listener
-        console.log("visualClicked event wired!");
+        // Remove any existing listeners
+        report.off("visualClicked");
+        report.off("selectionChanged"); // Remove previous selection change listeners
+
+        // Add a new listener for selection change
+        report.on("selectionChanged", (event) => {
+          console.log("selectionChanged event:", event);
+          const dataPoints = event.detail?.dataPoints || [];
+          if (dataPoints.length > 0) {
+            const dataPoint = dataPoints[0];
+            const identities = dataPoint.identity || [];
+            if (identities.length > 0) {
+              const column = identities[0].equals?.toString() || "";
+
+              if (
+                column.includes("Licenses used") ||
+                column.includes("Licenses Purchased")
+              ) {
+                setPopupData({
+                  columnName: column.includes("Licenses used")
+                    ? "Licenses used"
+                    : "Licenses Purchased",
+                  currentValue: dataPoint.value,
+                  dataPoint: dataPoint,
+                });
+                setShowPopup(true);
+              }
+            }
+          }
+        });
+
+        console.log("selectionChanged event listener added!");
       }
     } catch (error) {
-      console.error("Error setting up visualClicked handler:", error);
+      console.error("Error setting up selectionChanged handler:", error);
     }
   };
 
