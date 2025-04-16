@@ -278,15 +278,17 @@
 
 //code with modal
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
-import { models } from "powerbi-client";
+import { models, Embed } from "powerbi-client";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 import Modal from "react-modal";
+
+Modal.setAppElement("#root"); // important for accessibility
 
 const reports = {
   homepage: {
@@ -327,13 +329,16 @@ const reports = {
   },
 };
 
-Modal.setAppElement("#root");
-
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [modalData, setModalData] = useState({ field: "", currentValue: "" });
+  const reportRef = useRef(null);
   const location = useLocation();
+
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -347,16 +352,40 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
+  const handleDataSelected = (event) => {
+    const data = event.detail;
+    if (!data || !data.dataPoints || !data.dataPoints.length) return;
+
+    const firstPoint = data.dataPoints[0];
+
+    const clickedField = firstPoint?.identity?.[0]?.target?.column;
+    const currentValue = firstPoint?.values?.[0];
+
+    if (
+      clickedField === "Licenses Purchased" ||
+      clickedField === "Licenses Used"
+    ) {
+      setModalData({ field: clickedField, currentValue });
+      setModalIsOpen(true);
+    }
+  };
+
+  const handleEmbed = (embeddedReport) => {
+    reportRef.current = embeddedReport;
+
+    if (currentReport.pageId === "8e9801e82496355a41ee") {
+      embeddedReport.on("dataSelected", handleDataSelected);
+    }
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+  };
+
   const toggleSection = (section, event) => {
     event.stopPropagation();
     setExpandedSection((prev) => (prev === section ? null : section));
   };
-
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
-
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
 
   return (
     <div className="homepage-container">
@@ -375,10 +404,7 @@ const HomePage = () => {
                 </span>
                 <Link to="/healthscore"> Health Score</Link>
                 {expandedSection === "healthScore" && (
-                  <ul
-                    className="submenu expanded"
-                    style={{ display: "block", border: "none" }}
-                  >
+                  <ul className="submenu expanded">
                     <li>
                       <Link to="/growth">Growth</Link>
                     </li>
@@ -394,39 +420,7 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("renewals", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/renewals">Renewals</Link>
-                {expandedSection === "renewals" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("financials", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/financials">Financials</Link>
-                {expandedSection === "financials" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <Link to="/statistics">Statistics</Link>
-              </li>
+              {/* Additional sidebar items... */}
             </ul>
             <ul className="tree-menu bottom-links">
               <li>
@@ -441,62 +435,54 @@ const HomePage = () => {
 
         <main className="report-container">
           {embedToken ? (
-            <>
-              <PowerBIEmbed
-                embedConfig={{
-                  type: "report",
-                  id: currentReport.id,
-                  embedUrl: currentReport.embedUrl,
-                  accessToken: embedToken,
-                  tokenType: models.TokenType.Embed,
-                  settings: {
-                    panes: { filters: { expanded: false, visible: false } },
-                    background: models.BackgroundType.Default,
-                    navContentPaneEnabled: false,
-                  },
-                  pageName: currentReport.pageId,
-                }}
-                cssClassName="home-report"
-                key={location.pathname}
-              />
-
-              {currentReport.pageId === "8e9801e82496355a41ee" && (
-                <>
-                  <button onClick={openModal} className="open-modal-button">
-                    Update Adoption Data
-                  </button>
-
-                  <Modal
-                    isOpen={isModalOpen}
-                    onRequestClose={closeModal}
-                    contentLabel="Edit Adoption Data"
-                    className="modal-content"
-                    overlayClassName="modal-overlay"
-                  >
-                    <h2>Edit Adoption Info</h2>
-                    <form>
-                      <label>
-                        Licenses Used:
-                        <input type="number" name="licensesUsed" />
-                      </label>
-                      <br />
-                      <label>
-                        Licenses Purchased:
-                        <input type="number" name="licensesPurchased" />
-                      </label>
-                      <br />
-                      <button type="submit">Save</button>
-                      <button type="button" onClick={closeModal}>
-                        Cancel
-                      </button>
-                    </form>
-                  </Modal>
-                </>
-              )}
-            </>
+            <PowerBIEmbed
+              embedConfig={{
+                type: "report",
+                id: currentReport.id,
+                embedUrl: currentReport.embedUrl,
+                accessToken: embedToken,
+                tokenType: models.TokenType.Embed,
+                settings: {
+                  panes: { filters: { visible: false } },
+                  background: models.BackgroundType.Default,
+                  navContentPaneEnabled: false,
+                },
+                pageName: currentReport.pageId,
+              }}
+              eventHandlers={
+                new Map([
+                  ["loaded", () => console.log("Report loaded")],
+                  ["rendered", () => console.log("Report rendered")],
+                  ["error", (event) => console.error(event.detail)],
+                ])
+              }
+              getEmbeddedComponent={handleEmbed}
+              cssClassName="home-report"
+              key={location.pathname}
+            />
           ) : (
             <p>Loading Power BI report...</p>
           )}
+
+          {/* Modal for input */}
+          <Modal
+            isOpen={modalIsOpen}
+            onRequestClose={closeModal}
+            contentLabel="Edit License Info"
+            className="Modal"
+            overlayClassName="Overlay"
+          >
+            <h2>Edit {modalData.field}</h2>
+            <p>Current Value: {modalData.currentValue}</p>
+            <input
+              type="number"
+              placeholder={`Enter new ${modalData.field}`}
+              className="modal-input"
+            />
+            <button onClick={closeModal} className="modal-button">
+              Submit
+            </button>
+          </Modal>
         </main>
       </div>
     </div>
