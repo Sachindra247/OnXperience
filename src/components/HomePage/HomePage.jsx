@@ -366,7 +366,7 @@ const HomePage = () => {
     currentValue: null,
     dataPoint: null,
   });
-  const powerBiRef = useRef(null);
+  const reportRef = useRef(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -381,63 +381,45 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
-  useEffect(() => {
-    if (!powerBiRef.current || !embedToken) return;
+  const handleVisualClick = (event) => {
+    if (event.detail?.pageName !== "8e9801e82496355a41ee") return;
 
-    const handleVisualClick = (event) => {
-      if (event.detail.pageName === "8e9801e82496355a41ee") {
-        const visual = event.detail.visual;
-        if (visual.type === "table" || visual.type === "matrix") {
-          const dataPoints = event.detail.dataPoints;
-          if (dataPoints && dataPoints.length > 0) {
-            const dataPoint = dataPoints[0];
-            const identities = dataPoint.identity;
+    const dataPoints = event.detail?.dataPoints;
+    if (dataPoints && dataPoints.length > 0) {
+      const dataPoint = dataPoints[0];
+      const identities = dataPoint.identity;
 
-            if (identities && identities.length > 0) {
-              const identity = identities[0];
-              const column = identity.equals.toString();
+      if (identities?.length > 0) {
+        const column = identities[0].equals?.toString() || "";
 
-              if (
-                column.includes("Licenses used") ||
-                column.includes("Licenses Purchased")
-              ) {
-                setPopupData({
-                  columnName: column.includes("Licenses used")
-                    ? "Licenses used"
-                    : "Licenses Purchased",
-                  currentValue: dataPoint.value,
-                  dataPoint: dataPoint,
-                });
-                setShowPopup(true);
-              }
-            }
-          }
-        }
-      }
-    };
-
-    const setupEventHandlers = async () => {
-      try {
-        const report = powerBiRef.current;
-        if (report) {
-          report.on("loaded", () => {
-            report.on("visualClicked", handleVisualClick);
+        if (
+          column.includes("Licenses used") ||
+          column.includes("Licenses Purchased")
+        ) {
+          setPopupData({
+            columnName: column.includes("Licenses used")
+              ? "Licenses used"
+              : "Licenses Purchased",
+            currentValue: dataPoint.value,
+            dataPoint: dataPoint,
           });
+          setShowPopup(true);
         }
-      } catch (error) {
-        console.error("Error setting up event handlers:", error);
       }
-    };
+    }
+  };
 
-    setupEventHandlers();
-
-    return () => {
-      // Cleanup event listeners
-      if (powerBiRef.current) {
-        powerBiRef.current.off("visualClicked", handleVisualClick);
+  const handleReportLoaded = async () => {
+    try {
+      const report = reportRef.current;
+      if (report && typeof report.on === "function") {
+        report.off("visualClicked"); // Remove any existing listeners
+        report.on("visualClicked", handleVisualClick);
       }
-    };
-  }, [embedToken, location.pathname]);
+    } catch (error) {
+      console.error("Error setting up visualClicked handler:", error);
+    }
+  };
 
   const toggleSection = (section, event) => {
     event.stopPropagation();
@@ -447,6 +429,7 @@ const HomePage = () => {
   const handlePopupSubmit = (newValue) => {
     console.log(`Updating ${popupData.columnName} to ${newValue}`);
     setShowPopup(false);
+    // Add backend update logic here
   };
 
   const currentRoute = location.pathname.split("/")[1];
@@ -467,7 +450,7 @@ const HomePage = () => {
                 >
                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
                 </span>
-                <Link to="/healthscore"> Health Score</Link>
+                <Link to="/healthscore">Health Score</Link>
                 {expandedSection === "healthScore" && (
                   <ul
                     className="submenu expanded"
@@ -552,9 +535,10 @@ const HomePage = () => {
                 }}
                 cssClassName="home-report"
                 key={location.pathname}
-                ref={powerBiRef}
+                ref={reportRef}
+                onLoad={handleReportLoaded}
                 getEmbeddedComponent={(embeddedReport) => {
-                  powerBiRef.current = embeddedReport;
+                  reportRef.current = embeddedReport;
                 }}
               />
               {showPopup && (
