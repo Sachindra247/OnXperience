@@ -370,67 +370,57 @@ const HomePage = () => {
   const powerBiRef = useRef(null);
   const location = useLocation();
 
-  // Fetching Power BI embed token
-  useEffect(() => {
-    const fetchEmbedToken = async () => {
-      try {
-        const response = await axios.get("https://on-xperience.vercel.app/api");
-        setEmbedToken(response.data.embedToken);
-      } catch (error) {
-        console.error("Error fetching embed token:", error);
-      }
-    };
-    fetchEmbedToken();
-  }, []);
-
-  // Setup Power BI event handlers
+  // Update the useEffect hook for event handlers
   useEffect(() => {
     if (!powerBiRef.current || !embedToken) return;
 
-    const setupEventHandlers = async () => {
-      try {
-        const report = await powerBiRef.current.getReport();
+    const report = powerBiRef.current;
 
-        report.on("loaded", () => {
-          report.on("visualClicked", (event) => {
-            if (event.detail.pageName === "8e9801e82496355a41ee") {
-              const visual = event.detail.visual;
-              if (visual.type === "table" || visual.type === "matrix") {
-                const dataPoints = event.detail.dataPoints;
-                if (dataPoints && dataPoints.length > 0) {
-                  const dataPoint = dataPoints[0];
-                  const identities = dataPoint.identity;
+    // Check if report exists and has the getReport method
+    if (report && typeof report.getReport === "function") {
+      report
+        .getReport()
+        .then((report) => {
+          report.on("loaded", () => {
+            report.on("visualClicked", (event) => {
+              if (event.detail.pageName === "8e9801e82496355a41ee") {
+                const visual = event.detail.visual;
+                if (visual.type === "table" || visual.type === "matrix") {
+                  const dataPoints = event.detail.dataPoints;
+                  if (dataPoints && dataPoints.length > 0) {
+                    const dataPoint = dataPoints[0];
+                    const identities = dataPoint.identity;
 
-                  if (identities && identities.length > 0) {
-                    const identity = identities[0];
-                    const column = identity.equals.toString();
+                    if (identities && identities.length > 0) {
+                      const identity = identities[0];
+                      const column = identity.equals.toString();
 
-                    // Check for license columns
-                    if (
-                      column.includes("Licenses used") ||
-                      column.includes("Licenses Purchased")
-                    ) {
-                      setPopupData({
-                        columnName: column.includes("Licenses used")
-                          ? "Licenses used"
-                          : "Licenses Purchased",
-                        currentValue: dataPoint.value,
-                        dataPoint: dataPoint,
-                      });
-                      setShowPopup(true);
+                      if (
+                        column.includes("Licenses used") ||
+                        column.includes("Licenses Purchased")
+                      ) {
+                        setPopupData({
+                          columnName: column.includes("Licenses used")
+                            ? "Licenses used"
+                            : "Licenses Purchased",
+                          currentValue: dataPoint.value,
+                          dataPoint: dataPoint,
+                        });
+                        setShowPopup(true);
+                      }
                     }
                   }
                 }
               }
-            }
+            });
           });
+        })
+        .catch((error) => {
+          console.error("Error getting Power BI report:", error);
         });
-      } catch (error) {
-        console.error("Error setting up Power BI event handlers:", error);
-      }
-    };
-
-    setupEventHandlers();
+    } else {
+      console.error("Power BI report reference is not valid");
+    }
   }, [embedToken, location.pathname]);
 
   const toggleSection = (section, event) => {
@@ -567,6 +557,9 @@ const HomePage = () => {
                 cssClassName="home-report"
                 key={location.pathname}
                 ref={powerBiRef}
+                getEmbeddedComponent={(embeddedReport) => {
+                  powerBiRef.current = embeddedReport;
+                }}
               />
               {showPopup && (
                 <LicensePopup
