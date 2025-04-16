@@ -287,6 +287,38 @@ import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
+// Popup component for editing license values
+const LicensePopup = ({ onClose, onSubmit, columnName, currentValue }) => {
+  const [value, setValue] = useState(currentValue || "");
+
+  const handleSubmit = () => {
+    onSubmit(parseInt(value, 10) || 0);
+  };
+
+  return (
+    <div className="popup-overlay">
+      <div className="popup-content">
+        <h3>Edit {columnName}</h3>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          min="0"
+          step="1"
+        />
+        <div className="popup-buttons">
+          <button className="submit-btn" onClick={handleSubmit}>
+            Submit
+          </button>
+          <button className="cancel-btn" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const reports = {
   homepage: {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
@@ -329,9 +361,13 @@ const reports = {
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCell, setSelectedCell] = useState(null);
-  const [newValue, setNewValue] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupData, setPopupData] = useState({
+    columnName: "",
+    currentValue: null,
+    dataPoint: null,
+  });
+  const powerBiRef = useRef(null);
   const location = useLocation();
 
   // Fetching Power BI embed token
@@ -347,47 +383,88 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
+  // Setup Power BI event handlers
+  useEffect(() => {
+    if (!powerBiRef.current || !embedToken) return;
+
+    const setupEventHandlers = async () => {
+      try {
+        const report = await powerBiRef.current.getReport();
+
+        report.on("loaded", () => {
+          report.on("visualClicked", (event) => {
+            if (event.detail.pageName === "8e9801e82496355a41ee") {
+              const visual = event.detail.visual;
+              if (visual.type === "table" || visual.type === "matrix") {
+                const dataPoints = event.detail.dataPoints;
+                if (dataPoints && dataPoints.length > 0) {
+                  const dataPoint = dataPoints[0];
+                  const identities = dataPoint.identity;
+
+                  if (identities && identities.length > 0) {
+                    const identity = identities[0];
+                    const column = identity.equals.toString();
+
+                    // Check for license columns
+                    if (
+                      column.includes("Licenses used") ||
+                      column.includes("Licenses Purchased")
+                    ) {
+                      setPopupData({
+                        columnName: column.includes("Licenses used")
+                          ? "Licenses used"
+                          : "Licenses Purchased",
+                        currentValue: dataPoint.value,
+                        dataPoint: dataPoint,
+                      });
+                      setShowPopup(true);
+                    }
+                  }
+                }
+              }
+            }
+          });
+        });
+      } catch (error) {
+        console.error("Error setting up Power BI event handlers:", error);
+      }
+    };
+
+    setupEventHandlers();
+  }, [embedToken, location.pathname]);
+
   const toggleSection = (section, event) => {
     event.stopPropagation();
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
+  const handlePopupSubmit = (newValue) => {
+    // In a real implementation, you would:
+    // 1. Send the update to your backend API
+    // 2. Possibly refresh the Power BI report data
+    console.log(`Updating ${popupData.columnName} to ${newValue}`);
+
+    // Example API call (uncomment and implement your actual endpoint):
+    /*
+    axios.post('/api/update-license', {
+      column: popupData.columnName,
+      value: newValue,
+      // Include any other necessary identifiers from dataPoint
+    })
+    .then(() => {
+      // Optionally refresh the report if needed
+      // powerBiRef.current.getReport().refresh();
+    })
+    .catch(error => {
+      console.error('Error updating license value:', error);
+    });
+    */
+
+    setShowPopup(false);
+  };
+
   const currentRoute = location.pathname.split("/")[1];
   const currentReport = reports[currentRoute] || reports.homepage;
-
-  const openModal = (column, value) => {
-    setSelectedCell({ column, value });
-    setNewValue(value);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedCell(null);
-    setNewValue("");
-  };
-
-  const handleSubmit = () => {
-    // Here you can send newValue and selectedCell to your API or backend.
-    console.log(`Updated ${selectedCell.column}:`, newValue);
-    closeModal();
-  };
-
-  const handleEmbedEvent = (event) => {
-    if (event.detail && event.detail.eventType === "cellClicked") {
-      const { column, value } = event.detail;
-      if (column === "Licenses Purchased" || column === "Licenses Used") {
-        openModal(column, value);
-      }
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("powerbiEvent", handleEmbedEvent);
-    return () => {
-      window.removeEventListener("powerbiEvent", handleEmbedEvent);
-    };
-  }, []);
 
   return (
     <div className="homepage-container">
@@ -425,49 +502,85 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("renewals", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/renewals">Renewals</Link>
+                {expandedSection === "renewals" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
+              </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("financials", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/financials">Financials</Link>
+                {expandedSection === "financials" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
+              </li>
+              <li>
+                <Link to="/statistics">Statistics</Link>
+              </li>
+            </ul>
+            <ul className="tree-menu bottom-links">
+              <li>
+                <Link to="/settings">Settings</Link>
+              </li>
+              <li>
+                <Link to="/help">Help</Link>
+              </li>
             </ul>
           </nav>
         </aside>
 
         <main className="report-container">
           {embedToken ? (
-            <PowerBIEmbed
-              embedConfig={{
-                type: "report",
-                id: currentReport.id,
-                embedUrl: currentReport.embedUrl,
-                accessToken: embedToken,
-                tokenType: models.TokenType.Embed,
-                settings: {
-                  panes: { filters: { expanded: false, visible: false } },
-                  background: models.BackgroundType.Default,
-                  navContentPaneEnabled: false,
-                },
-                pageName: currentReport.pageId,
-              }}
-              cssClassName="home-report"
-              key={location.pathname}
-            />
+            <>
+              <PowerBIEmbed
+                embedConfig={{
+                  type: "report",
+                  id: currentReport.id,
+                  embedUrl: currentReport.embedUrl,
+                  accessToken: embedToken,
+                  tokenType: models.TokenType.Embed,
+                  settings: {
+                    panes: { filters: { expanded: false, visible: false } },
+                    background: models.BackgroundType.Default,
+                    navContentPaneEnabled: false,
+                  },
+                  pageName: currentReport.pageId,
+                }}
+                cssClassName="home-report"
+                key={location.pathname}
+                ref={powerBiRef}
+              />
+              {showPopup && (
+                <LicensePopup
+                  onClose={() => setShowPopup(false)}
+                  onSubmit={handlePopupSubmit}
+                  columnName={popupData.columnName}
+                  currentValue={popupData.currentValue}
+                />
+              )}
+            </>
           ) : (
             <p>Loading Power BI report...</p>
           )}
         </main>
-
-        {/* Modal for editing data */}
-        {isModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <h2>Edit {selectedCell.column}</h2>
-              <input
-                type="number"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-              />
-              <button onClick={handleSubmit}>Submit</button>
-              <button onClick={closeModal}>Cancel</button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
