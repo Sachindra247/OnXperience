@@ -13,6 +13,7 @@ const dbConfig = {
   database: process.env.AZURE_SQL_DATABASE,
   options: {
     encrypt: true,
+    enableArithAbort: true,
   },
 };
 
@@ -29,7 +30,9 @@ module.exports = async (req, res) => {
 
   try {
     const pool = await sql.connect(dbConfig);
-    const result = await pool.request().query("SELECT * FROM your_table_name");
+    const result = await pool
+      .request()
+      .query("SELECT * FROM Subscription_Licenses");
     res.status(200).json(result.recordset);
   } catch (err) {
     console.error("SQL error:", err);
