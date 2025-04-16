@@ -366,14 +366,11 @@ const HomePage = () => {
   const handleEmbedEvent = (event) => {
     const { pageId, visual, dataPoints } = event.detail;
 
-    console.log("DATA SELECTED EVENT:", event.detail);
+    // Check if event is properly triggered
+    console.log("Power BI Event Fired:", event.detail);
 
-    // Only trigger for the "adoption" page
-    if (
-      pageId === "8e9801e82496355a41ee" &&
-      visual &&
-      visual.name === "matrix"
-    ) {
+    // Only trigger for the "adoption" page and if the visual is of type 'matrix'
+    if (pageId === "8e9801e82496355a41ee" && visual.type === "matrix") {
       dataPoints.forEach((dataPoint) => {
         const columnName = dataPoint.target.column; // Get the column name
         const columnValue = dataPoint.value; // Get the value of the clicked cell
@@ -399,11 +396,15 @@ const HomePage = () => {
     const powerbiElement = document.querySelector(".home-report");
 
     if (powerbiElement) {
+      // Debugging to see if the event is getting attached
+      console.log("Attaching event listener to Power BI embed");
+
       powerbiElement.addEventListener("powerbiEvent", handleEmbedEvent);
     }
 
     return () => {
       if (powerbiElement) {
+        console.log("Removing event listener from Power BI embed");
         powerbiElement.removeEventListener("powerbiEvent", handleEmbedEvent);
       }
     };
