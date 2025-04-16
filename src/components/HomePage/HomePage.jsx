@@ -438,11 +438,12 @@ const HomePage = () => {
       if (report && typeof report.on === "function") {
         // Remove any existing listeners
         report.off("visualClicked");
-        report.off("selectionChanged"); // Remove previous selection change listeners
+        report.off("selectionChanged");
+        report.off("dataPointClicked"); // Remove previous dataPointClicked listeners
 
-        // Add a new listener for selection change
-        report.on("selectionChanged", (event) => {
-          console.log("selectionChanged event:", event);
+        // Add a new listener for data point clicked event
+        report.on("dataPointClicked", (event) => {
+          console.log("dataPointClicked event:", event);
           const dataPoints = event.detail?.dataPoints || [];
           if (dataPoints.length > 0) {
             const dataPoint = dataPoints[0];
@@ -451,12 +452,12 @@ const HomePage = () => {
               const column = identities[0].equals?.toString() || "";
 
               if (
-                column.includes("Licenses used") ||
+                column.includes("Licenses Used") ||
                 column.includes("Licenses Purchased")
               ) {
                 setPopupData({
-                  columnName: column.includes("Licenses used")
-                    ? "Licenses used"
+                  columnName: column.includes("Licenses Used")
+                    ? "Licenses Used"
                     : "Licenses Purchased",
                   currentValue: dataPoint.value,
                   dataPoint: dataPoint,
@@ -467,10 +468,10 @@ const HomePage = () => {
           }
         });
 
-        console.log("selectionChanged event listener added!");
+        console.log("dataPointClicked event listener added!");
       }
     } catch (error) {
-      console.error("Error setting up selectionChanged handler:", error);
+      console.error("Error setting up dataPointClicked handler:", error);
     }
   };
 
