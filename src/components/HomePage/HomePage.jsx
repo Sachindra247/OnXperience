@@ -287,7 +287,6 @@ import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
-// Popup component for editing license values
 const LicensePopup = ({ onClose, onSubmit, columnName, currentValue }) => {
   const [value, setValue] = useState(currentValue || "");
 
@@ -370,57 +369,74 @@ const HomePage = () => {
   const powerBiRef = useRef(null);
   const location = useLocation();
 
-  // Update the useEffect hook for event handlers
+  useEffect(() => {
+    const fetchEmbedToken = async () => {
+      try {
+        const response = await axios.get("https://on-xperience.vercel.app/api");
+        setEmbedToken(response.data.embedToken);
+      } catch (error) {
+        console.error("Error fetching embed token:", error);
+      }
+    };
+    fetchEmbedToken();
+  }, []);
+
   useEffect(() => {
     if (!powerBiRef.current || !embedToken) return;
 
-    const report = powerBiRef.current;
+    const handleVisualClick = (event) => {
+      if (event.detail.pageName === "8e9801e82496355a41ee") {
+        const visual = event.detail.visual;
+        if (visual.type === "table" || visual.type === "matrix") {
+          const dataPoints = event.detail.dataPoints;
+          if (dataPoints && dataPoints.length > 0) {
+            const dataPoint = dataPoints[0];
+            const identities = dataPoint.identity;
 
-    // Check if report exists and has the getReport method
-    if (report && typeof report.getReport === "function") {
-      report
-        .getReport()
-        .then((report) => {
-          report.on("loaded", () => {
-            report.on("visualClicked", (event) => {
-              if (event.detail.pageName === "8e9801e82496355a41ee") {
-                const visual = event.detail.visual;
-                if (visual.type === "table" || visual.type === "matrix") {
-                  const dataPoints = event.detail.dataPoints;
-                  if (dataPoints && dataPoints.length > 0) {
-                    const dataPoint = dataPoints[0];
-                    const identities = dataPoint.identity;
+            if (identities && identities.length > 0) {
+              const identity = identities[0];
+              const column = identity.equals.toString();
 
-                    if (identities && identities.length > 0) {
-                      const identity = identities[0];
-                      const column = identity.equals.toString();
-
-                      if (
-                        column.includes("Licenses used") ||
-                        column.includes("Licenses Purchased")
-                      ) {
-                        setPopupData({
-                          columnName: column.includes("Licenses used")
-                            ? "Licenses used"
-                            : "Licenses Purchased",
-                          currentValue: dataPoint.value,
-                          dataPoint: dataPoint,
-                        });
-                        setShowPopup(true);
-                      }
-                    }
-                  }
-                }
+              if (
+                column.includes("Licenses used") ||
+                column.includes("Licenses Purchased")
+              ) {
+                setPopupData({
+                  columnName: column.includes("Licenses used")
+                    ? "Licenses used"
+                    : "Licenses Purchased",
+                  currentValue: dataPoint.value,
+                  dataPoint: dataPoint,
+                });
+                setShowPopup(true);
               }
-            });
+            }
+          }
+        }
+      }
+    };
+
+    const setupEventHandlers = async () => {
+      try {
+        const report = powerBiRef.current;
+        if (report) {
+          report.on("loaded", () => {
+            report.on("visualClicked", handleVisualClick);
           });
-        })
-        .catch((error) => {
-          console.error("Error getting Power BI report:", error);
-        });
-    } else {
-      console.error("Power BI report reference is not valid");
-    }
+        }
+      } catch (error) {
+        console.error("Error setting up event handlers:", error);
+      }
+    };
+
+    setupEventHandlers();
+
+    return () => {
+      // Cleanup event listeners
+      if (powerBiRef.current) {
+        powerBiRef.current.off("visualClicked", handleVisualClick);
+      }
+    };
   }, [embedToken, location.pathname]);
 
   const toggleSection = (section, event) => {
@@ -429,27 +445,7 @@ const HomePage = () => {
   };
 
   const handlePopupSubmit = (newValue) => {
-    // In a real implementation, you would:
-    // 1. Send the update to your backend API
-    // 2. Possibly refresh the Power BI report data
     console.log(`Updating ${popupData.columnName} to ${newValue}`);
-
-    // Example API call (uncomment and implement your actual endpoint):
-    /*
-    axios.post('/api/update-license', {
-      column: popupData.columnName,
-      value: newValue,
-      // Include any other necessary identifiers from dataPoint
-    })
-    .then(() => {
-      // Optionally refresh the report if needed
-      // powerBiRef.current.getReport().refresh();
-    })
-    .catch(error => {
-      console.error('Error updating license value:', error);
-    });
-    */
-
     setShowPopup(false);
   };
 
@@ -557,6 +553,9 @@ const HomePage = () => {
                 cssClassName="home-report"
                 key={location.pathname}
                 ref={powerBiRef}
+                getEmbeddedComponent={(embeddedReport) => {
+                  powerBiRef.current = embeddedReport;
+                }}
               />
               {showPopup && (
                 <LicensePopup
