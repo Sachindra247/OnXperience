@@ -329,8 +329,9 @@ const reports = {
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [modalData, setModalData] = useState({ field: "", value: "" });
-  const [showModal, setShowModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState(null);
+  const [newValue, setNewValue] = useState("");
   const location = useLocation();
 
   // Fetching Power BI embed token
@@ -354,18 +355,39 @@ const HomePage = () => {
   const currentRoute = location.pathname.split("/")[1];
   const currentReport = reports[currentRoute] || reports.homepage;
 
-  // Handle table cell click to open modal
-  const handleTableCellClick = (field, value) => {
-    setModalData({ field, value });
-    setShowModal(true);
+  const openModal = (column, value) => {
+    setSelectedCell({ column, value });
+    setNewValue(value);
+    setIsModalOpen(true);
   };
 
-  // Handle modal data submission
-  const handleSubmit = () => {
-    console.log("Submitted data:", modalData);
-    // Here, send the updated data to your backend or Power BI API
-    setShowModal(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedCell(null);
+    setNewValue("");
   };
+
+  const handleSubmit = () => {
+    // Here you can send newValue and selectedCell to your API or backend.
+    console.log(`Updated ${selectedCell.column}:`, newValue);
+    closeModal();
+  };
+
+  const handleEmbedEvent = (event) => {
+    if (event.detail && event.detail.eventType === "cellClicked") {
+      const { column, value } = event.detail;
+      if (column === "Licenses Purchased" || column === "Licenses Used") {
+        openModal(column, value);
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("powerbiEvent", handleEmbedEvent);
+    return () => {
+      window.removeEventListener("powerbiEvent", handleEmbedEvent);
+    };
+  }, []);
 
   return (
     <div className="homepage-container">
@@ -403,15 +425,6 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
-              {/* Additional menu items */}
-            </ul>
-            <ul className="tree-menu bottom-links">
-              <li>
-                <Link to="/settings">Settings</Link>
-              </li>
-              <li>
-                <Link to="/help">Help</Link>
-              </li>
             </ul>
           </nav>
         </aside>
@@ -434,48 +447,28 @@ const HomePage = () => {
               }}
               cssClassName="home-report"
               key={location.pathname}
-              eventHandlers={
-                // Listen for cell clicks on the Power BI table visual
-                [
-                  {
-                    event: "cellClicked",
-                    callback: (event) => {
-                      const field = event.detail.column;
-                      const value = event.detail.value;
-                      if (
-                        field === "Licenses Purchased" ||
-                        field === "Licenses Used"
-                      ) {
-                        handleTableCellClick(field, value);
-                      }
-                    },
-                  },
-                ]
-              }
             />
           ) : (
             <p>Loading Power BI report...</p>
           )}
         </main>
-      </div>
 
-      {/* Modal for data entry */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Edit {modalData.field}</h3>
-            <input
-              type="number"
-              value={modalData.value}
-              onChange={(e) =>
-                setModalData({ ...modalData, value: e.target.value })
-              }
-            />
-            <button onClick={handleSubmit}>Submit</button>
-            <button onClick={() => setShowModal(false)}>Cancel</button>
+        {/* Modal for editing data */}
+        {isModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h2>Edit {selectedCell.column}</h2>
+              <input
+                type="number"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+              />
+              <button onClick={handleSubmit}>Submit</button>
+              <button onClick={closeModal}>Cancel</button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
