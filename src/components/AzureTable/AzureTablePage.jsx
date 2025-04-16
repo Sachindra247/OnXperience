@@ -27,7 +27,6 @@ const AzureTablePage = () => {
 
   return (
     <div className="azure-table-wrapper">
-      <h2>Azure SQL Table</h2>
       {loading ? (
         <p>Loading table data...</p>
       ) : (
