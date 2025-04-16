@@ -91,193 +91,6 @@
 
 //my current homepage
 
-// import React, { useState, useEffect, useRef } from "react";
-// import { Link, useLocation } from "react-router-dom";
-// import "./HomePage.css";
-// import { PowerBIEmbed } from "powerbi-client-react";
-// import { models } from "powerbi-client";
-// import { FaPlus, FaMinus } from "react-icons/fa";
-// import Header from "../../components/Header/Header";
-// import axios from "axios";
-
-// const reports = {
-//   homepage: {
-//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-//     pageId: "42339bb3bbdb295ed7c8",
-//   },
-//   growth: {
-//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-//     pageId: "34c6fffab0536014a095",
-//   },
-//   adoption: {
-//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-//     pageId: "8e9801e82496355a41ee",
-//   },
-//   engagement: {
-//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-//     pageId: "1a80fca4b9d06e022019",
-//   },
-//   feedback: {
-//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-//     pageId: "2bc6242386de992b4428",
-//   },
-//   healthscore: {
-//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
-//     embedUrl:
-//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-//     pageId: "42339bb3bbdb295ed7c8",
-//   },
-// };
-
-// const HomePage = () => {
-//   const [expandedSection, setExpandedSection] = useState(null);
-//   const [embedToken, setEmbedToken] = useState(null);
-//   const location = useLocation();
-
-//   // Fetching Power BI embed token
-//   useEffect(() => {
-//     const fetchEmbedToken = async () => {
-//       try {
-//         const response = await axios.get("https://on-xperience.vercel.app/api");
-//         setEmbedToken(response.data.embedToken);
-//       } catch (error) {
-//         console.error("Error fetching embed token:", error);
-//       }
-//     };
-//     fetchEmbedToken();
-//   }, []);
-
-//   const toggleSection = (section, event) => {
-//     event.stopPropagation();
-//     setExpandedSection((prev) => (prev === section ? null : section));
-//   };
-
-//   const currentRoute = location.pathname.split("/")[1];
-//   const currentReport = reports[currentRoute] || reports.homepage;
-
-//   return (
-//     <div className="homepage-container">
-//       <Header />
-//       <div className="content">
-//         <aside className="sidebar">
-//           <nav className="nav-menu">
-//             <ul className="tree-menu">
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("healthScore", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/healthscore"> Health Score</Link>
-//                 {expandedSection === "healthScore" && (
-//                   <ul
-//                     className="submenu expanded"
-//                     style={{ display: "block", border: "none" }}
-//                   >
-//                     <li>
-//                       <Link to="/growth">Growth</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/adoption">Adoption</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/engagement">Engagement</Link>
-//                     </li>
-//                     <li>
-//                       <Link to="/feedback">Feedback</Link>
-//                     </li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("renewals", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/renewals">Renewals</Link>
-//                 {expandedSection === "renewals" && (
-//                   <ul className="submenu expanded">
-//                     <li>Dummy Page</li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <span
-//                   className="expand-icon"
-//                   onClick={(e) => toggleSection("financials", e)}
-//                   style={{ float: "right" }}
-//                 >
-//                   {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-//                 </span>
-//                 <Link to="/financials">Financials</Link>
-//                 {expandedSection === "financials" && (
-//                   <ul className="submenu expanded">
-//                     <li>Dummy Page</li>
-//                   </ul>
-//                 )}
-//               </li>
-//               <li>
-//                 <Link to="/statistics">Statistics</Link>
-//               </li>
-//             </ul>
-//             <ul className="tree-menu bottom-links">
-//               <li>
-//                 <Link to="/settings">Settings</Link>
-//               </li>
-//               <li>
-//                 <Link to="/help">Help</Link>
-//               </li>
-//             </ul>
-//           </nav>
-//         </aside>
-
-//         <main className="report-container">
-//           {embedToken ? (
-//             <PowerBIEmbed
-//               embedConfig={{
-//                 type: "report",
-//                 id: currentReport.id,
-//                 embedUrl: currentReport.embedUrl,
-//                 accessToken: embedToken,
-//                 tokenType: models.TokenType.Embed,
-//                 settings: {
-//                   panes: { filters: { expanded: false, visible: false } },
-//                   background: models.BackgroundType.Default,
-//                   navContentPaneEnabled: false,
-//                 },
-//                 pageName: currentReport.pageId,
-//               }}
-//               cssClassName="home-report"
-//               key={location.pathname}
-//             />
-//           ) : (
-//             <p>Loading Power BI report...</p>
-//           )}
-//         </main>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default HomePage;
-
-//code with modal
-
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
@@ -287,39 +100,6 @@ import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
-// Popup component for editing licenses
-const LicensePopup = ({ onClose, onSubmit, columnName, currentValue }) => {
-  const [value, setValue] = useState(currentValue || "");
-
-  const handleSubmit = () => {
-    onSubmit(parseInt(value, 10) || 0);
-  };
-
-  return (
-    <div className="popup-overlay">
-      <div className="popup-content">
-        <h3>Edit {columnName}</h3>
-        <input
-          type="number"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          min="0"
-          step="1"
-        />
-        <div className="popup-buttons">
-          <button className="submit-btn" onClick={handleSubmit}>
-            Submit
-          </button>
-          <button className="cancel-btn" onClick={onClose}>
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Define reports and their embed configuration
 const reports = {
   homepage: {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
@@ -362,16 +142,9 @@ const reports = {
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupData, setPopupData] = useState({
-    columnName: "",
-    currentValue: null,
-    dataPoint: null,
-  });
-  const reportRef = useRef(null);
   const location = useLocation();
 
-  // Fetch embed token
+  // Fetching Power BI embed token
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
@@ -384,106 +157,9 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
-  const handleVisualClick = (event) => {
-    console.log("visualClicked event:", event);
-
-    // Check if 'detail' exists
-    if (event.detail) {
-      console.log("Event Detail:", event.detail);
-
-      // If the visual is available in event.detail, inspect it further
-      if (event.detail.visual) {
-        const visual = event.detail.visual;
-        console.log("Visual clicked:", visual);
-
-        // Check if the visual has dataPoints
-        const dataPoints = visual.dataPoints || [];
-        console.log("Data points:", dataPoints);
-
-        if (dataPoints.length > 0) {
-          const dataPoint = dataPoints[0];
-          console.log("Data point clicked:", dataPoint);
-
-          const identities = dataPoint.identity || [];
-          if (identities.length > 0) {
-            const column = identities[0].equals?.toString() || "";
-            console.log("Column info:", column);
-
-            // Now handle if it's one of the target columns
-            if (
-              column.includes("Licenses used") ||
-              column.includes("Licenses Purchased")
-            ) {
-              setPopupData({
-                columnName: column.includes("Licenses used")
-                  ? "Licenses used"
-                  : "Licenses Purchased",
-                currentValue: dataPoint.value,
-                dataPoint: dataPoint,
-              });
-              setShowPopup(true);
-            }
-          }
-        }
-      }
-    } else {
-      console.error("No detail in event.");
-    }
-  };
-
-  const handleReportLoaded = async () => {
-    console.log("Report loaded!");
-    try {
-      const report = reportRef.current;
-      if (report && typeof report.on === "function") {
-        // Remove any existing listeners
-        report.off("visualClicked");
-        report.off("selectionChanged");
-        report.off("dataPointClicked"); // Remove previous dataPointClicked listeners
-
-        // Add a new listener for data point clicked event
-        report.on("dataPointClicked", (event) => {
-          console.log("dataPointClicked event:", event);
-          const dataPoints = event.detail?.dataPoints || [];
-          if (dataPoints.length > 0) {
-            const dataPoint = dataPoints[0];
-            const identities = dataPoint.identity || [];
-            if (identities.length > 0) {
-              const column = identities[0].equals?.toString() || "";
-
-              if (
-                column.includes("Licenses Used") ||
-                column.includes("Licenses Purchased")
-              ) {
-                setPopupData({
-                  columnName: column.includes("Licenses Used")
-                    ? "Licenses Used"
-                    : "Licenses Purchased",
-                  currentValue: dataPoint.value,
-                  dataPoint: dataPoint,
-                });
-                setShowPopup(true);
-              }
-            }
-          }
-        });
-
-        console.log("dataPointClicked event listener added!");
-      }
-    } catch (error) {
-      console.error("Error setting up dataPointClicked handler:", error);
-    }
-  };
-
   const toggleSection = (section, event) => {
     event.stopPropagation();
     setExpandedSection((prev) => (prev === section ? null : section));
-  };
-
-  const handlePopupSubmit = (newValue) => {
-    console.log(`Updating ${popupData.columnName} to ${newValue}`);
-    setShowPopup(false);
-    // Add backend update logic here
   };
 
   const currentRoute = location.pathname.split("/")[1];
@@ -504,7 +180,7 @@ const HomePage = () => {
                 >
                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
                 </span>
-                <Link to="/healthscore">Health Score</Link>
+                <Link to="/healthscore"> Health Score</Link>
                 {expandedSection === "healthScore" && (
                   <ul
                     className="submenu expanded"
@@ -572,42 +248,23 @@ const HomePage = () => {
 
         <main className="report-container">
           {embedToken ? (
-            <>
-              <PowerBIEmbed
-                embedConfig={{
-                  type: "report",
-                  id: currentReport.id,
-                  embedUrl: currentReport.embedUrl,
-                  accessToken: embedToken,
-                  tokenType: models.TokenType.Embed,
-                  settings: {
-                    panes: { filters: { expanded: false, visible: false } },
-                    background: models.BackgroundType.Default,
-                    navContentPaneEnabled: false,
-                  },
-                  pageName: currentReport.pageId,
-                }}
-                cssClassName="home-report"
-                key={location.pathname}
-                ref={reportRef}
-                onLoad={handleReportLoaded}
-                getEmbeddedComponent={(embeddedReport) => {
-                  reportRef.current = embeddedReport;
-                  console.log("Power BI embedded!");
-                  embeddedReport.off("visualClicked");
-                  embeddedReport.on("visualClicked", handleVisualClick);
-                  console.log("visualClicked event wired!");
-                }}
-              />
-              {showPopup && (
-                <LicensePopup
-                  onClose={() => setShowPopup(false)}
-                  onSubmit={handlePopupSubmit}
-                  columnName={popupData.columnName}
-                  currentValue={popupData.currentValue}
-                />
-              )}
-            </>
+            <PowerBIEmbed
+              embedConfig={{
+                type: "report",
+                id: currentReport.id,
+                embedUrl: currentReport.embedUrl,
+                accessToken: embedToken,
+                tokenType: models.TokenType.Embed,
+                settings: {
+                  panes: { filters: { expanded: false, visible: false } },
+                  background: models.BackgroundType.Default,
+                  navContentPaneEnabled: false,
+                },
+                pageName: currentReport.pageId,
+              }}
+              cssClassName="home-report"
+              key={location.pathname}
+            />
           ) : (
             <p>Loading Power BI report...</p>
           )}
@@ -618,3 +275,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
+//code with modal
