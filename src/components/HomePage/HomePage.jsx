@@ -503,32 +503,31 @@ const HomePage = () => {
                 },
                 pageName: currentReport.pageId,
               }}
-              cssClassName="home-report"
-              getEmbeddedComponent={handleEmbed}
-              key={location.pathname}
+              cssClassName="powerbi-embed"
+              onEmbedded={(event) => handleEmbed(event)}
             />
           ) : (
-            <p>Loading Power BI report...</p>
+            <p>Loading...</p>
           )}
         </main>
-      </div>
 
-      <Modal
-        isOpen={modalIsOpen}
-        onRequestClose={() => setModalIsOpen(false)}
-        contentLabel="Edit Licenses"
-      >
-        <h2>Edit {modalData.field}</h2>
-        <p>Current Value: {modalData.currentValue}</p>
-        <input
-          type="number"
-          placeholder="Enter new value"
-          value={newValue}
-          onChange={(e) => setNewValue(e.target.value)}
-        />
-        <button onClick={handleModalSubmit}>Submit</button>
-        <button onClick={() => setModalIsOpen(false)}>Cancel</button>
-      </Modal>
+        <Modal
+          isOpen={modalIsOpen}
+          onRequestClose={() => setModalIsOpen(false)}
+        >
+          <h2>Edit {modalData.field}</h2>
+          <label>
+            New Value:
+            <input
+              type="text"
+              value={newValue}
+              onChange={(e) => setNewValue(e.target.value)}
+            />
+          </label>
+          <button onClick={handleModalSubmit}>Submit</button>
+          <button onClick={() => setModalIsOpen(false)}>Close</button>
+        </Modal>
+      </div>
     </div>
   );
 };
