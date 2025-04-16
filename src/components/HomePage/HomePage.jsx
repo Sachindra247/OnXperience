@@ -384,33 +384,34 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
-  // Handle visual click event
   const handleVisualClick = (event) => {
     console.log("visualClicked event:", event);
 
-    // Check for the pageId
-    if (event.detail?.pageName !== "8e9801e82496355a41ee") return;
+    // Check if 'detail' exists and has the required properties
+    if (event.detail && event.detail.visual) {
+      const dataPoints = event.detail.visual.dataPoints;
+      console.log("dataPoints:", dataPoints);
 
-    const dataPoints = event.detail?.dataPoints;
-    if (dataPoints && dataPoints.length > 0) {
-      const dataPoint = dataPoints[0];
-      const identities = dataPoint.identity;
+      if (dataPoints && dataPoints.length > 0) {
+        const dataPoint = dataPoints[0];
+        const identities = dataPoint.identity;
 
-      if (identities?.length > 0) {
-        const column = identities[0].equals?.toString() || "";
+        if (identities && identities.length > 0) {
+          const column = identities[0].equals?.toString() || "";
 
-        if (
-          column.includes("Licenses used") ||
-          column.includes("Licenses Purchased")
-        ) {
-          setPopupData({
-            columnName: column.includes("Licenses used")
-              ? "Licenses used"
-              : "Licenses Purchased",
-            currentValue: dataPoint.value,
-            dataPoint: dataPoint,
-          });
-          setShowPopup(true);
+          if (
+            column.includes("Licenses Used") ||
+            column.includes("Licenses Purchased")
+          ) {
+            setPopupData({
+              columnName: column.includes("Licenses used")
+                ? "Licenses Used"
+                : "Licenses Purchased",
+              currentValue: dataPoint.value,
+              dataPoint: dataPoint,
+            });
+            setShowPopup(true);
+          }
         }
       }
     }
