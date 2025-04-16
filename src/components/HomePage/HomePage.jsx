@@ -91,6 +91,193 @@
 
 //my current homepage
 
+// import React, { useState, useEffect, useRef } from "react";
+// import { Link, useLocation } from "react-router-dom";
+// import "./HomePage.css";
+// import { PowerBIEmbed } from "powerbi-client-react";
+// import { models } from "powerbi-client";
+// import { FaPlus, FaMinus } from "react-icons/fa";
+// import Header from "../../components/Header/Header";
+// import axios from "axios";
+
+// const reports = {
+//   homepage: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "42339bb3bbdb295ed7c8",
+//   },
+//   growth: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "34c6fffab0536014a095",
+//   },
+//   adoption: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "8e9801e82496355a41ee",
+//   },
+//   engagement: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "1a80fca4b9d06e022019",
+//   },
+//   feedback: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "2bc6242386de992b4428",
+//   },
+//   healthscore: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "42339bb3bbdb295ed7c8",
+//   },
+// };
+
+// const HomePage = () => {
+//   const [expandedSection, setExpandedSection] = useState(null);
+//   const [embedToken, setEmbedToken] = useState(null);
+//   const location = useLocation();
+
+//   // Fetching Power BI embed token
+//   useEffect(() => {
+//     const fetchEmbedToken = async () => {
+//       try {
+//         const response = await axios.get("https://on-xperience.vercel.app/api");
+//         setEmbedToken(response.data.embedToken);
+//       } catch (error) {
+//         console.error("Error fetching embed token:", error);
+//       }
+//     };
+//     fetchEmbedToken();
+//   }, []);
+
+//   const toggleSection = (section, event) => {
+//     event.stopPropagation();
+//     setExpandedSection((prev) => (prev === section ? null : section));
+//   };
+
+//   const currentRoute = location.pathname.split("/")[1];
+//   const currentReport = reports[currentRoute] || reports.homepage;
+
+//   return (
+//     <div className="homepage-container">
+//       <Header />
+//       <div className="content">
+//         <aside className="sidebar">
+//           <nav className="nav-menu">
+//             <ul className="tree-menu">
+//               <li>
+//                 <span
+//                   className="expand-icon"
+//                   onClick={(e) => toggleSection("healthScore", e)}
+//                   style={{ float: "right" }}
+//                 >
+//                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
+//                 </span>
+//                 <Link to="/healthscore"> Health Score</Link>
+//                 {expandedSection === "healthScore" && (
+//                   <ul
+//                     className="submenu expanded"
+//                     style={{ display: "block", border: "none" }}
+//                   >
+//                     <li>
+//                       <Link to="/growth">Growth</Link>
+//                     </li>
+//                     <li>
+//                       <Link to="/adoption">Adoption</Link>
+//                     </li>
+//                     <li>
+//                       <Link to="/engagement">Engagement</Link>
+//                     </li>
+//                     <li>
+//                       <Link to="/feedback">Feedback</Link>
+//                     </li>
+//                   </ul>
+//                 )}
+//               </li>
+//               <li>
+//                 <span
+//                   className="expand-icon"
+//                   onClick={(e) => toggleSection("renewals", e)}
+//                   style={{ float: "right" }}
+//                 >
+//                   {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
+//                 </span>
+//                 <Link to="/renewals">Renewals</Link>
+//                 {expandedSection === "renewals" && (
+//                   <ul className="submenu expanded">
+//                     <li>Dummy Page</li>
+//                   </ul>
+//                 )}
+//               </li>
+//               <li>
+//                 <span
+//                   className="expand-icon"
+//                   onClick={(e) => toggleSection("financials", e)}
+//                   style={{ float: "right" }}
+//                 >
+//                   {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
+//                 </span>
+//                 <Link to="/financials">Financials</Link>
+//                 {expandedSection === "financials" && (
+//                   <ul className="submenu expanded">
+//                     <li>Dummy Page</li>
+//                   </ul>
+//                 )}
+//               </li>
+//               <li>
+//                 <Link to="/statistics">Statistics</Link>
+//               </li>
+//             </ul>
+//             <ul className="tree-menu bottom-links">
+//               <li>
+//                 <Link to="/settings">Settings</Link>
+//               </li>
+//               <li>
+//                 <Link to="/help">Help</Link>
+//               </li>
+//             </ul>
+//           </nav>
+//         </aside>
+
+//         <main className="report-container">
+//           {embedToken ? (
+//             <PowerBIEmbed
+//               embedConfig={{
+//                 type: "report",
+//                 id: currentReport.id,
+//                 embedUrl: currentReport.embedUrl,
+//                 accessToken: embedToken,
+//                 tokenType: models.TokenType.Embed,
+//                 settings: {
+//                   panes: { filters: { expanded: false, visible: false } },
+//                   background: models.BackgroundType.Default,
+//                   navContentPaneEnabled: false,
+//                 },
+//                 pageName: currentReport.pageId,
+//               }}
+//               cssClassName="home-report"
+//               key={location.pathname}
+//             />
+//           ) : (
+//             <p>Loading Power BI report...</p>
+//           )}
+//         </main>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default HomePage;
+
+//code with modal
+
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
@@ -142,6 +329,8 @@ const reports = {
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
+  const [modalData, setModalData] = useState({ field: "", value: "" });
+  const [showModal, setShowModal] = useState(false);
   const location = useLocation();
 
   // Fetching Power BI embed token
@@ -164,6 +353,19 @@ const HomePage = () => {
 
   const currentRoute = location.pathname.split("/")[1];
   const currentReport = reports[currentRoute] || reports.homepage;
+
+  // Handle table cell click to open modal
+  const handleTableCellClick = (field, value) => {
+    setModalData({ field, value });
+    setShowModal(true);
+  };
+
+  // Handle modal data submission
+  const handleSubmit = () => {
+    console.log("Submitted data:", modalData);
+    // Here, send the updated data to your backend or Power BI API
+    setShowModal(false);
+  };
 
   return (
     <div className="homepage-container">
@@ -201,39 +403,7 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("renewals", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/renewals">Renewals</Link>
-                {expandedSection === "renewals" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("financials", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
-                </span>
-                <Link to="/financials">Financials</Link>
-                {expandedSection === "financials" && (
-                  <ul className="submenu expanded">
-                    <li>Dummy Page</li>
-                  </ul>
-                )}
-              </li>
-              <li>
-                <Link to="/statistics">Statistics</Link>
-              </li>
+              {/* Additional menu items */}
             </ul>
             <ul className="tree-menu bottom-links">
               <li>
@@ -264,16 +434,50 @@ const HomePage = () => {
               }}
               cssClassName="home-report"
               key={location.pathname}
+              eventHandlers={
+                // Listen for cell clicks on the Power BI table visual
+                [
+                  {
+                    event: "cellClicked",
+                    callback: (event) => {
+                      const field = event.detail.column;
+                      const value = event.detail.value;
+                      if (
+                        field === "Licenses Purchased" ||
+                        field === "Licenses Used"
+                      ) {
+                        handleTableCellClick(field, value);
+                      }
+                    },
+                  },
+                ]
+              }
             />
           ) : (
             <p>Loading Power BI report...</p>
           )}
         </main>
       </div>
+
+      {/* Modal for data entry */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit {modalData.field}</h3>
+            <input
+              type="number"
+              value={modalData.value}
+              onChange={(e) =>
+                setModalData({ ...modalData, value: e.target.value })
+              }
+            />
+            <button onClick={handleSubmit}>Submit</button>
+            <button onClick={() => setShowModal(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default HomePage;
-
-//code with modal
