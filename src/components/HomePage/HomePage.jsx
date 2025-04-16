@@ -304,7 +304,7 @@ const reports = {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-    pageId: "8e9801e82496355a41ee",
+    pageId: "8e9801e82496355a41ee", // This is the page you care about
   },
   engagement: {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
@@ -373,7 +373,9 @@ const HomePage = () => {
   };
 
   const handleEmbedEvent = (event) => {
-    if (event.detail && event.detail.column) {
+    const report = event.detail;
+    // Only proceed if the report is the one with the required pageId
+    if (report.pageName === "8e9801e82496355a41ee") {
       const clickedColumn = event.detail.column;
       if (
         clickedColumn === "Licenses Purchased" ||
