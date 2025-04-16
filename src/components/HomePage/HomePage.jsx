@@ -374,6 +374,7 @@ const HomePage = () => {
     console.log("Clicked Value:", value);
     console.log("Entire Data Point:", point);
 
+    // Check if the selected column is "Licenses Purchased" or "Licenses Used"
     if (
       (columnName === "Licenses Purchased" || columnName === "Licenses Used") &&
       currentRoute === "adoption" &&
