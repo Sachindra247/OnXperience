@@ -282,7 +282,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
-import { models, Report } from "powerbi-client";
+import { models } from "powerbi-client";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
@@ -331,15 +331,10 @@ const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [selectedField, setSelectedField] = useState(null);
-  const [inputValue, setInputValue] = useState("");
+  const [modalData, setModalData] = useState({ field: "", currentValue: "" });
   const location = useLocation();
   const reportRef = useRef(null);
 
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
-
-  // Fetch embed token
   useEffect(() => {
     const fetchEmbedToken = async () => {
       try {
@@ -357,40 +352,48 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
-  // Setup event listener only for adoption page
-  const handleEmbed = (report) => {
-    if (currentRoute !== "adoption") return;
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
 
+  const handleDataSelected = (event) => {
+    console.log("DataSelected Event Triggered:", event);
+    const data = event.detail;
+
+    if (!data?.dataPoints?.length) {
+      console.log("No data points found.");
+      return;
+    }
+
+    const point = data.dataPoints[0];
+    const identity = point.identity?.[0];
+    const columnName = identity?.target?.column || "Unknown";
+    const value = point.values?.[0];
+
+    console.log("Clicked Column:", columnName);
+    console.log("Clicked Value:", value);
+
+    if (columnName === "Licenses Purchased" || columnName === "Licenses Used") {
+      setModalData({ field: columnName, currentValue: value });
+      setModalIsOpen(true);
+    }
+  };
+
+  const handleEmbed = (report) => {
     reportRef.current = report;
 
-    report.on("dataSelected", (event) => {
-      const selections = event.detail?.dataPoints || [];
-      selections.forEach((point) => {
-        point.identity?.forEach((id) => {
-          const fieldValue = id?.equals || id?.value || id;
-          if (
-            fieldValue
-              ?.toString()
-              .toLowerCase()
-              .includes("licenses purchased") ||
-            fieldValue?.toString().toLowerCase().includes("licenses used")
-          ) {
-            setSelectedField(fieldValue);
-            setInputValue(""); // reset
-            setModalIsOpen(true);
-          }
-        });
-      });
-    });
-  };
+    // Unsubscribe from any previous dataSelected event
+    report.off("dataSelected");
 
-  const closeModal = () => {
-    setModalIsOpen(false);
-  };
+    // Subscribe to dataSelected only on adoption page
+    if (currentRoute === "adoption") {
+      report.on("dataSelected", handleDataSelected);
+      console.log("Listening for dataSelected event on Adoption page");
+    }
 
-  const handleSubmit = () => {
-    console.log(`Updated ${selectedField} to ${inputValue}`);
-    closeModal();
+    // Optional debugging logs
+    report.on("loaded", () => console.log("Report loaded"));
+    report.on("rendered", () => console.log("Report rendered"));
+    report.on("error", (e) => console.error("Power BI error:", e));
   };
 
   return (
@@ -410,7 +413,10 @@ const HomePage = () => {
                 </span>
                 <Link to="/healthscore"> Health Score</Link>
                 {expandedSection === "healthScore" && (
-                  <ul className="submenu expanded">
+                  <ul
+                    className="submenu expanded"
+                    style={{ display: "block", border: "none" }}
+                  >
                     <li>
                       <Link to="/growth">Growth</Link>
                     </li>
@@ -427,9 +433,23 @@ const HomePage = () => {
                 )}
               </li>
               <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("renewals", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
+                </span>
                 <Link to="/renewals">Renewals</Link>
               </li>
               <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("financials", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
+                </span>
                 <Link to="/financials">Financials</Link>
               </li>
               <li>
@@ -464,11 +484,7 @@ const HomePage = () => {
                 pageName: currentReport.pageId,
               }}
               cssClassName="home-report"
-              eventHandlers={
-                currentRoute === "adoption"
-                  ? new Map([["loaded", (e) => handleEmbed(e.detail)]])
-                  : undefined
-              }
+              getEmbeddedComponent={handleEmbed}
               key={location.pathname}
             />
           ) : (
@@ -477,27 +493,26 @@ const HomePage = () => {
         </main>
       </div>
 
-      {/* Modal */}
       <Modal
         isOpen={modalIsOpen}
-        onRequestClose={closeModal}
+        onRequestClose={() => setModalIsOpen(false)}
         contentLabel="Edit Licenses"
-        ariaHideApp={false}
-        className="custom-modal"
-        overlayClassName="custom-modal-overlay"
+        style={{
+          content: {
+            top: "50%",
+            left: "50%",
+            right: "auto",
+            bottom: "auto",
+            marginRight: "-50%",
+            transform: "translate(-50%, -50%)",
+          },
+        }}
       >
-        <h2>Edit {selectedField}</h2>
-        <input
-          type="number"
-          placeholder="Enter new value"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-        />
+        <h2>Edit {modalData.field}</h2>
+        <p>Current Value: {modalData.currentValue}</p>
+        <input type="number" placeholder="Enter new value" />
         <div style={{ marginTop: "10px" }}>
-          <button onClick={handleSubmit}>Submit</button>
-          <button onClick={closeModal} style={{ marginLeft: "10px" }}>
-            Cancel
-          </button>
+          <button onClick={() => setModalIsOpen(false)}>Close</button>
         </div>
       </Modal>
     </div>
