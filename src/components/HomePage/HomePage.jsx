@@ -396,10 +396,16 @@ const HomePage = () => {
   const currentReport = reports[currentRoute] || reports.homepage;
 
   useEffect(() => {
-    window.addEventListener("powerbiEvent", handleEmbedEvent);
+    const powerbiElement = document.querySelector(".home-report");
+
+    if (powerbiElement) {
+      powerbiElement.addEventListener("powerbiEvent", handleEmbedEvent);
+    }
 
     return () => {
-      window.removeEventListener("powerbiEvent", handleEmbedEvent);
+      if (powerbiElement) {
+        powerbiElement.removeEventListener("powerbiEvent", handleEmbedEvent);
+      }
     };
   }, []);
 
