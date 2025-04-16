@@ -331,9 +331,14 @@ const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [modalData, setModalData] = useState({ field: "", currentValue: "" });
+  const [modalData, setModalData] = useState({
+    field: "",
+    currentValue: "",
+    row: {},
+  });
   const location = useLocation();
   const reportRef = useRef(null);
+  const [newValue, setNewValue] = useState("");
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -356,44 +361,42 @@ const HomePage = () => {
   const currentReport = reports[currentRoute] || reports.homepage;
 
   const handleDataSelected = (event) => {
-    console.log("DataSelected Event Triggered:", event);
     const data = event.detail;
+    console.log("DATA SELECTED EVENT:", data);
 
-    if (!data?.dataPoints?.length) {
-      console.log("No data points found.");
-      return;
-    }
+    if (!data || !data.dataPoints || !data.dataPoints.length) return;
 
     const point = data.dataPoints[0];
-    const identity = point.identity?.[0];
-    const columnName = identity?.target?.column || "Unknown";
-    const value = point.values?.[0];
+    const columnName = point?.identity?.[0]?.target?.column;
+    const value = point?.values?.[0];
 
     console.log("Clicked Column:", columnName);
     console.log("Clicked Value:", value);
+    console.log("Entire Data Point:", point);
 
     if (columnName === "Licenses Purchased" || columnName === "Licenses Used") {
-      setModalData({ field: columnName, currentValue: value });
+      setModalData({ field: columnName, currentValue: value, row: point });
       setModalIsOpen(true);
     }
   };
 
   const handleEmbed = (report) => {
     reportRef.current = report;
+    console.log("Current pageId:", currentReport.pageId);
 
-    // Unsubscribe from any previous dataSelected event
-    report.off("dataSelected");
-
-    // Subscribe to dataSelected only on adoption page
     if (currentRoute === "adoption") {
       report.on("dataSelected", handleDataSelected);
-      console.log("Listening for dataSelected event on Adoption page");
+      console.log("Listening for dataSelected event");
     }
+  };
 
-    // Optional debugging logs
-    report.on("loaded", () => console.log("Report loaded"));
-    report.on("rendered", () => console.log("Report rendered"));
-    report.on("error", (e) => console.error("Power BI error:", e));
+  const handleModalSubmit = () => {
+    console.log("Submitting new value:", newValue);
+    console.log("For field:", modalData.field);
+    console.log("Full Row Data:", modalData.row);
+    // Later: make POST/PUT request to backend/Azure SQL here
+    setModalIsOpen(false);
+    setNewValue("");
   };
 
   return (
@@ -441,6 +444,11 @@ const HomePage = () => {
                   {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
                 </span>
                 <Link to="/renewals">Renewals</Link>
+                {expandedSection === "renewals" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
               </li>
               <li>
                 <span
@@ -451,6 +459,11 @@ const HomePage = () => {
                   {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
                 </span>
                 <Link to="/financials">Financials</Link>
+                {expandedSection === "financials" && (
+                  <ul className="submenu expanded">
+                    <li>Dummy Page</li>
+                  </ul>
+                )}
               </li>
               <li>
                 <Link to="/statistics">Statistics</Link>
@@ -497,23 +510,17 @@ const HomePage = () => {
         isOpen={modalIsOpen}
         onRequestClose={() => setModalIsOpen(false)}
         contentLabel="Edit Licenses"
-        style={{
-          content: {
-            top: "50%",
-            left: "50%",
-            right: "auto",
-            bottom: "auto",
-            marginRight: "-50%",
-            transform: "translate(-50%, -50%)",
-          },
-        }}
       >
         <h2>Edit {modalData.field}</h2>
         <p>Current Value: {modalData.currentValue}</p>
-        <input type="number" placeholder="Enter new value" />
-        <div style={{ marginTop: "10px" }}>
-          <button onClick={() => setModalIsOpen(false)}>Close</button>
-        </div>
+        <input
+          type="number"
+          placeholder="Enter new value"
+          value={newValue}
+          onChange={(e) => setNewValue(e.target.value)}
+        />
+        <button onClick={handleModalSubmit}>Submit</button>
+        <button onClick={() => setModalIsOpen(false)}>Cancel</button>
       </Modal>
     </div>
   );
