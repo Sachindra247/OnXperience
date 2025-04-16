@@ -331,17 +331,9 @@ const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [modalData, setModalData] = useState({
-    field: "",
-    currentValue: "",
-    row: {},
-  });
-  const [newValue, setNewValue] = useState("");
+  const [modalData, setModalData] = useState({ field: "", currentValue: "" });
   const location = useLocation();
   const reportRef = useRef(null);
-
-  const currentRoute = location.pathname.split("/")[1];
-  const currentReport = reports[currentRoute] || reports.homepage;
 
   useEffect(() => {
     const fetchEmbedToken = async () => {
@@ -360,51 +352,39 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
+  const currentRoute = location.pathname.split("/")[1];
+  const currentReport = reports[currentRoute] || reports.homepage;
+
   const handleDataSelected = (event) => {
     const data = event.detail;
-    console.log("DATA SELECTED EVENT:", data);
+    console.log("DATA SELECTED:", data);
 
     if (!data || !data.dataPoints || !data.dataPoints.length) return;
 
     const point = data.dataPoints[0];
-    const columnName = point?.identity?.[0]?.target?.column;
+    const column = point?.identity?.[0]?.target?.column;
     const value = point?.values?.[0];
 
-    console.log("Clicked Column:", columnName);
-    console.log("Clicked Value:", value);
-    console.log("Entire Data Point:", point);
+    console.log("Selected column:", column);
+    console.log("Selected value:", value);
 
-    // Check if the selected column is "Licenses Purchased" or "Licenses Used"
     if (
-      (columnName === "Licenses Purchased" || columnName === "Licenses Used") &&
-      currentRoute === "adoption" &&
-      currentReport.pageId === "8e9801e82496355a41ee"
+      (column === "Licenses Purchased" || column === "Licenses Used") &&
+      currentRoute === "adoption"
     ) {
-      setModalData({ field: columnName, currentValue: value, row: point });
+      setModalData({ field: column, currentValue: value });
       setModalIsOpen(true);
     }
   };
 
   const handleEmbed = (report) => {
     reportRef.current = report;
-    console.log("Current pageId:", currentReport.pageId);
 
-    if (
-      currentRoute === "adoption" &&
-      currentReport.pageId === "8e9801e82496355a41ee"
-    ) {
+    if (currentRoute === "adoption") {
+      report.off("dataSelected"); // Prevent duplicates
       report.on("dataSelected", handleDataSelected);
-      console.log("Listening for dataSelected event on Adoption page");
+      console.log("Registered dataSelected event for adoption page.");
     }
-  };
-
-  const handleModalSubmit = () => {
-    console.log("Submitting new value:", newValue);
-    console.log("For field:", modalData.field);
-    console.log("Full Row Data:", modalData.row);
-    // Future: Send to Azure SQL here
-    setModalIsOpen(false);
-    setNewValue("");
   };
 
   return (
@@ -443,6 +423,29 @@ const HomePage = () => {
                   </ul>
                 )}
               </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("renewals", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/renewals">Renewals</Link>
+              </li>
+              <li>
+                <span
+                  className="expand-icon"
+                  onClick={(e) => toggleSection("financials", e)}
+                  style={{ float: "right" }}
+                >
+                  {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
+                </span>
+                <Link to="/financials">Financials</Link>
+              </li>
+              <li>
+                <Link to="/statistics">Statistics</Link>
+              </li>
             </ul>
           </nav>
         </aside>
@@ -463,31 +466,37 @@ const HomePage = () => {
                 },
                 pageName: currentReport.pageId,
               }}
-              cssClassName="powerbi-embed"
-              onEmbedded={(event) => handleEmbed(event)}
+              cssClassName="home-report"
+              getEmbeddedComponent={handleEmbed}
+              key={location.pathname}
             />
           ) : (
-            <p>Loading...</p>
+            <p>Loading Power BI report...</p>
           )}
         </main>
-
-        <Modal
-          isOpen={modalIsOpen}
-          onRequestClose={() => setModalIsOpen(false)}
-        >
-          <h2>Edit {modalData.field}</h2>
-          <label>
-            New Value:
-            <input
-              type="text"
-              value={newValue}
-              onChange={(e) => setNewValue(e.target.value)}
-            />
-          </label>
-          <button onClick={handleModalSubmit}>Submit</button>
-          <button onClick={() => setModalIsOpen(false)}>Close</button>
-        </Modal>
       </div>
+
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={() => setModalIsOpen(false)}
+        contentLabel="Edit Licenses"
+        ariaHideApp={false}
+        style={{
+          content: {
+            top: "50%",
+            left: "50%",
+            right: "auto",
+            bottom: "auto",
+            marginRight: "-50%",
+            transform: "translate(-50%, -50%)",
+          },
+        }}
+      >
+        <h2>Edit {modalData.field}</h2>
+        <p>Current Value: {modalData.currentValue}</p>
+        <input type="number" placeholder="Enter new value" />
+        <button onClick={() => setModalIsOpen(false)}>Close</button>
+      </Modal>
     </div>
   );
 };
