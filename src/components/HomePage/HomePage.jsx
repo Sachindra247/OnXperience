@@ -327,11 +327,9 @@ const reports = {
 };
 
 const HomePage = () => {
-  const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCell, setSelectedCell] = useState(null);
-  const [newValue, setNewValue] = useState("");
+  const [licensesPurchased, setLicensesPurchased] = useState("");
+  const [licensesUsed, setLicensesUsed] = useState("");
   const location = useLocation();
 
   // Fetching Power BI embed token
@@ -347,49 +345,22 @@ const HomePage = () => {
     fetchEmbedToken();
   }, []);
 
-  const toggleSection = (section, event) => {
-    event.stopPropagation();
-    setExpandedSection((prev) => (prev === section ? null : section));
-  };
-
   const currentRoute = location.pathname.split("/")[1];
   const currentReport = reports[currentRoute] || reports.homepage;
 
-  const openModal = (column, value) => {
-    setSelectedCell({ column, value });
-    setNewValue(value);
-    setIsModalOpen(true);
+  const handleLicensesPurchasedChange = (event) => {
+    setLicensesPurchased(event.target.value);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedCell(null);
-    setNewValue("");
+  const handleLicensesUsedChange = (event) => {
+    setLicensesUsed(event.target.value);
   };
 
   const handleSubmit = () => {
-    console.log(`Updated ${selectedCell.column}:`, newValue);
-    closeModal();
+    // Here you can send the updated values to an API or Power BI to refresh the data
+    console.log("Updated Licenses Purchased:", licensesPurchased);
+    console.log("Updated Licenses Used:", licensesUsed);
   };
-
-  const handleEmbedEvent = (event) => {
-    const clickedCell = event.detail;
-    if (
-      clickedCell &&
-      clickedCell.column &&
-      (clickedCell.column === "Licenses Purchased" ||
-        clickedCell.column === "Licenses Used")
-    ) {
-      openModal(clickedCell.column, clickedCell.value);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("powerbiEvent", handleEmbedEvent);
-    return () => {
-      window.removeEventListener("powerbiEvent", handleEmbedEvent);
-    };
-  }, []);
 
   return (
     <div className="homepage-container">
@@ -399,33 +370,10 @@ const HomePage = () => {
           <nav className="nav-menu">
             <ul className="tree-menu">
               <li>
-                <span
-                  className="expand-icon"
-                  onClick={(e) => toggleSection("healthScore", e)}
-                  style={{ float: "right" }}
-                >
-                  {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
+                <span className="expand-icon" style={{ float: "right" }}>
+                  <FaPlus />
                 </span>
                 <Link to="/healthscore"> Health Score</Link>
-                {expandedSection === "healthScore" && (
-                  <ul
-                    className="submenu expanded"
-                    style={{ display: "block", border: "none" }}
-                  >
-                    <li>
-                      <Link to="/growth">Growth</Link>
-                    </li>
-                    <li>
-                      <Link to="/adoption">Adoption</Link>
-                    </li>
-                    <li>
-                      <Link to="/engagement">Engagement</Link>
-                    </li>
-                    <li>
-                      <Link to="/feedback">Feedback</Link>
-                    </li>
-                  </ul>
-                )}
               </li>
             </ul>
           </nav>
@@ -455,21 +403,29 @@ const HomePage = () => {
           )}
         </main>
 
-        {/* Modal for editing data */}
-        {isModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <h2>Edit {selectedCell.column}</h2>
-              <input
-                type="number"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-              />
-              <button onClick={handleSubmit}>Submit</button>
-              <button onClick={closeModal}>Cancel</button>
-            </div>
-          </div>
-        )}
+        <div className="input-container">
+          <label>
+            Licenses Purchased:
+            <input
+              type="number"
+              value={licensesPurchased}
+              onChange={handleLicensesPurchasedChange}
+              placeholder="Enter Licenses Purchased"
+            />
+          </label>
+
+          <label>
+            Licenses Used:
+            <input
+              type="number"
+              value={licensesUsed}
+              onChange={handleLicensesUsedChange}
+              placeholder="Enter Licenses Used"
+            />
+          </label>
+
+          <button onClick={handleSubmit}>Submit Changes</button>
+        </div>
       </div>
     </div>
   );
