@@ -278,7 +278,7 @@
 
 //code with modal
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
@@ -304,7 +304,7 @@ const reports = {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
     embedUrl:
       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
-    pageId: "8e9801e82496355a41ee",
+    pageId: "8e9801e82496355a41ee", // Target pageId for Adoption
   },
   engagement: {
     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
@@ -364,32 +364,29 @@ const HomePage = () => {
   };
 
   const handleEmbedEvent = (event) => {
-    const report = event.detail.report;
-    const visual = event.detail.visual;
-    const dataPoints = event.detail.dataPoints;
+    const { pageId, visual, dataPoints } = event.detail;
 
     console.log("DATA SELECTED EVENT:", event.detail);
 
-    // Ensure we are targeting the correct visual (Table with relevant columns like Licenses Purchased/Used)
+    // Only trigger for the "adoption" page
     if (
-      (visual && visual.name && visual.name.includes("Licenses Purchased")) ||
-      visual.name.includes("Licenses Used")
+      pageId === "8e9801e82496355a41ee" &&
+      visual &&
+      visual.name === "matrix"
     ) {
-      // Loop through the data points and check the column values
       dataPoints.forEach((dataPoint) => {
-        const columnName = dataPoint.target.column; // Get the column name of the clicked cell
+        const columnName = dataPoint.target.column; // Get the column name
         const columnValue = dataPoint.value; // Get the value of the clicked cell
 
         console.log("Clicked Column:", columnName);
         console.log("Clicked Value:", columnValue);
 
-        // You can target specific columns by their name (e.g., "Licenses Purchased" or "Licenses Used")
+        // Only trigger on Licenses Purchased or Licenses Used columns
         if (
           columnName === "Licenses Purchased" ||
           columnName === "Licenses Used"
         ) {
-          // Trigger the modal to open
-          openModal(columnName, columnValue);
+          openModal(columnName, columnValue); // Open the modal with the selected data
         }
       });
     }
@@ -527,8 +524,7 @@ const HomePage = () => {
             <button onClick={closeModal}>Close</button>
             <button
               onClick={() => {
-                // Here, you can add the logic to update the data in the Power BI report
-                // and close the modal after that
+                // Logic to update Power BI or backend with updated value
                 console.log("Updated Value:", modalData.columnValue);
                 closeModal();
               }}
