@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
       res.status(500).json({ error: "Failed to update data" });
     }
   } else {
-    // Handle unsupported HTTP methods
+    // Handle unsupported HTTP methods.
     res.status(405).json({ error: "Method Not Allowed" });
   }
 };
