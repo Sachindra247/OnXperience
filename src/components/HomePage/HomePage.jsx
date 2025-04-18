@@ -236,7 +236,7 @@ const HomePage = () => {
                 <Link to="/statistics">Statistics</Link>
               </li>
               <li>
-                <Link to="/azure-sql-table">Azure SQL Table</Link>
+                <Link to="/azure-sql-table">Licenses</Link>
               </li>
             </ul>
             <ul className="tree-menu bottom-links">
