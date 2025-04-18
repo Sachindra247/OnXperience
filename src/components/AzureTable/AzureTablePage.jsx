@@ -49,8 +49,10 @@ const AzureTablePage = () => {
     try {
       await axios.post("https://on-xperience.vercel.app/api/sql-table", {
         SubscriptionID: row.SubscriptionID,
-        LicensesPurchased: parseInt(updatedRow.LicensesPurchased),
-        LicensesUsed: parseInt(updatedRow.LicensesUsed),
+        LicensesPurchased:
+          parseInt(updatedRow.LicensesPurchased ?? row.LicensesPurchased) || 0,
+        LicensesUsed:
+          parseInt(updatedRow.LicensesUsed ?? row.LicensesUsed) || 0,
       });
 
       const response = await axios.get(
