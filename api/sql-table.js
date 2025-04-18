@@ -44,12 +44,13 @@ module.exports = async (req, res) => {
     if (req.method === "POST") {
       const { SubscriptionID, LicensesPurchased, LicensesUsed } = req.body;
 
+      // Validate all fields are numbers
       if (
-        !SubscriptionID ||
-        LicensesPurchased === undefined ||
-        LicensesUsed === undefined
+        typeof SubscriptionID !== "number" ||
+        typeof LicensesPurchased !== "number" ||
+        typeof LicensesUsed !== "number"
       ) {
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({ error: "All fields must be numbers" });
       }
 
       await pool

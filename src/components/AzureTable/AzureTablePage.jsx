@@ -35,14 +35,22 @@ const AzureTablePage = () => {
   };
 
   const handleSave = async (id) => {
+    const row = rows.find((r) => r.SubscriptionID === id);
     const updatedRow = editedRows[id];
+
     if (!updatedRow) return;
+
+    console.log("Saving row:", {
+      SubscriptionID: row.SubscriptionID,
+      LicensesPurchased: updatedRow.LicensesPurchased,
+      LicensesUsed: updatedRow.LicensesUsed,
+    });
 
     try {
       await axios.post("https://on-xperience.vercel.app/api/sql-table", {
-        SubscriptionID: id,
-        LicensesPurchased: updatedRow.LicensesPurchased,
-        LicensesUsed: updatedRow.LicensesUsed,
+        SubscriptionID: row.SubscriptionID,
+        LicensesPurchased: parseInt(updatedRow.LicensesPurchased),
+        LicensesUsed: parseInt(updatedRow.LicensesUsed),
       });
 
       const response = await axios.get(
@@ -56,7 +64,10 @@ const AzureTablePage = () => {
         return newState;
       });
     } catch (error) {
-      console.error("Failed to save data:", error);
+      console.error(
+        "Failed to save data:",
+        error.response?.data || error.message
+      );
     }
   };
 
