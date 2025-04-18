@@ -44,25 +44,29 @@ module.exports = async (req, res) => {
     if (req.method === "POST") {
       const { SubscriptionID, LicensesPurchased, LicensesUsed } = req.body;
 
-      // Validate all fields are numbers
+      console.log("POST body received:", req.body);
+
+      const parsedPurchased = Number(LicensesPurchased);
+      const parsedUsed = Number(LicensesUsed);
+
       if (
-        typeof SubscriptionID !== "number" ||
-        typeof LicensesPurchased !== "number" ||
-        typeof LicensesUsed !== "number"
+        typeof SubscriptionID !== "string" ||
+        isNaN(parsedPurchased) ||
+        isNaN(parsedUsed)
       ) {
-        return res.status(400).json({ error: "All fields must be numbers" });
+        return res.status(400).json({ error: "Missing or invalid fields" });
       }
 
       await pool
         .request()
-        .input("SubscriptionID", sql.Int, SubscriptionID)
-        .input("LicensesPurchased", sql.Int, LicensesPurchased)
-        .input("LicensesUsed", sql.Int, LicensesUsed).query(`
-          UPDATE Subscription_Licenses
-          SET LicensesPurchased = @LicensesPurchased,
-              LicensesUsed = @LicensesUsed
-          WHERE SubscriptionID = @SubscriptionID
-        `);
+        .input("SubscriptionID", sql.VarChar, SubscriptionID)
+        .input("LicensesPurchased", sql.Int, parsedPurchased)
+        .input("LicensesUsed", sql.Int, parsedUsed).query(`
+            UPDATE Subscription_Licenses
+            SET LicensesPurchased = @LicensesPurchased,
+                LicensesUsed = @LicensesUsed
+            WHERE SubscriptionID = @SubscriptionID
+          `);
 
       return res.status(200).json({ message: "Data updated successfully" });
     }
