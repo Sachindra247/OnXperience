@@ -40,19 +40,28 @@ const AzureTablePage = () => {
 
     if (!updatedRow) return;
 
+    const licensesPurchased =
+      parseInt(updatedRow.LicensesPurchased ?? row.LicensesPurchased) || 0;
+    const licensesUsed =
+      parseInt(updatedRow.LicensesUsed ?? row.LicensesUsed) || 0;
+
+    // Validation check
+    if (licensesUsed > licensesPurchased) {
+      alert("Licenses Used cannot be greater than Licenses Purchased.");
+      return;
+    }
+
     console.log("Saving row:", {
       SubscriptionID: row.SubscriptionID,
-      LicensesPurchased: updatedRow.LicensesPurchased,
-      LicensesUsed: updatedRow.LicensesUsed,
+      LicensesPurchased: licensesPurchased,
+      LicensesUsed: licensesUsed,
     });
 
     try {
       await axios.post("https://on-xperience.vercel.app/api/sql-table", {
         SubscriptionID: row.SubscriptionID,
-        LicensesPurchased:
-          parseInt(updatedRow.LicensesPurchased ?? row.LicensesPurchased) || 0,
-        LicensesUsed:
-          parseInt(updatedRow.LicensesUsed ?? row.LicensesUsed) || 0,
+        LicensesPurchased: licensesPurchased,
+        LicensesUsed: licensesUsed,
       });
 
       const response = await axios.get(
