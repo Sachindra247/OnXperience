@@ -164,51 +164,41 @@ const AzureTablePage = () => {
     fetchTableData();
   }, []);
 
-  const validateLicenses = (id) => {
-    const editedRow = editedRows[id] || {};
-    const currentRow = rows.find((r) => r.SubscriptionID === id) || {};
+  const validateLicenses = (id, updatedRow) => {
+    const originalRow = rows.find((r) => r.SubscriptionID === id) || {};
+    const row = {
+      ...originalRow,
+      ...editedRows[id],
+      ...updatedRow,
+    };
 
-    const purchased =
-      editedRow.LicensesPurchased !== undefined
-        ? editedRow.LicensesPurchased
-        : currentRow.LicensesPurchased;
-    const used =
-      editedRow.LicensesUsed !== undefined
-        ? editedRow.LicensesUsed
-        : currentRow.LicensesUsed;
+    const purchasedNum = parseInt(row.LicensesPurchased) || 0;
+    const usedNum = parseInt(row.LicensesUsed) || 0;
 
-    // Only validate when both fields have values
-    if (purchased !== undefined && used !== undefined) {
-      const purchasedNum = parseInt(purchased) || 0;
-      const usedNum = parseInt(used) || 0;
-      const isInvalid = usedNum > purchasedNum;
+    const isInvalid = usedNum > purchasedNum;
 
-      setErrors((prev) => ({
-        ...prev,
-        [id]: isInvalid,
-      }));
-
-      return !isInvalid;
-    }
-
-    // If either field is empty, consider it valid
-    setErrors((prev) => ({ ...prev, [id]: false }));
-    return true;
+    setErrors((prev) => ({
+      ...prev,
+      [id]: isInvalid,
+    }));
   };
 
   const handleEditChange = (id, field, value) => {
+    const newValue = value === "" ? "" : Number(value);
+
     setEditedRows((prev) => {
-      const newEditedRows = {
-        ...prev,
-        [id]: {
-          ...prev[id],
-          [field]: value,
-        },
+      const updatedRow = {
+        ...prev[id],
+        [field]: newValue,
       };
 
-      // Validate after each change
-      validateLicenses(id);
-      return newEditedRows;
+      // Validate live as user types
+      validateLicenses(id, updatedRow);
+
+      return {
+        ...prev,
+        [id]: updatedRow,
+      };
     });
   };
 
@@ -219,9 +209,8 @@ const AzureTablePage = () => {
     if (!updatedRow) return;
 
     // Final validation before saving
-    if (!validateLicenses(id)) {
-      return;
-    }
+    const isValid = !errors[id];
+    if (!isValid) return;
 
     try {
       await axios.post("https://on-xperience.vercel.app/api/sql-table", {
@@ -237,7 +226,7 @@ const AzureTablePage = () => {
       );
       setRows(response.data);
 
-      // Clear edit state and errors
+      // Clear edited state and error
       setEditedRows((prev) => {
         const newState = { ...prev };
         delete newState[id];
@@ -265,11 +254,6 @@ const AzureTablePage = () => {
         <p>Loading table data...</p>
       ) : (
         <>
-          {Object.keys(errors).some((id) => errors[id]) && (
-            <div className="global-error-message">
-              Please correct the highlighted fields before saving
-            </div>
-          )}
           <table className="azure-table">
             <thead>
               <tr>
@@ -302,6 +286,7 @@ const AzureTablePage = () => {
                           <td key={col}>
                             <input
                               type="number"
+                              min={0}
                               value={
                                 editedRow[col] !== undefined
                                   ? editedRow[col]
@@ -319,7 +304,6 @@ const AzureTablePage = () => {
                                   ? "error"
                                   : ""
                               }
-                              min={0}
                             />
                             {hasError && col === "LicensesUsed" && (
                               <div className="error-message">
@@ -334,15 +318,7 @@ const AzureTablePage = () => {
                     })}
                     <td>
                       {isRowEdited(row.SubscriptionID) && (
-                        <button
-                          onClick={() => handleSave(row.SubscriptionID)}
-                          disabled={errors[row.SubscriptionID]}
-                          className={
-                            errors[row.SubscriptionID]
-                              ? "save-button-disabled"
-                              : ""
-                          }
-                        >
+                        <button onClick={() => handleSave(row.SubscriptionID)}>
                           Save
                         </button>
                       )}
