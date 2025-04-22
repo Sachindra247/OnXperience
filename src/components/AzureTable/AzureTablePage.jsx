@@ -146,6 +146,7 @@ const AzureTablePage = () => {
   const [loading, setLoading] = useState(true);
   const [editedRows, setEditedRows] = useState({});
   const [errors, setErrors] = useState({});
+  const [activeField, setActiveField] = useState({ id: null, field: null });
 
   useEffect(() => {
     const fetchTableData = async () => {
@@ -164,7 +165,7 @@ const AzureTablePage = () => {
     fetchTableData();
   }, []);
 
-  const validateLicenses = (id) => {
+  const validateLicenses = (id, fieldBeingEdited) => {
     const editedRow = editedRows[id] || {};
     const currentRow = rows.find((r) => r.SubscriptionID === id) || {};
 
@@ -177,25 +178,37 @@ const AzureTablePage = () => {
         ? editedRow.LicensesUsed
         : currentRow.LicensesUsed;
 
-    // Skip validation if either field is empty
-    if (purchased === undefined || used === undefined) {
+    // Skip validation if either field is empty during editing
+    if ((purchased === undefined || used === undefined) && fieldBeingEdited) {
       setErrors((prev) => ({ ...prev, [id]: false }));
       return true;
     }
 
-    const purchasedNum = parseInt(purchased) || 0;
-    const usedNum = parseInt(used) || 0;
-    const isValid = usedNum <= purchasedNum;
+    // If we have both values, validate
+    if (purchased !== undefined && used !== undefined) {
+      const purchasedNum = parseInt(purchased) || 0;
+      const usedNum = parseInt(used) || 0;
+      const isValid = usedNum <= purchasedNum;
 
-    setErrors((prev) => ({
-      ...prev,
-      [id]: !isValid,
-    }));
+      // Only show error if we're actively editing a field that causes invalidity
+      const shouldShowError =
+        (fieldBeingEdited === "LicensesUsed" && usedNum > purchasedNum) ||
+        (fieldBeingEdited === "LicensesPurchased" && usedNum > purchasedNum);
 
-    return isValid;
+      setErrors((prev) => ({
+        ...prev,
+        [id]: shouldShowError,
+      }));
+
+      return isValid;
+    }
+
+    return true;
   };
 
   const handleEditChange = (id, field, value) => {
+    setActiveField({ id, field });
+
     setEditedRows((prev) => {
       const newEditedRows = {
         ...prev,
@@ -205,8 +218,8 @@ const AzureTablePage = () => {
         },
       };
 
-      // Validate after change but don't block input
-      validateLicenses(id);
+      // Validate with context of which field is being edited
+      validateLicenses(id, field);
       return newEditedRows;
     });
   };
@@ -217,9 +230,9 @@ const AzureTablePage = () => {
 
     if (!updatedRow) return;
 
-    // Final validation before saving
-    if (!validateLicenses(id)) {
-      return; // Now we show the error message in the UI instead of alert
+    // Final validation before saving (check all fields, not just active one)
+    if (!validateLicenses(id, null)) {
+      return;
     }
 
     try {
@@ -248,6 +261,8 @@ const AzureTablePage = () => {
         delete newState[id];
         return newState;
       });
+
+      setActiveField({ id: null, field: null });
     } catch (error) {
       console.error(
         "Failed to save data:",
@@ -313,17 +328,21 @@ const AzureTablePage = () => {
                                   e.target.value
                                 )
                               }
+                              onFocus={() =>
+                                setActiveField({
+                                  id: row.SubscriptionID,
+                                  field: col,
+                                })
+                              }
+                              onBlur={() =>
+                                setActiveField({ id: null, field: null })
+                              }
                               className={
                                 hasError && col === "LicensesUsed"
                                   ? "error"
                                   : ""
                               }
                               min={0}
-                              max={
-                                col === "LicensesUsed"
-                                  ? purchasedValue
-                                  : undefined
-                              }
                             />
                             {hasError && col === "LicensesUsed" && (
                               <div className="error-message">
