@@ -45,17 +45,11 @@ const AzureTablePage = () => {
     const licensesUsed =
       parseInt(updatedRow.LicensesUsed ?? row.LicensesUsed) || 0;
 
-    // Validation check
+    // ✅ Validation before saving
     if (licensesUsed > licensesPurchased) {
-      alert("Licenses Used cannot be greater than Licenses Purchased.");
+      alert("Error: Licenses Used cannot be greater than Licenses Purchased.");
       return;
     }
-
-    console.log("Saving row:", {
-      SubscriptionID: row.SubscriptionID,
-      LicensesPurchased: licensesPurchased,
-      LicensesUsed: licensesUsed,
-    });
 
     try {
       await axios.post("https://on-xperience.vercel.app/api/sql-table", {
@@ -104,6 +98,15 @@ const AzureTablePage = () => {
                 <tr key={row.SubscriptionID}>
                   {Object.keys(row).map((col) => {
                     if (col === "LicensesPurchased" || col === "LicensesUsed") {
+                      const currentPurchased =
+                        parseInt(
+                          editedRow.LicensesPurchased ?? row.LicensesPurchased
+                        ) || 0;
+                      const currentUsed =
+                        parseInt(editedRow.LicensesUsed ?? row.LicensesUsed) ||
+                        0;
+                      const isInvalid = currentUsed > currentPurchased;
+
                       return (
                         <td key={col}>
                           <input
@@ -120,12 +123,24 @@ const AzureTablePage = () => {
                                 e.target.value
                               )
                             }
+                            style={{
+                              borderColor:
+                                col === "LicensesUsed" && isInvalid
+                                  ? "red"
+                                  : undefined,
+                            }}
                           />
+                          {col === "LicensesUsed" && isInvalid && (
+                            <div style={{ color: "red", fontSize: "0.8em" }}>
+                              Licenses Used cannot exceed Licenses Purchased
+                            </div>
+                          )}
                         </td>
                       );
                     }
                     return <td key={col}>{row[col]}</td>;
                   })}
+
                   <td>
                     {isRowEdited(row.SubscriptionID) && (
                       <button onClick={() => handleSave(row.SubscriptionID)}>
