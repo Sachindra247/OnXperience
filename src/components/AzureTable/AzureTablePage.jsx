@@ -143,7 +143,15 @@ const AzureTablePage = () => {
 
                   <td>
                     {isRowEdited(row.SubscriptionID) && (
-                      <button onClick={() => handleSave(row.SubscriptionID)}>
+                      <button
+                        onClick={() => handleSave(row.SubscriptionID)}
+                        disabled={
+                          parseInt(editedRow.LicensesUsed ?? row.LicensesUsed) >
+                          parseInt(
+                            editedRow.LicensesPurchased ?? row.LicensesPurchased
+                          )
+                        }
+                      >
                         Save
                       </button>
                     )}
