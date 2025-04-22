@@ -146,7 +146,6 @@ const AzureTablePage = () => {
   const [loading, setLoading] = useState(true);
   const [editedRows, setEditedRows] = useState({});
   const [errors, setErrors] = useState({});
-  const [activeField, setActiveField] = useState({ id: null, field: null });
 
   useEffect(() => {
     const fetchTableData = async () => {
@@ -165,7 +164,7 @@ const AzureTablePage = () => {
     fetchTableData();
   }, []);
 
-  const validateLicenses = (id, fieldBeingEdited) => {
+  const validateLicenses = (id) => {
     const editedRow = editedRows[id] || {};
     const currentRow = rows.find((r) => r.SubscriptionID === id) || {};
 
@@ -178,37 +177,26 @@ const AzureTablePage = () => {
         ? editedRow.LicensesUsed
         : currentRow.LicensesUsed;
 
-    // Skip validation if either field is empty during editing
-    if ((purchased === undefined || used === undefined) && fieldBeingEdited) {
-      setErrors((prev) => ({ ...prev, [id]: false }));
-      return true;
-    }
-
-    // If we have both values, validate
+    // Only validate when both fields have values
     if (purchased !== undefined && used !== undefined) {
       const purchasedNum = parseInt(purchased) || 0;
       const usedNum = parseInt(used) || 0;
-      const isValid = usedNum <= purchasedNum;
-
-      // Only show error if we're actively editing a field that causes invalidity
-      const shouldShowError =
-        (fieldBeingEdited === "LicensesUsed" && usedNum > purchasedNum) ||
-        (fieldBeingEdited === "LicensesPurchased" && usedNum > purchasedNum);
+      const isInvalid = usedNum > purchasedNum;
 
       setErrors((prev) => ({
         ...prev,
-        [id]: shouldShowError,
+        [id]: isInvalid,
       }));
 
-      return isValid;
+      return !isInvalid;
     }
 
+    // If either field is empty, consider it valid
+    setErrors((prev) => ({ ...prev, [id]: false }));
     return true;
   };
 
   const handleEditChange = (id, field, value) => {
-    setActiveField({ id, field });
-
     setEditedRows((prev) => {
       const newEditedRows = {
         ...prev,
@@ -218,8 +206,8 @@ const AzureTablePage = () => {
         },
       };
 
-      // Validate with context of which field is being edited
-      validateLicenses(id, field);
+      // Validate after each change
+      validateLicenses(id);
       return newEditedRows;
     });
   };
@@ -230,8 +218,8 @@ const AzureTablePage = () => {
 
     if (!updatedRow) return;
 
-    // Final validation before saving (check all fields, not just active one)
-    if (!validateLicenses(id, null)) {
+    // Final validation before saving
+    if (!validateLicenses(id)) {
       return;
     }
 
@@ -261,8 +249,6 @@ const AzureTablePage = () => {
         delete newState[id];
         return newState;
       });
-
-      setActiveField({ id: null, field: null });
     } catch (error) {
       console.error(
         "Failed to save data:",
@@ -327,15 +313,6 @@ const AzureTablePage = () => {
                                   col,
                                   e.target.value
                                 )
-                              }
-                              onFocus={() =>
-                                setActiveField({
-                                  id: row.SubscriptionID,
-                                  field: col,
-                                })
-                              }
-                              onBlur={() =>
-                                setActiveField({ id: null, field: null })
                               }
                               className={
                                 hasError && col === "LicensesUsed"
