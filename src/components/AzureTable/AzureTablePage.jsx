@@ -118,7 +118,7 @@ const AzureTablePage = () => {
           <table className="azure-table">
             <thead>
               <tr>
-                <th>Subscription ID</th>
+                <th className="wide-column">Subscription ID</th>
                 <th>Customer Name</th>
                 <th>Licenses Purchased</th>
                 <th>Licenses Used</th>
@@ -178,7 +178,16 @@ const AzureTablePage = () => {
                           </td>
                         );
                       }
-                      return <td key={col}>{row[col]}</td>;
+                      return (
+                        <td
+                          key={col}
+                          className={
+                            col === "SubscriptionID" ? "wide-column" : ""
+                          }
+                        >
+                          {row[col]}
+                        </td>
+                      );
                     })}
                     <td>
                       {isRowEdited(row.SubscriptionID) && (

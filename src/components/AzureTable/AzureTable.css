@@ -99,3 +99,9 @@ button:disabled,
 .azure-table-wrapper {
     padding: 20px;
 }
+
+.wide-column {
+    min-width: 200px;
+    max-width: 250px;
+    word-break: break-word;
+}
