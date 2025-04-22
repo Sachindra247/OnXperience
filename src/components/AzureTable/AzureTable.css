@@ -102,6 +102,6 @@ button:disabled,
 
 .wide-column {
     min-width: 200px;
-    max-width: 250px;
+    max-width: 350px;
     word-break: break-word;
 }
