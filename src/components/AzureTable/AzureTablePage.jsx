@@ -29,7 +29,7 @@ const AzureTablePage = () => {
       ...prev,
       [id]: {
         ...prev[id],
-        [field]: value,
+        [field]: value === "" ? "" : Number(value),
       },
     }));
   };
