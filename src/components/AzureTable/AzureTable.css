@@ -80,7 +80,22 @@
     margin-top: 4px;
 }
 
-button:disabled {
+button:disabled,
+.save-button-disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    background-color: #cccccc;
+}
+
+.global-error-message {
+    background-color: #ffebee;
+    color: #ff4444;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border-left: 4px solid #ff4444;
+}
+
+.azure-table-wrapper {
+    padding: 20px;
 }

@@ -177,6 +177,7 @@ const AzureTablePage = () => {
         ? editedRow.LicensesUsed
         : currentRow.LicensesUsed;
 
+    // Skip validation if either field is empty
     if (purchased === undefined || used === undefined) {
       setErrors((prev) => ({ ...prev, [id]: false }));
       return true;
@@ -204,7 +205,7 @@ const AzureTablePage = () => {
         },
       };
 
-      // Validate after change
+      // Validate after change but don't block input
       validateLicenses(id);
       return newEditedRows;
     });
@@ -218,15 +219,8 @@ const AzureTablePage = () => {
 
     // Final validation before saving
     if (!validateLicenses(id)) {
-      alert("Licenses used cannot exceed licenses purchased");
-      return;
+      return; // Now we show the error message in the UI instead of alert
     }
-
-    console.log("Saving row:", {
-      SubscriptionID: row.SubscriptionID,
-      LicensesPurchased: updatedRow.LicensesPurchased,
-      LicensesUsed: updatedRow.LicensesUsed,
-    });
 
     try {
       await axios.post("https://on-xperience.vercel.app/api/sql-table", {
@@ -242,6 +236,7 @@ const AzureTablePage = () => {
       );
       setRows(response.data);
 
+      // Clear edit state and errors
       setEditedRows((prev) => {
         const newState = { ...prev };
         delete newState[id];
@@ -268,67 +263,100 @@ const AzureTablePage = () => {
       {loading ? (
         <p>Loading table data...</p>
       ) : (
-        <table className="azure-table">
-          <thead>
-            <tr>
-              {rows.length > 0 &&
-                Object.keys(rows[0]).map((col) => <th key={col}>{col}</th>)}
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const editedRow = editedRows[row.SubscriptionID] || {};
-              const hasError = errors[row.SubscriptionID];
+        <>
+          {Object.keys(errors).some((id) => errors[id]) && (
+            <div className="global-error-message">
+              Please correct the highlighted fields before saving
+            </div>
+          )}
+          <table className="azure-table">
+            <thead>
+              <tr>
+                {rows.length > 0 &&
+                  Object.keys(rows[0]).map((col) => <th key={col}>{col}</th>)}
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const editedRow = editedRows[row.SubscriptionID] || {};
+                const hasError = errors[row.SubscriptionID];
+                const purchasedValue =
+                  editedRow.LicensesPurchased !== undefined
+                    ? editedRow.LicensesPurchased
+                    : row.LicensesPurchased;
+                const usedValue =
+                  editedRow.LicensesUsed !== undefined
+                    ? editedRow.LicensesUsed
+                    : row.LicensesUsed;
 
-              return (
-                <tr key={row.SubscriptionID}>
-                  {Object.keys(row).map((col) => {
-                    if (col === "LicensesPurchased" || col === "LicensesUsed") {
-                      return (
-                        <td key={col}>
-                          <input
-                            type="number"
-                            value={
-                              editedRow[col] !== undefined
-                                ? editedRow[col]
-                                : row[col]
-                            }
-                            onChange={(e) =>
-                              handleEditChange(
-                                row.SubscriptionID,
-                                col,
-                                e.target.value
-                              )
-                            }
-                            className={hasError ? "error" : ""}
-                            min={0}
-                          />
-                          {hasError && col === "LicensesUsed" && (
-                            <div className="error-message">
-                              Cannot exceed licenses purchased
-                            </div>
-                          )}
-                        </td>
-                      );
-                    }
-                    return <td key={col}>{row[col]}</td>;
-                  })}
-                  <td>
-                    {isRowEdited(row.SubscriptionID) && (
-                      <button
-                        onClick={() => handleSave(row.SubscriptionID)}
-                        disabled={errors[row.SubscriptionID]}
-                      >
-                        Save
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr key={row.SubscriptionID}>
+                    {Object.keys(row).map((col) => {
+                      if (
+                        col === "LicensesPurchased" ||
+                        col === "LicensesUsed"
+                      ) {
+                        return (
+                          <td key={col}>
+                            <input
+                              type="number"
+                              value={
+                                editedRow[col] !== undefined
+                                  ? editedRow[col]
+                                  : row[col]
+                              }
+                              onChange={(e) =>
+                                handleEditChange(
+                                  row.SubscriptionID,
+                                  col,
+                                  e.target.value
+                                )
+                              }
+                              className={
+                                hasError && col === "LicensesUsed"
+                                  ? "error"
+                                  : ""
+                              }
+                              min={0}
+                              max={
+                                col === "LicensesUsed"
+                                  ? purchasedValue
+                                  : undefined
+                              }
+                            />
+                            {hasError && col === "LicensesUsed" && (
+                              <div className="error-message">
+                                Cannot exceed {purchasedValue} licenses
+                                purchased
+                              </div>
+                            )}
+                          </td>
+                        );
+                      }
+                      return <td key={col}>{row[col]}</td>;
+                    })}
+                    <td>
+                      {isRowEdited(row.SubscriptionID) && (
+                        <button
+                          onClick={() => handleSave(row.SubscriptionID)}
+                          disabled={errors[row.SubscriptionID]}
+                          className={
+                            errors[row.SubscriptionID]
+                              ? "save-button-disabled"
+                              : ""
+                          }
+                        >
+                          Save
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
       )}
     </div>
   );
