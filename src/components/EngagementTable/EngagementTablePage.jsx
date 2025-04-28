@@ -13,7 +13,6 @@ const engagementTypes = [
 
 const EngagementTablePage = () => {
   const [customers, setCustomers] = useState([]);
-  const [engagementList, setEngagementList] = useState([]);
   const [updatedEngagements, setUpdatedEngagements] = useState({});
 
   useEffect(() => {
@@ -21,13 +20,11 @@ const EngagementTablePage = () => {
     axios
       .get("https://on-xperience.vercel.app/api/engagement-table")
       .then((response) => {
-        setCustomers(response.data);
-        // Initialize the engagement data from the response
-        const initialEngagementList = response.data.map((customer) => ({
+        const customersWithEngagements = response.data.map((customer) => ({
           ...customer,
-          engagements: customer.engagements || [], // Ensure engagements is an empty array if not provided
+          engagements: customer.engagements || [], // Ensure engagements is always an array
         }));
-        setEngagementList(initialEngagementList);
+        setCustomers(customersWithEngagements);
       })
       .catch((error) => {
         console.error("Error fetching customers:", error);
@@ -57,7 +54,7 @@ const EngagementTablePage = () => {
           EngagementPoints: engagementPoints,
         })
         .then(() => {
-          setEngagementList((prevList) =>
+          setCustomers((prevList) =>
             prevList.map((customer) =>
               customer.SubscriptionID === subscriptionId
                 ? {
@@ -117,13 +114,13 @@ const EngagementTablePage = () => {
                   </select>
                 </td>
                 <td>
-                  {customer.engagements && customer.engagements.length > 0
+                  {customer.engagements.length > 0
                     ? customer.engagements[customer.engagements.length - 1]
                         .points
                     : "-"}
                 </td>
                 <td>
-                  {customer.engagements && customer.engagements.length > 0
+                  {customer.engagements.length > 0
                     ? customer.engagements[customer.engagements.length - 1]
                         .lastUpdated
                     : "-"}
