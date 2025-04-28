@@ -23,6 +23,10 @@ const EngagementTablePage = () => {
         const customersWithEngagements = response.data.map((customer) => ({
           ...customer,
           engagements: customer.engagements || [], // Ensure engagements is always an array
+          totalPoints: customer.engagements.reduce(
+            (sum, engagement) => sum + engagement.points,
+            0
+          ), // Sum of points for the customer
         }));
         setCustomers(customersWithEngagements);
       })
@@ -50,6 +54,7 @@ const EngagementTablePage = () => {
       );
       const engagementPoints = engagement ? engagement.points : 0;
 
+      // Update the total points by adding the new engagement points
       axios
         .post("https://on-xperience.vercel.app/api/engagement-table", {
           SubscriptionID: subscriptionId,
@@ -57,7 +62,7 @@ const EngagementTablePage = () => {
           EngagementPoints: engagementPoints,
         })
         .then(() => {
-          // Instead of replacing engagements, we add the new engagement to the existing list
+          // Update the customer data with the new total points
           setCustomers((prevList) =>
             prevList.map((customer) =>
               customer.SubscriptionID === subscriptionId
@@ -71,6 +76,7 @@ const EngagementTablePage = () => {
                         lastUpdated: new Date().toLocaleString(),
                       },
                     ],
+                    totalPoints: customer.totalPoints + engagementPoints, // Add new points to total points
                   }
                 : customer
             )
@@ -127,12 +133,7 @@ const EngagementTablePage = () => {
                     ))}
                   </select>
                 </td>
-                <td>
-                  {customer.engagements.length > 0
-                    ? customer.engagements[customer.engagements.length - 1]
-                        .points
-                    : "-"}
-                </td>
+                <td>{customer.totalPoints}</td>
                 <td>
                   {customer.engagements.length > 0
                     ? customer.engagements[customer.engagements.length - 1]
@@ -155,13 +156,7 @@ const EngagementTablePage = () => {
 
       <div className="total-points">
         <h3>Total Points (all customers):</h3>
-        {customers.reduce((acc, customer) => {
-          const totalPoints = customer.engagements.reduce(
-            (sum, engagement) => sum + engagement.points,
-            0
-          );
-          return acc + totalPoints;
-        }, 0)}
+        {customers.reduce((acc, customer) => acc + customer.totalPoints, 0)}
       </div>
     </div>
   );
