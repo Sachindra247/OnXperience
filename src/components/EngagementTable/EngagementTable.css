@@ -1,29 +1,138 @@
 .engagement-table-page-container {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+}
+
+h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 30px;
 }
 
 .engagement-form {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.engagement-form select,
+.engagement-form button {
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.engagement-form select {
+    width: 250px;
+}
+
+.engagement-form button {
+    background-color: #4caf50;
+    color: white;
+    cursor: pointer;
+}
+
+.engagement-form button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.engagement-table {
+    width: 100%;
+    overflow-x: auto;
 }
 
 .engagement-table table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .engagement-table th,
 .engagement-table td {
-    border: 1px solid #ccc;
-    padding: 10px;
+    border: 1px solid #ddd;
+    padding: 12px 15px;
     text-align: left;
+    font-size: 1rem;
+}
+
+.engagement-table th {
+    background-color: #4caf50;
+    color: white;
+}
+
+.engagement-table td {
+    background-color: #f9f9f9;
+}
+
+.engagement-table td ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.engagement-table td ul li {
+    padding: 3px 0;
+}
+
+.engagement-table td select {
+    padding: 5px;
+    width: 100%;
+    font-size: 1rem;
+    border-radius: 5px;
+}
+
+.engagement-table td button {
+    background-color: #4caf50;
+    color: white;
+    padding: 6px 10px;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.engagement-table td button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.engagement-table .engagement-log {
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+.engagement-table .engagement-log p {
+    margin: 5px 0;
 }
 
 .total-points {
     margin-top: 20px;
     font-weight: bold;
     font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .engagement-form {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .engagement-form select,
+    .engagement-form button {
+        width: 100%;
+    }
+
+    .engagement-table table {
+        font-size: 0.9rem;
+    }
+
+    .engagement-table th,
+    .engagement-table td {
+        padding: 8px;
+    }
 }
