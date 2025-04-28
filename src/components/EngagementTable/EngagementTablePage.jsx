@@ -13,8 +13,9 @@ const engagementTypes = [
 
 const EngagementTablePage = () => {
   const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState("");
   const [selectedEngagement, setSelectedEngagement] = useState("");
-  const [updatedEngagements, setUpdatedEngagements] = useState({});
+  const [engagementList, setEngagementList] = useState([]);
 
   useEffect(() => {
     // Fetch all customers from the backend
@@ -22,178 +23,130 @@ const EngagementTablePage = () => {
       .get("https://on-xperience.vercel.app/api/engagement-table")
       .then((response) => {
         setCustomers(response.data);
+        // Assuming the response data has all customers
+        setEngagementList(
+          response.data.map((customer) => ({
+            SubscriptionID: customer.SubscriptionID,
+            CustomerName: customer.CustomerName,
+            engagementPoints: 0, // Initialize with zero points
+          }))
+        );
       })
       .catch((error) => {
         console.error("Error fetching customers:", error);
       });
   }, []);
 
+  const handleSelectChange = (e) => {
+    setSelectedCustomer(e.target.value);
+  };
+
   const handleEngagementChange = (e) => {
     setSelectedEngagement(e.target.value);
   };
 
-  const handleAddEngagement = (subscriptionId) => {
-    const selectedEngagement = updatedEngagements[subscriptionId];
-    if (selectedEngagement) {
+  const handleAddEngagement = () => {
+    if (selectedCustomer && selectedEngagement) {
       const engagement = engagementTypes.find(
         (eng) => eng.type === selectedEngagement
       );
       const engagementPoints = engagement ? engagement.points : 0;
 
-      // Find the customer and check if the engagement type already exists
-      const customer = customers.find(
-        (customer) => customer.SubscriptionID === subscriptionId
-      );
+      // Find the customer and update engagement points
+      const updatedCustomers = customers.map((customer) => {
+        if (customer.SubscriptionID === selectedCustomer) {
+          customer.engagementPoints += engagementPoints; // Add points to existing ones
+        }
+        return customer;
+      });
 
-      // Ensure engagements array is defined
-      const customerEngagements = customer.engagements || [];
-
-      const existingEngagement = customerEngagements.find(
-        (eng) => eng.engagement === selectedEngagement
-      );
-
-      if (existingEngagement) {
-        // If the engagement type already exists, update the points
-        const updatedEngagements = customerEngagements.map((eng) =>
-          eng.engagement === selectedEngagement
-            ? {
-                ...eng,
-                points: eng.points + engagementPoints, // Sum the points
-                lastUpdated: new Date().toLocaleString(),
-              }
-            : eng
-        );
-
-        // Update the customer with the modified engagements
-        axios
-          .post("https://on-xperience.vercel.app/api/engagement-table", {
-            SubscriptionID: subscriptionId,
-            EngagementType: selectedEngagement,
-            EngagementPoints: engagementPoints,
-          })
-          .then((response) => {
-            console.log("Server response:", response.data); // Log response from the server
-            setCustomers((prevList) =>
-              prevList.map((customer) =>
-                customer.SubscriptionID === subscriptionId
-                  ? { ...customer, engagements: updatedEngagements }
-                  : customer
-              )
-            );
-          })
-          .catch((err) => {
-            console.error(
-              "Error occurred while sending data to the server:",
-              err
-            );
-            console.error("Server error response:", err.response?.data); // Log detailed error response
-          });
-      } else {
-        // If the engagement type doesn't exist, add it as a new entry
-        axios
-          .post("https://on-xperience.vercel.app/api/engagement-table", {
-            SubscriptionID: subscriptionId,
-            EngagementType: selectedEngagement,
-            EngagementPoints: engagementPoints,
-          })
-          .then((response) => {
-            console.log("Server response:", response.data); // Log response from the server
-            setCustomers((prevList) =>
-              prevList.map((customer) =>
-                customer.SubscriptionID === subscriptionId
-                  ? {
-                      ...customer,
-                      engagements: [
-                        ...customer.engagements,
-                        {
-                          engagement: selectedEngagement,
-                          points: engagementPoints,
-                          lastUpdated: new Date().toLocaleString(),
-                        },
-                      ],
-                    }
-                  : customer
-              )
-            );
-          })
-          .catch((err) => {
-            console.error(
-              "Error occurred while sending data to the server:",
-              err
-            );
-            console.error("Server error response:", err.response?.data); // Log detailed error response
-          });
-      }
+      // Send updated data to backend
+      axios
+        .post("https://on-xperience.vercel.app/api/engagement-table", {
+          SubscriptionID: selectedCustomer,
+          EngagementType: selectedEngagement,
+          EngagementPoints: engagementPoints,
+        })
+        .then((response) => {
+          console.log("Server response:", response.data);
+          setCustomers(updatedCustomers); // Update local state with new points
+        })
+        .catch((err) => {
+          console.error(
+            "Error occurred while sending data to the server:",
+            err
+          );
+          console.error(
+            "Detailed error response:",
+            err.response?.data || err.message
+          );
+        });
     }
-  };
-
-  const handleEngagementChangeForCustomer = (
-    subscriptionId,
-    engagementType
-  ) => {
-    setUpdatedEngagements({
-      ...updatedEngagements,
-      [subscriptionId]: engagementType,
-    });
   };
 
   return (
     <div className="engagement-table-page-container">
       <h2>Log Engagement</h2>
       <div className="engagement-form">
-        {/* Display a table of customers and their engagement types */}
+        {/* Customer selection dropdown */}
+        <select
+          value={selectedCustomer}
+          onChange={handleSelectChange}
+          disabled={!customers.length}
+        >
+          <option value="">Select Customer</option>
+          {customers && customers.length > 0 ? (
+            customers.map((customer) => (
+              <option
+                key={customer.SubscriptionID}
+                value={customer.SubscriptionID}
+              >
+                {customer.CustomerName} (ID: {customer.SubscriptionID})
+              </option>
+            ))
+          ) : (
+            <option disabled>No customers available</option>
+          )}
+        </select>
+
+        {/* Engagement type selection dropdown */}
+        <select value={selectedEngagement} onChange={handleEngagementChange}>
+          <option value="">Select Engagement Type</option>
+          {engagementTypes.map((engagement) => (
+            <option key={engagement.type} value={engagement.type}>
+              {engagement.type}
+            </option>
+          ))}
+        </select>
+
+        {/* Add Engagement button */}
+        <button
+          onClick={handleAddEngagement}
+          disabled={!selectedCustomer || !selectedEngagement}
+        >
+          Add Engagement
+        </button>
+      </div>
+
+      <div className="engagement-table">
+        <h3>Logged Engagements</h3>
         <table>
           <thead>
             <tr>
+              <th>Subscription ID</th>
               <th>Customer</th>
-              <th>Engagement Type</th>
-              <th>Engagement Points</th>
+              <th>Total Points</th>
               <th>Last Updated</th>
-              <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {customers.map((customer) => (
               <tr key={customer.SubscriptionID}>
+                <td>{customer.SubscriptionID}</td>
                 <td>{customer.CustomerName}</td>
-                <td>
-                  <select
-                    value={updatedEngagements[customer.SubscriptionID] || ""}
-                    onChange={(e) =>
-                      handleEngagementChangeForCustomer(
-                        customer.SubscriptionID,
-                        e.target.value
-                      )
-                    }
-                  >
-                    <option value="">Select Engagement</option>
-                    {engagementTypes.map((engagement) => (
-                      <option key={engagement.type} value={engagement.type}>
-                        {engagement.type}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  {customer.engagements && customer.engagements.length > 0
-                    ? customer.engagements
-                        .map((engagement) => engagement.points)
-                        .reduce((total, points) => total + points, 0)
-                    : 0}
-                </td>
-                <td>
-                  {customer.engagements && customer.engagements.length > 0
-                    ? customer.engagements[0].lastUpdated
-                    : "-"}
-                </td>
-                <td>
-                  <button
-                    onClick={() => handleAddEngagement(customer.SubscriptionID)}
-                    disabled={!updatedEngagements[customer.SubscriptionID]}
-                  >
-                    Add Engagement
-                  </button>
-                </td>
+                <td>{customer.engagementPoints}</td>
+                <td>{new Date().toLocaleString()}</td>{" "}
+                {/* Assuming the last updated date */}
               </tr>
             ))}
           </tbody>
