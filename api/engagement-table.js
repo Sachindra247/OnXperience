@@ -1,7 +1,7 @@
 const sql = require("mssql");
 
 const CORS_ALLOWED_ORIGIN = process.env.CORS_ALLOWED_ORIGIN || "*";
-const CORS_METHODS = "GET, POST, OPTIONS";
+const CORS_METHODS = "GET, POST, OPTIONS, PUT";
 const CORS_HEADERS = "Content-Type";
 
 const dbConfig = {
@@ -97,9 +97,56 @@ module.exports = async (req, res) => {
           VALUES (@SubscriptionID, @EngagementType, @EngagementPoints, @EngagementDate)
         `);
 
+      // Now update the total points for the customer in Subscription_Licenses
+      const totalPointsResult = await pool
+        .request()
+        .input("SubscriptionID", sql.VarChar, SubscriptionID).query(`
+          SELECT SUM(EngagementPoints) AS TotalPoints
+          FROM Subscription_Engagements
+          WHERE SubscriptionID = @SubscriptionID
+        `);
+
+      const totalPoints = totalPointsResult.recordset[0]?.TotalPoints || 0;
+
+      // Update the TotalPoints in Subscription_Licenses
+      await pool
+        .request()
+        .input("SubscriptionID", sql.VarChar, SubscriptionID)
+        .input("TotalPoints", sql.Int, totalPoints).query(`
+          UPDATE Subscription_Licenses
+          SET TotalPoints = @TotalPoints
+          WHERE SubscriptionID = @SubscriptionID
+        `);
+
       return res
         .status(200)
-        .json({ message: "Engagement updated successfully" });
+        .json({
+          message: "Engagement updated and total points updated successfully",
+        });
+    }
+
+    if (req.method === "PUT") {
+      const { SubscriptionID, TotalPoints } = req.body;
+
+      console.log("PUT body received:", req.body);
+
+      if (typeof SubscriptionID !== "string" || isNaN(TotalPoints)) {
+        return res.status(400).json({ error: "Missing or invalid fields" });
+      }
+
+      // Update the TotalPoints in Subscription_Licenses
+      await pool
+        .request()
+        .input("SubscriptionID", sql.VarChar, SubscriptionID)
+        .input("TotalPoints", sql.Int, TotalPoints).query(`
+          UPDATE Subscription_Licenses
+          SET TotalPoints = @TotalPoints
+          WHERE SubscriptionID = @SubscriptionID
+        `);
+
+      return res
+        .status(200)
+        .json({ message: "Total points updated successfully" });
     }
 
     return res.status(405).json({ error: "Method Not Allowed" });
