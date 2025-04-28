@@ -13,191 +13,141 @@ const engagementTypes = [
 
 const EngagementTablePage = () => {
   const [customers, setCustomers] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState("");
-  const [selectedEngagement, setSelectedEngagement] = useState("");
-  const [engagementList, setEngagementList] = useState([]);
+  const [updatedEngagements, setUpdatedEngagements] = useState({});
 
   useEffect(() => {
     // Fetch all customers from the backend
     axios
       .get("https://on-xperience.vercel.app/api/engagement-table")
       .then((response) => {
-        setCustomers(response.data);
-        // Assuming the response data has all customers
-        setEngagementList(
-          response.data.map((customer) => ({
-            SubscriptionID: customer.SubscriptionID,
-            CustomerName: customer.CustomerName,
-            engagementPoints: 0, // Initialize with zero points
-          }))
-        );
+        const customersWithEngagements = response.data.map((customer) => ({
+          ...customer,
+          engagements: customer.engagements || [], // Ensure engagements is always an array
+        }));
+        setCustomers(customersWithEngagements);
       })
       .catch((error) => {
         console.error("Error fetching customers:", error);
       });
   }, []);
 
-  const handleSelectChange = (e) => {
-    setSelectedCustomer(e.target.value);
+  const handleEngagementChange = (e, subscriptionId) => {
+    const { value } = e.target;
+    setUpdatedEngagements({
+      ...updatedEngagements,
+      [subscriptionId]: value,
+    });
   };
 
-  const handleEngagementChange = (e) => {
-    setSelectedEngagement(e.target.value);
-  };
-
-  const handleAddEngagement = () => {
-    if (selectedCustomer && selectedEngagement) {
+  const handleAddEngagement = (subscriptionId) => {
+    const selectedEngagement = updatedEngagements[subscriptionId];
+    if (selectedEngagement) {
       const engagement = engagementTypes.find(
         (eng) => eng.type === selectedEngagement
       );
       const engagementPoints = engagement ? engagement.points : 0;
 
-      // Find the customer and update engagement points
-      const updatedCustomers = customers.map((customer) => {
-        if (customer.SubscriptionID === selectedCustomer) {
-          customer.engagementPoints += engagementPoints; // Add points to existing ones
-        }
-        return customer;
-      });
-
-      // Send updated data to backend
       axios
         .post("https://on-xperience.vercel.app/api/engagement-table", {
-          SubscriptionID: selectedCustomer,
+          SubscriptionID: subscriptionId,
           EngagementType: selectedEngagement,
           EngagementPoints: engagementPoints,
         })
-        .then((response) => {
-          console.log("Server response:", response.data);
-          setCustomers(updatedCustomers); // Update local state with new points
-        })
-        .catch((err) => {
-          console.error(
-            "Error occurred while sending data to the server:",
-            err
+        .then(() => {
+          setCustomers((prevList) =>
+            prevList.map((customer) =>
+              customer.SubscriptionID === subscriptionId
+                ? {
+                    ...customer,
+                    engagements: [
+                      ...customer.engagements,
+                      {
+                        engagement: selectedEngagement,
+                        points: engagementPoints,
+                        lastUpdated: new Date().toLocaleString(),
+                      },
+                    ],
+                  }
+                : customer
+            )
           );
-          console.error(
-            "Detailed error response:",
-            err.response?.data || err.message
-          );
-        });
-    }
-  };
-
-  const handlePointsChange = (e, subscriptionId) => {
-    const updatedCustomers = customers.map((customer) => {
-      if (customer.SubscriptionID === subscriptionId) {
-        customer.engagementPoints = e.target.value;
-      }
-      return customer;
-    });
-
-    setCustomers(updatedCustomers);
-  };
-
-  const handleSavePoints = (subscriptionId) => {
-    const customer = customers.find(
-      (customer) => customer.SubscriptionID === subscriptionId
-    );
-
-    if (customer) {
-      axios
-        .put("https://on-xperience.vercel.app/api/engagement-table", {
-          SubscriptionID: customer.SubscriptionID,
-          EngagementPoints: customer.engagementPoints,
         })
-        .then((response) => {
-          console.log("Points saved:", response.data);
-        })
-        .catch((err) => {
-          console.error("Error saving points:", err);
-        });
+        .catch((err) => console.error(err));
     }
   };
 
   return (
     <div className="engagement-table-page-container">
       <h2>Log Engagement</h2>
-      <div className="engagement-form">
-        {/* Customer selection dropdown */}
-        <select
-          value={selectedCustomer}
-          onChange={handleSelectChange}
-          disabled={!customers.length}
-        >
-          <option value="">Select Customer</option>
-          {customers && customers.length > 0 ? (
-            customers.map((customer) => (
-              <option
-                key={customer.SubscriptionID}
-                value={customer.SubscriptionID}
-              >
-                {customer.CustomerName} (ID: {customer.SubscriptionID})
-              </option>
-            ))
-          ) : (
-            <option disabled>No customers available</option>
-          )}
-        </select>
-
-        {/* Engagement type selection dropdown */}
-        <select value={selectedEngagement} onChange={handleEngagementChange}>
-          <option value="">Select Engagement Type</option>
-          {engagementTypes.map((engagement) => (
-            <option key={engagement.type} value={engagement.type}>
-              {engagement.type}
-            </option>
-          ))}
-        </select>
-
-        {/* Add Engagement button */}
-        <button
-          onClick={handleAddEngagement}
-          disabled={!selectedCustomer || !selectedEngagement}
-        >
-          Add Engagement
-        </button>
-      </div>
 
       <div className="engagement-table">
-        <h3>Logged Engagements</h3>
+        <h3>Customer Engagement Table</h3>
         <table>
           <thead>
             <tr>
+              <th>Customer Name</th>
               <th>Subscription ID</th>
-              <th>Customer</th>
-              <th>Total Points</th>
+              <th>Engagement Type</th>
+              <th>Points</th>
               <th>Last Updated</th>
-              <th>Edit</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {customers.map((customer) => (
               <tr key={customer.SubscriptionID}>
-                <td>{customer.SubscriptionID}</td>
                 <td>{customer.CustomerName}</td>
+                <td>{customer.SubscriptionID}</td>
                 <td>
-                  <input
-                    type="number"
-                    value={customer.engagementPoints}
+                  <select
+                    value={updatedEngagements[customer.SubscriptionID] || ""}
                     onChange={(e) =>
-                      handlePointsChange(e, customer.SubscriptionID)
+                      handleEngagementChange(e, customer.SubscriptionID)
                     }
-                  />
+                  >
+                    <option value="">Select Engagement</option>
+                    {engagementTypes.map((engagement) => (
+                      <option key={engagement.type} value={engagement.type}>
+                        {engagement.type}
+                      </option>
+                    ))}
+                  </select>
                 </td>
-                <td>{new Date().toLocaleString()}</td>{" "}
-                {/* Assuming the last updated date */}
+                <td>
+                  {customer.engagements.length > 0
+                    ? customer.engagements[customer.engagements.length - 1]
+                        .points
+                    : "-"}
+                </td>
+                <td>
+                  {customer.engagements.length > 0
+                    ? customer.engagements[customer.engagements.length - 1]
+                        .lastUpdated
+                    : "-"}
+                </td>
                 <td>
                   <button
-                    onClick={() => handleSavePoints(customer.SubscriptionID)}
+                    onClick={() => handleAddEngagement(customer.SubscriptionID)}
+                    disabled={!updatedEngagements[customer.SubscriptionID]}
                   >
-                    Save
+                    Add Engagement
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="total-points">
+        <h3>Total Points (all customers):</h3>
+        {customers.reduce((acc, customer) => {
+          const totalPoints = customer.engagements.reduce(
+            (sum, engagement) => sum + engagement.points,
+            0
+          );
+          return acc + totalPoints;
+        }, 0)}
       </div>
     </div>
   );
