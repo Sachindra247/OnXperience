@@ -57,6 +57,7 @@ const EngagementTablePage = () => {
           EngagementPoints: engagementPoints,
         })
         .then(() => {
+          // Instead of replacing engagements, we add the new engagement to the existing list
           setCustomers((prevList) =>
             prevList.map((customer) =>
               customer.SubscriptionID === subscriptionId
@@ -74,6 +75,11 @@ const EngagementTablePage = () => {
                 : customer
             )
           );
+          // Clear the selected engagement after it is added
+          setUpdatedEngagements({
+            ...updatedEngagements,
+            [subscriptionId]: "",
+          });
         })
         .catch((err) => {
           console.error(err);
