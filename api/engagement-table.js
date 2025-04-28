@@ -1,7 +1,7 @@
 const sql = require("mssql");
 
 const CORS_ALLOWED_ORIGIN = process.env.CORS_ALLOWED_ORIGIN || "*";
-const CORS_METHODS = "GET, POST, OPTIONS";
+const CORS_METHODS = "GET, POST, OPTIONS, PUT";
 const CORS_HEADERS = "Content-Type";
 
 const dbConfig = {
@@ -15,7 +15,6 @@ const dbConfig = {
   },
 };
 
-// Cache SQL connection pool across invocations
 let cachedPool = null;
 
 async function getConnection() {
@@ -35,63 +34,93 @@ module.exports = async (req, res) => {
     const pool = await getConnection();
 
     if (req.method === "GET") {
-      // Get all customers from Subscription_Licenses table
-      const result = await pool
-        .request()
-        .query(
-          "SELECT SubscriptionID, CustomerName FROM Subscription_Licenses"
+      const result = await pool.request().query(`
+        SELECT sl.SubscriptionID, sl.CustomerName, se.EngagementType, se.EngagementPoints, se.EngagementDate
+        FROM Subscription_Licenses sl
+        LEFT JOIN Subscription_Engagements se ON sl.SubscriptionID = se.SubscriptionID
+      `);
+
+      const customers = result.recordset.reduce((acc, row) => {
+        const customerIndex = acc.findIndex(
+          (customer) => customer.SubscriptionID === row.SubscriptionID
         );
-      return res.status(200).json(result.recordset);
+
+        if (customerIndex === -1) {
+          acc.push({
+            SubscriptionID: row.SubscriptionID,
+            CustomerName: row.CustomerName,
+            engagements: row.EngagementType
+              ? [
+                  {
+                    engagement: row.EngagementType,
+                    points: row.EngagementPoints,
+                    lastUpdated: row.EngagementDate,
+                  },
+                ]
+              : [],
+          });
+        } else if (row.EngagementType) {
+          acc[customerIndex].engagements.push({
+            engagement: row.EngagementType,
+            points: row.EngagementPoints,
+            lastUpdated: row.EngagementDate,
+          });
+        }
+
+        return acc;
+      }, []);
+
+      return res.status(200).json(customers);
     }
 
     if (req.method === "POST") {
-      const { action, SubscriptionID, EngagementType, EngagementPoints } =
-        req.body;
+      console.log("POST body received:", req.body);
+      const { SubscriptionID, EngagementType, EngagementPoints } = req.body;
 
-      if (action === "updateLicense") {
-        // Update license information (Existing logic)
-        const { LicensesPurchased, LicensesUsed } = req.body;
-        await pool
-          .request()
-          .input("SubscriptionID", sql.VarChar, SubscriptionID)
-          .input("LicensesPurchased", sql.Int, LicensesPurchased)
-          .input("LicensesUsed", sql.Int, LicensesUsed).query(`
-            UPDATE Subscription_Licenses
-            SET LicensesPurchased = @LicensesPurchased,
-                LicensesUsed = @LicensesUsed
-            WHERE SubscriptionID = @SubscriptionID
-          `);
-
+      if (!SubscriptionID || !EngagementType || EngagementPoints == null) {
         return res
-          .status(200)
-          .json({ message: "License data updated successfully" });
+          .status(400)
+          .json({ error: "Missing fields in request body" });
       }
 
-      if (action === "updateEngagement") {
-        // Insert the engagement record into Subscription_Engagements
-        await pool
-          .request()
-          .input("SubscriptionID", sql.VarChar, SubscriptionID)
-          .input("EngagementType", sql.VarChar, EngagementType)
-          .input("EngagementPoints", sql.Int, EngagementPoints)
-          .input("EngagementDate", sql.DateTime, new Date()).query(`
-            INSERT INTO Subscription_Engagements (SubscriptionID, CustomerName, EngagementType, EngagementPoints, EngagementDate)
-            SELECT SubscriptionID, CustomerName, @EngagementType, @EngagementPoints, @EngagementDate
-            FROM Subscription_Licenses
-            WHERE SubscriptionID = @SubscriptionID
-          `);
-
-        return res
-          .status(200)
-          .json({ message: "Engagement data updated successfully" });
+      if (
+        typeof SubscriptionID !== "string" ||
+        typeof EngagementType !== "string" ||
+        typeof EngagementPoints !== "number"
+      ) {
+        return res.status(400).json({ error: "Invalid field types" });
       }
 
-      return res.status(400).json({ error: "Invalid action" });
+      // Use MERGE to handle insertion or update and sum the points
+      await pool
+        .request()
+        .input("SubscriptionID", sql.VarChar, SubscriptionID)
+        .input("EngagementType", sql.VarChar, EngagementType)
+        .input("EngagementPoints", sql.Int, EngagementPoints).query(`
+          MERGE INTO Subscription_Engagements AS target
+          USING (SELECT @SubscriptionID AS SubscriptionID, @EngagementType AS EngagementType) AS source
+          ON target.SubscriptionID = source.SubscriptionID AND target.EngagementType = source.EngagementType
+          WHEN MATCHED THEN
+            UPDATE SET target.EngagementPoints = target.EngagementPoints + @EngagementPoints
+          WHEN NOT MATCHED THEN
+            INSERT (SubscriptionID, EngagementType, EngagementPoints)
+            VALUES (@SubscriptionID, @EngagementType, @EngagementPoints);
+
+          -- Update the total points for the Subscription
+          UPDATE sl
+          SET sl.EngagementPoints = (
+            SELECT SUM(EngagementPoints) FROM Subscription_Engagements WHERE SubscriptionID = sl.SubscriptionID
+          )
+          FROM Subscription_Licenses sl
+          WHERE sl.SubscriptionID = @SubscriptionID;
+        `);
+
+      return res.status(200).json({ message: "Engagement added successfully" });
     }
 
-    return res.status(405).json({ error: "Method Not Allowed" });
+    res.status(405).end(); // Method Not Allowed
   } catch (err) {
-    console.error("SQL error:", err);
-    return res.status(500).json({ error: "Failed to fetch or update data" });
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
