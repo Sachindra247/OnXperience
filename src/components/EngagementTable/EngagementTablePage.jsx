@@ -41,10 +41,6 @@ const EngagementTablePage = () => {
 
   const handleEngagementChange = (e, subscriptionId) => {
     const { value } = e.target;
-    console.log(
-      `Engagement type selected for SubscriptionID ${subscriptionId}:`,
-      value
-    ); // Log the selected engagement type
     setUpdatedEngagements((prev) => ({
       ...prev,
       [subscriptionId]: value,
@@ -53,10 +49,6 @@ const EngagementTablePage = () => {
 
   const handleAddEngagement = async (subscriptionId) => {
     const selectedEngagement = updatedEngagements[subscriptionId];
-    console.log(
-      `Attempting to add engagement for SubscriptionID ${subscriptionId}:`,
-      selectedEngagement
-    ); // Log engagement attempt
     if (!selectedEngagement) {
       alert("Please select an engagement type first.");
       return;
@@ -72,12 +64,6 @@ const EngagementTablePage = () => {
     }
 
     const engagementPoints = Number(engagement.points); // 🛠️ Force to number
-
-    if (isNaN(engagementPoints)) {
-      alert("Invalid engagement points.");
-      return;
-    }
-
     const customer = customers.find((c) => c.SubscriptionID === subscriptionId);
 
     if (!customer) {
@@ -90,7 +76,6 @@ const EngagementTablePage = () => {
     );
 
     const method = existingEngagement ? "put" : "post";
-    console.log(`Using HTTP method: ${method}`); // Log which HTTP method is being used
 
     try {
       await axios[method](
@@ -126,15 +111,14 @@ const EngagementTablePage = () => {
                         lastUpdated: new Date().toLocaleString(),
                       },
                     ],
-                totalPoints: cust.totalPoints + engagementPoints, // Update the total points
+                totalPoints: cust.engagements.reduce(
+                  (sum, engagement) => sum + engagement.points,
+                  0
+                ), // Recalculate the total points
               }
             : cust
         )
       );
-
-      console.log(
-        `Engagement successfully added for SubscriptionID ${subscriptionId}`
-      ); // Log success
 
       // Clear the selected engagement after it is added
       setUpdatedEngagements((prev) => ({
