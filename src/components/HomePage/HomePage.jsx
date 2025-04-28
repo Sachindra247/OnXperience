@@ -96,6 +96,7 @@ import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
 import AzureTablePage from "../../components/AzureTable/AzureTablePage";
+import EngagementTablePage from "../../components/EngagementTable/EngagementTablePage";
 import { models } from "powerbi-client";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../../components/Header/Header";
@@ -238,6 +239,9 @@ const HomePage = () => {
               <li>
                 <Link to="/azure-sql-table">Licenses</Link>
               </li>
+              <li>
+                <Link to="/engagement-table">Engagement Data</Link>
+              </li>
             </ul>
             <ul className="tree-menu bottom-links">
               <li>
@@ -253,6 +257,8 @@ const HomePage = () => {
         <main className="report-container">
           {currentRoute === "azure-sql-table" ? (
             <AzureTablePage />
+          ) : currentRoute === "engagement-table" ? (
+            <EngagementTablePage />
           ) : embedToken ? (
             <PowerBIEmbed
               embedConfig={{

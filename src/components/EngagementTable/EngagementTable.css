@@ -1,0 +1,29 @@
+.engagement-table-page-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.engagement-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.engagement-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.engagement-table th,
+.engagement-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+
+.total-points {
+    margin-top: 20px;
+    font-weight: bold;
+    font-size: 18px;
+}

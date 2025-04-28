@@ -103,6 +103,7 @@ import {
 } from "react-router-dom";
 import "./global.css";
 import AzureTablePage from "./components/AzureTable/AzureTablePage";
+import EngagementTablePage from "./components/EngagementTable/EngagementTablePage";
 
 const RouteWrapper = ({ children }) => {
   const location = useLocation();
@@ -159,6 +160,14 @@ function App() {
           element={
             <RouteWrapper>
               {(path) => <HomePage route="azure-sql-table" path={path} />}
+            </RouteWrapper>
+          }
+        />
+        <Route
+          path="/engagement-table"
+          element={
+            <RouteWrapper>
+              {(path) => <HomePage route="engagement-table" path={path} />}
             </RouteWrapper>
           }
         />
