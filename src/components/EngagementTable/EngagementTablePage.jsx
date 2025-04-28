@@ -158,9 +158,11 @@ const EngagementTablePage = () => {
                   <td>
                     {customer.engagements.length > 0
                       ? new Date(
-                          customer.engagements[
-                            customer.engagements.length - 1
-                          ].lastUpdated
+                          // Sort engagements by date and get the most recent one
+                          [...customer.engagements].sort(
+                            (a, b) =>
+                              new Date(b.lastUpdated) - new Date(a.lastUpdated)
+                          )[0].lastUpdated
                         ).toLocaleString()
                       : "-"}
                   </td>
