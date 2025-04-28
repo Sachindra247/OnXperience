@@ -55,20 +55,23 @@ const EngagementTablePage = () => {
       const engagementPoints = engagement ? engagement.points : 0;
 
       // Update the total points by adding the new engagement points
-      axios
-        .post("https://on-xperience.vercel.app/api/engagement-table", {
-          SubscriptionID: subscriptionId,
-          EngagementType: selectedEngagement,
-          EngagementPoints: engagementPoints,
-        })
-        .then(() => {
-          // Update the customer data with the new total points
-          setCustomers((prevList) =>
-            prevList.map((customer) =>
-              customer.SubscriptionID === subscriptionId
-                ? {
-                    ...customer,
-                    engagements: [
+      setCustomers((prevList) =>
+        prevList.map((customer) =>
+          customer.SubscriptionID === subscriptionId
+            ? {
+                ...customer,
+                engagements: customer.engagements.some(
+                  (eng) => eng.engagement === selectedEngagement
+                )
+                  ? customer.engagements.map((eng) =>
+                      eng.engagement === selectedEngagement
+                        ? {
+                            ...eng,
+                            points: eng.points + engagementPoints, // Add points if engagement already exists
+                          }
+                        : eng
+                    )
+                  : [
                       ...customer.engagements,
                       {
                         engagement: selectedEngagement,
@@ -76,16 +79,28 @@ const EngagementTablePage = () => {
                         lastUpdated: new Date().toLocaleString(),
                       },
                     ],
-                    totalPoints: customer.totalPoints + engagementPoints, // Add new points to total points
-                  }
-                : customer
-            )
-          );
-          // Clear the selected engagement after it is added
-          setUpdatedEngagements({
-            ...updatedEngagements,
-            [subscriptionId]: "",
-          });
+                totalPoints: customer.engagements.some(
+                  (eng) => eng.engagement === selectedEngagement
+                )
+                  ? customer.totalPoints + engagementPoints // Sum points if engagement updated
+                  : customer.totalPoints + engagementPoints, // Add points if new engagement
+              }
+            : customer
+        )
+      );
+
+      // Clear the selected engagement after it is added
+      setUpdatedEngagements({
+        ...updatedEngagements,
+        [subscriptionId]: "",
+      });
+
+      // Proceed with the backend request to update the engagement
+      axios
+        .post("https://on-xperience.vercel.app/api/engagement-table", {
+          SubscriptionID: subscriptionId,
+          EngagementType: selectedEngagement,
+          EngagementPoints: engagementPoints,
         })
         .catch((err) => {
           console.error(err);
