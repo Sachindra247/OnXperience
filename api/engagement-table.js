@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
         SELECT sl.SubscriptionID, sl.CustomerName, se.EngagementType, se.EngagementPoints, se.EngagementDate
         FROM Subscription_Licenses sl
         LEFT JOIN Subscription_Engagements se ON sl.SubscriptionID = se.SubscriptionID
+        ORDER BY sl.SubscriptionID, se.EngagementDate DESC
       `);
 
       const customers = result.recordset.reduce((acc, row) => {
@@ -73,48 +74,48 @@ module.exports = async (req, res) => {
       return res.status(200).json(customers);
     }
 
-    if (req.method === "POST") {
-      console.log("POST body received:", req.body);
+    if (req.method === "POST" || req.method === "PUT") {
+      console.log("Request body received:", req.body);
       const { SubscriptionID, EngagementType, EngagementPoints } = req.body;
 
       if (!SubscriptionID || !EngagementType || EngagementPoints == null) {
-        return res
-          .status(400)
-          .json({ error: "Missing fields in request body" });
+        return res.status(400).json({ error: "Missing required fields" });
       }
 
-      if (
-        typeof SubscriptionID !== "string" ||
-        typeof EngagementType !== "string" ||
-        typeof EngagementPoints !== "number"
-      ) {
-        return res.status(400).json({ error: "Invalid field types" });
-      }
-
-      // Simplified MERGE statement - only updates Subscription_Engagements table
-      await pool
+      // Process engagement
+      const result = await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID)
         .input("EngagementType", sql.VarChar, EngagementType)
         .input("EngagementPoints", sql.Int, EngagementPoints).query(`
           MERGE INTO Subscription_Engagements AS target
-          USING (SELECT @SubscriptionID AS SubscriptionID, @EngagementType AS EngagementType) AS source
-          ON target.SubscriptionID = source.SubscriptionID AND target.EngagementType = source.EngagementType
+          USING (SELECT @SubscriptionID AS SubscriptionID,
+                        @EngagementType AS EngagementType,
+                        @EngagementPoints AS EngagementPoints) AS source
+          ON target.SubscriptionID = source.SubscriptionID
+             AND target.EngagementType = source.EngagementType
           WHEN MATCHED THEN
             UPDATE SET
-              target.EngagementPoints = target.EngagementPoints + @EngagementPoints,
+              target.EngagementPoints = target.EngagementPoints + source.EngagementPoints,
               target.EngagementDate = GETDATE()
           WHEN NOT MATCHED THEN
             INSERT (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
-            VALUES (@SubscriptionID, @EngagementType, @EngagementPoints, GETDATE());
+            VALUES (source.SubscriptionID, source.EngagementType, source.EngagementPoints, GETDATE());
         `);
 
-      return res.status(200).json({ message: "Engagement added successfully" });
+      return res.status(200).json({
+        message: "Engagement updated successfully",
+        subscriptionId: SubscriptionID,
+        engagementType: EngagementType,
+      });
     }
 
     res.status(405).end(); // Method Not Allowed
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error in request handler:", err);
+    return res.status(500).json({
+      error: "Internal Server Error",
+      details: err.message,
+    });
   }
 };
