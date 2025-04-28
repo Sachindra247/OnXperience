@@ -64,10 +64,9 @@ module.exports = async (req, res) => {
         .input("EngagementType", sql.VarChar, EngagementType)
         .input("EngagementPoints", sql.Int, EngagementPoints)
         .input("EngagementDate", sql.DateTime, new Date()).query(`
-          INSERT INTO Subscription_Engagements (SubscriptionID, CustomerName, EngagementType, EngagementPoints, EngagementDate)
-          SELECT SubscriptionID, CustomerName, @EngagementType, @EngagementPoints, @EngagementDate
-          FROM Subscription_Licenses
-          WHERE SubscriptionID = @SubscriptionID
+          INSERT INTO Subscription_Engagements (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
+          SELECT @SubscriptionID, @EngagementType, @EngagementPoints, @EngagementDate
+          WHERE EXISTS (SELECT 1 FROM Subscription_Licenses WHERE SubscriptionID = @SubscriptionID)
         `);
 
       return res
@@ -78,6 +77,8 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method Not Allowed" });
   } catch (err) {
     console.error("SQL error:", err);
-    return res.status(500).json({ error: "Failed to fetch or update data" });
+    return res
+      .status(500)
+      .json({ error: `Failed to update engagement: ${err.message}` });
   }
 };
