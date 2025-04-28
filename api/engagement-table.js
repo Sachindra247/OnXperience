@@ -92,6 +92,18 @@ module.exports = async (req, res) => {
       }
 
       // Use MERGE to handle insertion or update and sum the points
+      console.log(`
+        Executing MERGE query:
+        MERGE INTO dbo.Subscription_Engagements AS target
+        USING (SELECT @SubscriptionID AS SubscriptionID, @EngagementType AS EngagementType, @EngagementPoints AS EngagementPoints) AS source
+        ON target.SubscriptionID = source.SubscriptionID AND target.EngagementType = source.EngagementType
+        WHEN MATCHED THEN
+            UPDATE SET target.EngagementPoints = target.EngagementPoints + source.EngagementPoints, target.EngagementDate = @EngagementDate
+        WHEN NOT MATCHED THEN
+            INSERT (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
+            VALUES (source.SubscriptionID, source.EngagementType, source.EngagementPoints, @EngagementDate);
+      `);
+
       await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID)
@@ -109,6 +121,7 @@ module.exports = async (req, res) => {
         `);
 
       // Update total points (sum of all engagement points)
+      console.log("Updating total points for SubscriptionID:", SubscriptionID);
       const totalPointsResult = await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID).query(`
@@ -118,6 +131,7 @@ module.exports = async (req, res) => {
         `);
 
       const totalPoints = totalPointsResult.recordset[0]?.TotalPoints || 0;
+      console.log("Total points calculated:", totalPoints);
 
       await pool
         .request()

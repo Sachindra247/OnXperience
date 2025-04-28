@@ -20,6 +20,7 @@ const EngagementTablePage = () => {
     axios
       .get("https://on-xperience.vercel.app/api/engagement-table")
       .then((response) => {
+        console.log("Fetched customer data:", response.data); // Log the fetched data
         const customersWithEngagements = response.data.map((customer) => ({
           ...customer,
           engagements: customer.engagements || [], // Ensure engagements is always an array
@@ -40,6 +41,10 @@ const EngagementTablePage = () => {
 
   const handleEngagementChange = (e, subscriptionId) => {
     const { value } = e.target;
+    console.log(
+      `Engagement type selected for SubscriptionID ${subscriptionId}:`,
+      value
+    ); // Log the selected engagement type
     setUpdatedEngagements((prev) => ({
       ...prev,
       [subscriptionId]: value,
@@ -48,6 +53,10 @@ const EngagementTablePage = () => {
 
   const handleAddEngagement = async (subscriptionId) => {
     const selectedEngagement = updatedEngagements[subscriptionId];
+    console.log(
+      `Attempting to add engagement for SubscriptionID ${subscriptionId}:`,
+      selectedEngagement
+    ); // Log engagement attempt
     if (!selectedEngagement) {
       alert("Please select an engagement type first.");
       return;
@@ -81,6 +90,7 @@ const EngagementTablePage = () => {
     );
 
     const method = existingEngagement ? "put" : "post";
+    console.log(`Using HTTP method: ${method}`); // Log which HTTP method is being used
 
     try {
       await axios[method](
@@ -121,6 +131,10 @@ const EngagementTablePage = () => {
             : cust
         )
       );
+
+      console.log(
+        `Engagement successfully added for SubscriptionID ${subscriptionId}`
+      ); // Log success
 
       // Clear the selected engagement after it is added
       setUpdatedEngagements((prev) => ({
