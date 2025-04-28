@@ -1,113 +1,88 @@
+/* EngagementTable.css */
+
 .engagement-table-page-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-}
-
-h2 {
-    text-align: center;
-    font-size: 2rem;
-    margin-bottom: 30px;
-}
-
-.engagement-form {
+    padding: 2rem;
+    background: #f9fafb;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
     display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-bottom: 30px;
-}
-
-.engagement-form select,
-.engagement-form button {
-    padding: 10px 15px;
-    font-size: 1rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
-
-.engagement-form select {
-    width: 250px;
-}
-
-.engagement-form button {
-    background-color: #4caf50;
-    color: white;
-    cursor: pointer;
-}
-
-.engagement-form button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+    flex-direction: column;
+    align-items: center;
 }
 
 .engagement-table {
     width: 100%;
-    overflow-x: auto;
+    max-width: 1100px;
+    border-collapse: collapse;
+    background-color: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease-in-out;
 }
 
-.engagement-table table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+.engagement-table thead {
+    background-color: #f0f4f8;
+    color: #333;
+    font-weight: bold;
 }
 
 .engagement-table th,
 .engagement-table td {
-    border: 1px solid #ddd;
-    padding: 12px 15px;
+    padding: 16px 20px;
     text-align: left;
-    font-size: 1rem;
+    border-bottom: 1px solid #e5eaf0;
 }
 
-.engagement-table th {
-    background-color: #4caf50;
-    color: white;
+.engagement-table th:first-child,
+.engagement-table td:first-child {
+    border-left: 4px solid #0078d4;
+}
+
+.engagement-table tbody tr:hover {
+    background-color: #f6fbff;
+    transition: background-color 0.2s ease;
+}
+
+.engagement-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .engagement-table td {
-    background-color: #f9f9f9;
+    color: #555;
+    font-size: 14px;
 }
 
-.engagement-table td ul {
-    list-style-type: none;
-    padding: 0;
+.engagement-table-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
-.engagement-table td ul li {
-    padding: 3px 0;
+.engagement-table-form select,
+.engagement-table-form button {
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    transition: background-color 0.3s ease;
 }
 
-.engagement-table td select {
-    padding: 5px;
-    width: 100%;
-    font-size: 1rem;
-    border-radius: 5px;
-}
-
-.engagement-table td button {
-    background-color: #4caf50;
-    color: white;
-    padding: 6px 10px;
-    font-size: 1rem;
-    border-radius: 5px;
-    border: none;
+.engagement-table-form button {
+    background-color: #0078d4;
+    color: #fff;
     cursor: pointer;
 }
 
-.engagement-table td button:disabled {
-    background-color: #ccc;
+.engagement-table-form button:disabled {
+    background-color: #cccccc;
     cursor: not-allowed;
 }
 
-.engagement-table .engagement-log {
-    font-size: 0.9rem;
-    margin-top: 10px;
-}
-
-.engagement-table .engagement-log p {
-    margin: 5px 0;
+.engagement-table-form select:focus,
+.engagement-table-form button:focus {
+    border-color: #0078d4;
 }
 
 .total-points {
@@ -116,23 +91,43 @@ h2 {
     font-size: 18px;
 }
 
+.error {
+    border: 2px solid #ff4444;
+    background-color: #ffebee;
+}
+
+.error-message {
+    color: #ff4444;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.global-error-message {
+    background-color: #ffebee;
+    color: #ff4444;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border-left: 4px solid #ff4444;
+}
+
+.wide-column {
+    min-width: 200px;
+    max-width: 350px;
+    word-break: break-word;
+}
+
 @media (max-width: 768px) {
-    .engagement-form {
-        flex-direction: column;
-        gap: 10px;
+    .engagement-table-page-container {
+        padding: 1rem;
     }
 
-    .engagement-form select,
-    .engagement-form button {
-        width: 100%;
-    }
-
-    .engagement-table table {
-        font-size: 0.9rem;
+    .engagement-table {
+        font-size: 12px;
     }
 
     .engagement-table th,
     .engagement-table td {
-        padding: 8px;
+        padding: 12px 14px;
     }
 }

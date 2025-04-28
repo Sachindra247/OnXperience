@@ -13,45 +13,50 @@ const engagementTypes = [
 
 const EngagementTablePage = () => {
   const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState("");
   const [selectedEngagement, setSelectedEngagement] = useState("");
   const [engagementList, setEngagementList] = useState([]);
 
   useEffect(() => {
-    // Fetch all customers with SubscriptionIDs and engagement data
+    // Fetch all customers from the backend
     axios
       .get("https://on-xperience.vercel.app/api/engagement-table")
       .then((response) => {
         setCustomers(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching customers:", error);
       });
   }, []);
 
-  const handleEngagementChange = (e, customerID) => {
-    setSelectedEngagement({ type: e.target.value, customerID });
+  const handleSelectChange = (e) => {
+    setSelectedCustomer(e.target.value);
   };
 
-  const handleAddEngagement = (customerID) => {
-    if (selectedEngagement.type) {
+  const handleEngagementChange = (e) => {
+    setSelectedEngagement(e.target.value);
+  };
+
+  const handleAddEngagement = () => {
+    if (selectedCustomer && selectedEngagement) {
       const engagement = engagementTypes.find(
-        (eng) => eng.type === selectedEngagement.type
+        (eng) => eng.type === selectedEngagement
       );
       const engagementPoints = engagement ? engagement.points : 0;
 
-      // Update the engagement for the specific customer
       axios
         .post("https://on-xperience.vercel.app/api/engagement-table", {
-          SubscriptionID: customerID,
-          EngagementType: selectedEngagement.type,
+          SubscriptionID: selectedCustomer,
+          EngagementType: selectedEngagement,
           EngagementPoints: engagementPoints,
         })
-        .then((response) => {
-          // Update the engagement list with the newly added data
+        .then(() => {
           setEngagementList((prevList) => [
             ...prevList,
             {
-              customer: customerID,
-              engagement: selectedEngagement.type,
+              customer: selectedCustomer,
+              engagement: selectedEngagement,
               points: engagementPoints,
-              lastUpdated: new Date().toLocaleString(),
             },
           ]);
         })
@@ -62,76 +67,61 @@ const EngagementTablePage = () => {
   return (
     <div className="engagement-table-page-container">
       <h2>Log Engagement</h2>
+      <div className="engagement-form">
+        {/* If customers is undefined or empty, disable the select */}
+        <select
+          value={selectedCustomer}
+          onChange={handleSelectChange}
+          disabled={!customers.length}
+        >
+          <option value="">Select Customer</option>
+          {customers && customers.length > 0 ? (
+            customers.map((customer) => (
+              <option
+                key={customer.SubscriptionID}
+                value={customer.SubscriptionID}
+              >
+                {customer.CustomerName}
+              </option>
+            ))
+          ) : (
+            <option disabled>No customers available</option>
+          )}
+        </select>
+
+        <select value={selectedEngagement} onChange={handleEngagementChange}>
+          <option value="">Select Engagement Type</option>
+          {engagementTypes.map((engagement) => (
+            <option key={engagement.type} value={engagement.type}>
+              {engagement.type}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={handleAddEngagement}
+          disabled={!selectedCustomer || !selectedEngagement}
+        >
+          Add Engagement
+        </button>
+      </div>
 
       <div className="engagement-table">
-        <h3>Customer Engagement Table</h3>
+        <h3>Logged Engagements</h3>
         <table>
           <thead>
             <tr>
-              <th>Customer Name</th>
-              <th>Subscription IDs</th>
+              <th>Customer</th>
               <th>Engagement Type</th>
               <th>Points</th>
-              <th>Last Updated</th>
-              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {customers.map((customer) => (
-              <tr key={customer.SubscriptionID}>
-                <td>{customer.CustomerName}</td>
-                <td>
-                  <ul>
-                    {customer.SubscriptionIDs.map((subID) => (
-                      <li key={subID}>{subID}</li>
-                    ))}
-                  </ul>
-                </td>
-                <td>
-                  <select
-                    value={
-                      selectedEngagement.customerID === customer.SubscriptionID
-                        ? selectedEngagement.type
-                        : ""
-                    }
-                    onChange={(e) =>
-                      handleEngagementChange(e, customer.SubscriptionID)
-                    }
-                  >
-                    <option value="">Select Engagement Type</option>
-                    {engagementTypes.map((engagement) => (
-                      <option key={engagement.type} value={engagement.type}>
-                        {engagement.type}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  {selectedEngagement.customerID === customer.SubscriptionID &&
-                  selectedEngagement.type
-                    ? engagementTypes.find(
-                        (eng) => eng.type === selectedEngagement.type
-                      )?.points
-                    : ""}
-                </td>
-                <td>
-                  {engagementList
-                    .filter((eng) => eng.customer === customer.SubscriptionID)
-                    .map((engagement, idx) => (
-                      <div key={idx}>
-                        <p>{engagement.lastUpdated}</p>
-                        <p>Points: {engagement.points}</p>
-                      </div>
-                    ))}
-                </td>
-                <td>
-                  <button
-                    onClick={() => handleAddEngagement(customer.SubscriptionID)}
-                    disabled={!selectedEngagement.type}
-                  >
-                    Add Engagement
-                  </button>
-                </td>
+            {engagementList.map((engagement, index) => (
+              <tr key={index}>
+                <td>{engagement.customer}</td>
+                <td>{engagement.engagement}</td>
+                <td>{engagement.points}</td>
               </tr>
             ))}
           </tbody>
