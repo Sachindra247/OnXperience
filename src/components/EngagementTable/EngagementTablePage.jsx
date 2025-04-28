@@ -116,7 +116,7 @@ const EngagementTablePage = () => {
                         lastUpdated: new Date().toLocaleString(),
                       },
                     ],
-                totalPoints: cust.totalPoints + engagementPoints,
+                totalPoints: cust.totalPoints + engagementPoints, // Update the total points
               }
             : cust
         )
