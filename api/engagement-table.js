@@ -35,13 +35,42 @@ module.exports = async (req, res) => {
     const pool = await getConnection();
 
     if (req.method === "GET") {
-      // Get all customers from Subscription_Licenses table
-      const result = await pool
-        .request()
-        .query(
-          "SELECT SubscriptionID, CustomerName FROM Subscription_Licenses"
+      // Get all customers from Subscription_Licenses table with their engagements
+      const result = await pool.request().query(`
+          SELECT sl.SubscriptionID, sl.CustomerName, se.EngagementType, se.EngagementPoints, se.EngagementDate
+          FROM Subscription_Licenses sl
+          LEFT JOIN Subscription_Engagements se ON sl.SubscriptionID = se.SubscriptionID
+        `);
+
+      const customers = result.recordset.reduce((acc, row) => {
+        const customerIndex = acc.findIndex(
+          (customer) => customer.SubscriptionID === row.SubscriptionID
         );
-      return res.status(200).json(result.recordset);
+
+        if (customerIndex === -1) {
+          acc.push({
+            SubscriptionID: row.SubscriptionID,
+            CustomerName: row.CustomerName,
+            engagements: [
+              {
+                engagement: row.EngagementType,
+                points: row.EngagementPoints,
+                lastUpdated: row.EngagementDate,
+              },
+            ],
+          });
+        } else {
+          acc[customerIndex].engagements.push({
+            engagement: row.EngagementType,
+            points: row.EngagementPoints,
+            lastUpdated: row.EngagementDate,
+          });
+        }
+
+        return acc;
+      }, []);
+
+      return res.status(200).json(customers);
     }
 
     if (req.method === "POST") {
@@ -65,8 +94,7 @@ module.exports = async (req, res) => {
         .input("EngagementPoints", sql.Int, EngagementPoints)
         .input("EngagementDate", sql.DateTime, new Date()).query(`
           INSERT INTO Subscription_Engagements (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
-          SELECT @SubscriptionID, @EngagementType, @EngagementPoints, @EngagementDate
-          WHERE EXISTS (SELECT 1 FROM Subscription_Licenses WHERE SubscriptionID = @SubscriptionID)
+          VALUES (@SubscriptionID, @EngagementType, @EngagementPoints, @EngagementDate)
         `);
 
       return res
