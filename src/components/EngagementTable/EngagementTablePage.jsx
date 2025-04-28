@@ -23,10 +23,10 @@ const EngagementTablePage = () => {
         const customersWithEngagements = response.data.map((customer) => ({
           ...customer,
           engagements: customer.engagements || [], // Ensure engagements is always an array
-          totalPoints: customer.engagements.reduce(
+          totalPoints: (customer.engagements || []).reduce(
             (sum, engagement) => sum + engagement.points,
             0
-          ), // Sum of points for the customer
+          ),
         }));
         setCustomers(customersWithEngagements);
       })
@@ -40,10 +40,10 @@ const EngagementTablePage = () => {
 
   const handleEngagementChange = (e, subscriptionId) => {
     const { value } = e.target;
-    setUpdatedEngagements({
-      ...updatedEngagements,
+    setUpdatedEngagements((prev) => ({
+      ...prev,
       [subscriptionId]: value,
-    });
+    }));
   };
 
   const handleAddEngagement = (subscriptionId) => {
@@ -54,53 +54,57 @@ const EngagementTablePage = () => {
       );
       const engagementPoints = engagement ? engagement.points : 0;
 
-      // Update the total points by adding the new engagement points
-      setCustomers((prevList) =>
-        prevList.map((customer) =>
-          customer.SubscriptionID === subscriptionId
-            ? {
-                ...customer,
-                engagements: customer.engagements.some(
-                  (eng) => eng.engagement === selectedEngagement
-                )
-                  ? customer.engagements.map((eng) =>
-                      eng.engagement === selectedEngagement
-                        ? {
-                            ...eng,
-                            points: eng.points + engagementPoints, // Add points if engagement already exists
-                          }
-                        : eng
-                    )
-                  : [
-                      ...customer.engagements,
-                      {
-                        engagement: selectedEngagement,
-                        points: engagementPoints,
-                        lastUpdated: new Date().toLocaleString(),
-                      },
-                    ],
-                totalPoints: customer.engagements.some(
-                  (eng) => eng.engagement === selectedEngagement
-                )
-                  ? customer.totalPoints + engagementPoints // Sum points if engagement updated
-                  : customer.totalPoints + engagementPoints, // Add points if new engagement
-              }
-            : customer
-        )
+      const customer = customers.find(
+        (c) => c.SubscriptionID === subscriptionId
       );
 
-      // Clear the selected engagement after it is added
-      setUpdatedEngagements({
-        ...updatedEngagements,
-        [subscriptionId]: "",
-      });
+      const existingEngagement = customer.engagements.find(
+        (e) => e.engagement === selectedEngagement
+      );
 
-      // Proceed with the backend request to update the engagement
-      axios
-        .post("https://on-xperience.vercel.app/api/engagement-table", {
-          SubscriptionID: subscriptionId,
-          EngagementType: selectedEngagement,
-          EngagementPoints: engagementPoints,
+      const method = existingEngagement ? "put" : "post";
+
+      axios[method]("https://on-xperience.vercel.app/api/engagement-table", {
+        SubscriptionID: subscriptionId,
+        EngagementType: selectedEngagement,
+        EngagementPoints: engagementPoints,
+      })
+        .then(() => {
+          // Update the frontend view accordingly
+          setCustomers((prevList) =>
+            prevList.map((cust) =>
+              cust.SubscriptionID === subscriptionId
+                ? {
+                    ...cust,
+                    engagements: existingEngagement
+                      ? cust.engagements.map((eng) =>
+                          eng.engagement === selectedEngagement
+                            ? {
+                                ...eng,
+                                points: eng.points + engagementPoints,
+                                lastUpdated: new Date().toLocaleString(),
+                              }
+                            : eng
+                        )
+                      : [
+                          ...cust.engagements,
+                          {
+                            engagement: selectedEngagement,
+                            points: engagementPoints,
+                            lastUpdated: new Date().toLocaleString(),
+                          },
+                        ],
+                    totalPoints: cust.totalPoints + engagementPoints,
+                  }
+                : cust
+            )
+          );
+
+          // Clear the selected engagement after it is added
+          setUpdatedEngagements((prev) => ({
+            ...prev,
+            [subscriptionId]: "",
+          }));
         })
         .catch((err) => {
           console.error(err);
