@@ -47,32 +47,72 @@ const EngagementTablePage = () => {
       );
       const engagementPoints = engagement ? engagement.points : 0;
 
-      axios
-        .post("https://on-xperience.vercel.app/api/engagement-table", {
-          SubscriptionID: subscriptionId,
-          EngagementType: selectedEngagement,
-          EngagementPoints: engagementPoints,
-        })
-        .then(() => {
-          setCustomers((prevList) =>
-            prevList.map((customer) =>
-              customer.SubscriptionID === subscriptionId
-                ? {
-                    ...customer,
-                    engagements: [
-                      ...customer.engagements,
-                      {
-                        engagement: selectedEngagement,
-                        points: engagementPoints,
-                        lastUpdated: new Date().toLocaleString(),
-                      },
-                    ],
-                  }
-                : customer
-            )
-          );
-        })
-        .catch((err) => console.error(err));
+      // Find the customer and check if the engagement type already exists
+      const customer = customers.find(
+        (customer) => customer.SubscriptionID === subscriptionId
+      );
+      const existingEngagement = customer.engagements.find(
+        (eng) => eng.engagement === selectedEngagement
+      );
+
+      if (existingEngagement) {
+        // If the engagement type already exists, update the points
+        const updatedEngagements = customer.engagements.map((eng) =>
+          eng.engagement === selectedEngagement
+            ? {
+                ...eng,
+                points: eng.points + engagementPoints, // Sum the points
+                lastUpdated: new Date().toLocaleString(),
+              }
+            : eng
+        );
+
+        // Update the customer with the modified engagements
+        axios
+          .post("https://on-xperience.vercel.app/api/engagement-table", {
+            SubscriptionID: subscriptionId,
+            EngagementType: selectedEngagement,
+            EngagementPoints: engagementPoints,
+          })
+          .then(() => {
+            setCustomers((prevList) =>
+              prevList.map((customer) =>
+                customer.SubscriptionID === subscriptionId
+                  ? { ...customer, engagements: updatedEngagements }
+                  : customer
+              )
+            );
+          })
+          .catch((err) => console.error(err));
+      } else {
+        // If the engagement type doesn't exist, add it as a new entry
+        axios
+          .post("https://on-xperience.vercel.app/api/engagement-table", {
+            SubscriptionID: subscriptionId,
+            EngagementType: selectedEngagement,
+            EngagementPoints: engagementPoints,
+          })
+          .then(() => {
+            setCustomers((prevList) =>
+              prevList.map((customer) =>
+                customer.SubscriptionID === subscriptionId
+                  ? {
+                      ...customer,
+                      engagements: [
+                        ...customer.engagements,
+                        {
+                          engagement: selectedEngagement,
+                          points: engagementPoints,
+                          lastUpdated: new Date().toLocaleString(),
+                        },
+                      ],
+                    }
+                  : customer
+              )
+            );
+          })
+          .catch((err) => console.error(err));
+      }
     }
   };
 
@@ -114,10 +154,10 @@ const EngagementTablePage = () => {
                   </select>
                 </td>
                 <td>
-                  {customer.engagements.length > 0
-                    ? customer.engagements[customer.engagements.length - 1]
-                        .points
-                    : "-"}
+                  {customer.engagements.reduce(
+                    (acc, engagement) => acc + engagement.points,
+                    0
+                  )}
                 </td>
                 <td>
                   {customer.engagements.length > 0
@@ -142,11 +182,13 @@ const EngagementTablePage = () => {
       <div className="total-points">
         <h3>Total Points (all customers):</h3>
         {customers.reduce((acc, customer) => {
-          const totalPoints = customer.engagements.reduce(
-            (sum, engagement) => sum + engagement.points,
-            0
+          return (
+            acc +
+            customer.engagements.reduce(
+              (sum, engagement) => sum + engagement.points,
+              0
+            )
           );
-          return acc + totalPoints;
         }, 0)}
       </div>
     </div>
