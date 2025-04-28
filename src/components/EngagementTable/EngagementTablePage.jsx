@@ -15,6 +15,7 @@ const EngagementTablePage = () => {
   const [customers, setCustomers] = useState([]);
   const [updatedEngagements, setUpdatedEngagements] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [expandedSubscription, setExpandedSubscription] = useState(null);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -73,14 +74,12 @@ const EngagementTablePage = () => {
 
     setIsLoading(true);
     try {
-      // Always use POST - backend will handle updates via MERGE
       await axios.post("https://on-xperience.vercel.app/api/engagement-table", {
         SubscriptionID: subscriptionId,
         EngagementType: selectedEngagement,
         EngagementPoints: engagementPoints,
       });
 
-      // Refresh data after successful update
       const response = await axios.get(
         "https://on-xperience.vercel.app/api/engagement-table"
       );
@@ -109,6 +108,12 @@ const EngagementTablePage = () => {
     }
   };
 
+  const toggleEngagementHistory = (subscriptionId) => {
+    setExpandedSubscription(
+      expandedSubscription === subscriptionId ? null : subscriptionId
+    );
+  };
+
   return (
     <div className="engagement-table-page-container">
       <h2>Log Engagement</h2>
@@ -124,51 +129,101 @@ const EngagementTablePage = () => {
               <th>Engagement Type</th>
               <th>Points</th>
               <th>Last Updated</th>
-              <th>Action</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {customers.map((customer) => (
-              <tr key={customer.SubscriptionID}>
-                <td>{customer.CustomerName}</td>
-                <td>{customer.SubscriptionID}</td>
-                <td>
-                  <select
-                    value={updatedEngagements[customer.SubscriptionID] || ""}
-                    onChange={(e) =>
-                      handleEngagementChange(e, customer.SubscriptionID)
-                    }
-                    disabled={isLoading}
-                  >
-                    <option value="">Select Engagement</option>
-                    {engagementTypes.map((engagement) => (
-                      <option key={engagement.type} value={engagement.type}>
-                        {engagement.type}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>{customer.totalPoints}</td>
-                <td>
-                  {customer.engagements.length > 0
-                    ? new Date(
-                        customer.engagements[
-                          customer.engagements.length - 1
-                        ].lastUpdated
-                      ).toLocaleString()
-                    : "-"}
-                </td>
-                <td>
-                  <button
-                    onClick={() => handleAddEngagement(customer.SubscriptionID)}
-                    disabled={
-                      !updatedEngagements[customer.SubscriptionID] || isLoading
-                    }
-                  >
-                    {isLoading ? "Processing..." : "Add Engagement"}
-                  </button>
-                </td>
-              </tr>
+              <React.Fragment key={customer.SubscriptionID}>
+                <tr>
+                  <td>{customer.CustomerName}</td>
+                  <td>{customer.SubscriptionID}</td>
+                  <td>
+                    <select
+                      value={updatedEngagements[customer.SubscriptionID] || ""}
+                      onChange={(e) =>
+                        handleEngagementChange(e, customer.SubscriptionID)
+                      }
+                      disabled={isLoading}
+                    >
+                      <option value="">Select Engagement</option>
+                      {engagementTypes.map((engagement) => (
+                        <option key={engagement.type} value={engagement.type}>
+                          {engagement.type}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>{customer.totalPoints}</td>
+                  <td>
+                    {customer.engagements.length > 0
+                      ? new Date(
+                          customer.engagements[
+                            customer.engagements.length - 1
+                          ].lastUpdated
+                        ).toLocaleString()
+                      : "-"}
+                  </td>
+                  <td className="actions-cell">
+                    <button
+                      onClick={() =>
+                        handleAddEngagement(customer.SubscriptionID)
+                      }
+                      disabled={
+                        !updatedEngagements[customer.SubscriptionID] ||
+                        isLoading
+                      }
+                    >
+                      {isLoading ? "Processing..." : "Add Engagement"}
+                    </button>
+                    <button
+                      onClick={() =>
+                        toggleEngagementHistory(customer.SubscriptionID)
+                      }
+                      className="view-history-btn"
+                    >
+                      {expandedSubscription === customer.SubscriptionID
+                        ? "Hide History"
+                        : "View History"}
+                    </button>
+                  </td>
+                </tr>
+                {expandedSubscription === customer.SubscriptionID && (
+                  <tr className="engagement-history-row">
+                    <td colSpan="6">
+                      <div className="engagement-history">
+                        <h4>Engagement History for {customer.CustomerName}</h4>
+                        {customer.engagements.length > 0 ? (
+                          <table className="history-table">
+                            <thead>
+                              <tr>
+                                <th>Type</th>
+                                <th>Points</th>
+                                <th>Date</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {customer.engagements.map((engagement, index) => (
+                                <tr key={index}>
+                                  <td>{engagement.engagement}</td>
+                                  <td>{engagement.points}</td>
+                                  <td>
+                                    {new Date(
+                                      engagement.lastUpdated
+                                    ).toLocaleString()}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <p>No engagement history found</p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>

@@ -131,3 +131,46 @@
         padding: 12px 14px;
     }
 }
+
+.actions-cell {
+    display: flex;
+    gap: 10px;
+}
+
+.view-history-btn {
+    background-color: #4a6fa5;
+    color: white;
+}
+
+.view-history-btn:hover {
+    background-color: #3a5a8f;
+}
+
+.engagement-history-row {
+    background-color: #f8f9fa;
+}
+
+.engagement-history {
+    padding: 15px;
+    margin: 10px 0;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.history-table th,
+.history-table td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.history-table th {
+    background-color: #f2f2f2;
+}
