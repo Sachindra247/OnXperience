@@ -28,6 +28,9 @@ const EngagementTablePage = () => {
       })
       .catch((error) => {
         console.error("Error fetching customers:", error);
+        alert(
+          "There was an issue fetching the customer data. Please try again later."
+        );
       });
   }, []);
 
@@ -72,7 +75,12 @@ const EngagementTablePage = () => {
             )
           );
         })
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          console.error(err);
+          alert(
+            "An error occurred while adding the engagement. Please try again later."
+          );
+        });
     }
   };
 
