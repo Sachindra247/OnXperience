@@ -30,6 +30,16 @@ module.exports = async (req, res) => {
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
+  // 👇 Add body parsing for Vercel serverless functions
+  if (req.body && typeof req.body === "string") {
+    try {
+      req.body = JSON.parse(req.body);
+    } catch (err) {
+      console.error("Failed to parse body:", err);
+      return res.status(400).json({ error: "Invalid JSON body" });
+    }
+  }
+
   try {
     const pool = await getConnection();
 
@@ -122,11 +132,9 @@ module.exports = async (req, res) => {
           WHERE SubscriptionID = @SubscriptionID
         `);
 
-      return res
-        .status(200)
-        .json({
-          message: "Engagement added and total points updated successfully",
-        });
+      return res.status(200).json({
+        message: "Engagement added and total points updated successfully",
+      });
     }
 
     if (req.method === "PUT") {
