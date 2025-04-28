@@ -15,7 +15,6 @@ const dbConfig = {
   },
 };
 
-// Cache SQL connection pool across invocations
 let cachedPool = null;
 
 async function getConnection() {
@@ -35,12 +34,11 @@ module.exports = async (req, res) => {
     const pool = await getConnection();
 
     if (req.method === "GET") {
-      // Get all customers from Subscription_Licenses table with their engagements
       const result = await pool.request().query(`
-          SELECT sl.SubscriptionID, sl.CustomerName, se.EngagementType, se.EngagementPoints, se.EngagementDate
-          FROM Subscription_Licenses sl
-          LEFT JOIN Subscription_Engagements se ON sl.SubscriptionID = se.SubscriptionID
-        `);
+        SELECT sl.SubscriptionID, sl.CustomerName, se.EngagementType, se.EngagementPoints, se.EngagementDate
+        FROM Subscription_Licenses sl
+        LEFT JOIN Subscription_Engagements se ON sl.SubscriptionID = se.SubscriptionID
+      `);
 
       const customers = result.recordset.reduce((acc, row) => {
         const customerIndex = acc.findIndex(
@@ -51,15 +49,17 @@ module.exports = async (req, res) => {
           acc.push({
             SubscriptionID: row.SubscriptionID,
             CustomerName: row.CustomerName,
-            engagements: [
-              {
-                engagement: row.EngagementType,
-                points: row.EngagementPoints,
-                lastUpdated: row.EngagementDate,
-              },
-            ],
+            engagements: row.EngagementType
+              ? [
+                  {
+                    engagement: row.EngagementType,
+                    points: row.EngagementPoints,
+                    lastUpdated: row.EngagementDate,
+                  },
+                ]
+              : [],
           });
-        } else {
+        } else if (row.EngagementType) {
           acc[customerIndex].engagements.push({
             engagement: row.EngagementType,
             points: row.EngagementPoints,
@@ -74,19 +74,24 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST") {
+      console.log("POST body received:", req.body);
       const { SubscriptionID, EngagementType, EngagementPoints } = req.body;
 
-      console.log("POST body received:", req.body);
+      if (!SubscriptionID || !EngagementType || EngagementPoints == null) {
+        return res
+          .status(400)
+          .json({ error: "Missing fields in request body" });
+      }
 
       if (
         typeof SubscriptionID !== "string" ||
         typeof EngagementType !== "string" ||
-        isNaN(EngagementPoints)
+        typeof EngagementPoints !== "number"
       ) {
-        return res.status(400).json({ error: "Missing or invalid fields" });
+        return res.status(400).json({ error: "Invalid field types" });
       }
 
-      // Insert the engagement record into Subscription_Engagements
+      // Insert new engagement
       await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID)
@@ -97,7 +102,7 @@ module.exports = async (req, res) => {
           VALUES (@SubscriptionID, @EngagementType, @EngagementPoints, @EngagementDate)
         `);
 
-      // Now update the total points for the customer in Subscription_Licenses
+      // Update total points
       const totalPointsResult = await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID).query(`
@@ -108,7 +113,6 @@ module.exports = async (req, res) => {
 
       const totalPoints = totalPointsResult.recordset[0]?.TotalPoints || 0;
 
-      // Update the TotalPoints in Subscription_Licenses
       await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID)
@@ -121,20 +125,27 @@ module.exports = async (req, res) => {
       return res
         .status(200)
         .json({
-          message: "Engagement updated and total points updated successfully",
+          message: "Engagement added and total points updated successfully",
         });
     }
 
     if (req.method === "PUT") {
+      console.log("PUT body received:", req.body);
       const { SubscriptionID, TotalPoints } = req.body;
 
-      console.log("PUT body received:", req.body);
-
-      if (typeof SubscriptionID !== "string" || isNaN(TotalPoints)) {
-        return res.status(400).json({ error: "Missing or invalid fields" });
+      if (!SubscriptionID || TotalPoints == null) {
+        return res
+          .status(400)
+          .json({ error: "Missing fields in request body" });
       }
 
-      // Update the TotalPoints in Subscription_Licenses
+      if (
+        typeof SubscriptionID !== "string" ||
+        typeof TotalPoints !== "number"
+      ) {
+        return res.status(400).json({ error: "Invalid field types" });
+      }
+
       await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID)
@@ -154,6 +165,6 @@ module.exports = async (req, res) => {
     console.error("SQL error:", err);
     return res
       .status(500)
-      .json({ error: `Failed to update engagement: ${err.message}` });
+      .json({ error: `Failed to process request: ${err.message}` });
   }
 };
