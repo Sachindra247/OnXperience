@@ -240,7 +240,7 @@ const HomePage = () => {
                 <Link to="/azure-sql-table">Licenses</Link>
               </li>
               <li>
-                <Link to="/engagement-table">Engagement Data</Link>
+                <Link to="/engagement-table">Engagement Log</Link>
               </li>
             </ul>
             <ul className="tree-menu bottom-links">

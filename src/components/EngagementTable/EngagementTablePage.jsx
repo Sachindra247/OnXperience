@@ -116,11 +116,9 @@ const EngagementTablePage = () => {
 
   return (
     <div className="engagement-table-page-container">
-      <h2>Log Engagement</h2>
       {isLoading && <div className="loading-indicator">Processing...</div>}
 
       <div className="engagement-table">
-        <h3>Customer Engagement Table</h3>
         <table>
           <thead>
             <tr>
@@ -129,7 +127,7 @@ const EngagementTablePage = () => {
               <th>Engagement Type</th>
               <th>Points</th>
               <th>Last Updated</th>
-              <th>Actions</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
