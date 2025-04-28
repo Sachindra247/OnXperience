@@ -25,7 +25,7 @@ const EngagementTablePage = () => {
         // Initialize the engagement data from the response
         const initialEngagementList = response.data.map((customer) => ({
           ...customer,
-          engagements: [], // placeholder for each customer's engagements
+          engagements: customer.engagements || [], // Ensure engagements is an empty array if not provided
         }));
         setEngagementList(initialEngagementList);
       })
@@ -117,13 +117,13 @@ const EngagementTablePage = () => {
                   </select>
                 </td>
                 <td>
-                  {customer.engagements.length > 0
+                  {customer.engagements && customer.engagements.length > 0
                     ? customer.engagements[customer.engagements.length - 1]
                         .points
                     : "-"}
                 </td>
                 <td>
-                  {customer.engagements.length > 0
+                  {customer.engagements && customer.engagements.length > 0
                     ? customer.engagements[customer.engagements.length - 1]
                         .lastUpdated
                     : "-"}
