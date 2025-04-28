@@ -108,7 +108,7 @@ module.exports = async (req, res) => {
 
           -- Update the total points for the Subscription
           UPDATE sl
-          SET sl.TotalEngagementPoints = (
+          SET sl.EngagementPoints = (
             SELECT SUM(EngagementPoints) FROM Subscription_Engagements WHERE SubscriptionID = sl.SubscriptionID
           )
           FROM Subscription_Licenses sl
