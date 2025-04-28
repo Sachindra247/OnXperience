@@ -20,14 +20,9 @@ const EngagementTablePage = () => {
     axios
       .get("https://on-xperience.vercel.app/api/engagement-table")
       .then((response) => {
-        console.log("Fetched customer data:", response.data); // Log the fetched data
         const customersWithEngagements = response.data.map((customer) => ({
           ...customer,
           engagements: customer.engagements || [], // Ensure engagements is always an array
-          totalPoints: (customer.engagements || []).reduce(
-            (sum, engagement) => sum + engagement.points,
-            0
-          ),
         }));
         setCustomers(customersWithEngagements);
       })
@@ -41,95 +36,51 @@ const EngagementTablePage = () => {
 
   const handleEngagementChange = (e, subscriptionId) => {
     const { value } = e.target;
-    setUpdatedEngagements((prev) => ({
-      ...prev,
+    setUpdatedEngagements({
+      ...updatedEngagements,
       [subscriptionId]: value,
-    }));
+    });
   };
 
-  const handleAddEngagement = async (subscriptionId) => {
+  const handleAddEngagement = (subscriptionId) => {
     const selectedEngagement = updatedEngagements[subscriptionId];
-    if (!selectedEngagement) {
-      alert("Please select an engagement type first.");
-      return;
-    }
+    if (selectedEngagement) {
+      const engagement = engagementTypes.find(
+        (eng) => eng.type === selectedEngagement
+      );
+      const engagementPoints = engagement ? engagement.points : 0;
 
-    const engagement = engagementTypes.find(
-      (eng) => eng.type === selectedEngagement
-    );
-
-    if (!engagement) {
-      alert("Invalid engagement type selected.");
-      return;
-    }
-
-    const engagementPoints = Number(engagement.points); // 🛠️ Force to number
-    const customer = customers.find((c) => c.SubscriptionID === subscriptionId);
-
-    if (!customer) {
-      alert("Customer not found.");
-      return;
-    }
-
-    const existingEngagement = customer.engagements.find(
-      (e) => e.engagement === selectedEngagement
-    );
-
-    const method = existingEngagement ? "put" : "post";
-
-    try {
-      await axios[method](
-        "https://on-xperience.vercel.app/api/engagement-table",
-        {
+      axios
+        .post("https://on-xperience.vercel.app/api/engagement-table", {
           SubscriptionID: subscriptionId,
           EngagementType: selectedEngagement,
           EngagementPoints: engagementPoints,
-        }
-      );
-
-      // Update the frontend view accordingly
-      setCustomers((prevList) =>
-        prevList.map((cust) =>
-          cust.SubscriptionID === subscriptionId
-            ? {
-                ...cust,
-                engagements: existingEngagement
-                  ? cust.engagements.map((eng) =>
-                      eng.engagement === selectedEngagement
-                        ? {
-                            ...eng,
-                            points: eng.points + engagementPoints,
-                            lastUpdated: new Date().toLocaleString(),
-                          }
-                        : eng
-                    )
-                  : [
-                      ...cust.engagements,
+        })
+        .then(() => {
+          setCustomers((prevList) =>
+            prevList.map((customer) =>
+              customer.SubscriptionID === subscriptionId
+                ? {
+                    ...customer,
+                    engagements: [
+                      ...customer.engagements,
                       {
                         engagement: selectedEngagement,
                         points: engagementPoints,
                         lastUpdated: new Date().toLocaleString(),
                       },
                     ],
-                totalPoints: cust.engagements.reduce(
-                  (sum, engagement) => sum + engagement.points,
-                  0
-                ), // Recalculate the total points
-              }
-            : cust
-        )
-      );
-
-      // Clear the selected engagement after it is added
-      setUpdatedEngagements((prev) => ({
-        ...prev,
-        [subscriptionId]: "",
-      }));
-    } catch (err) {
-      console.error("Error adding engagement:", err);
-      alert(
-        "An error occurred while adding the engagement. Please check your input and try again."
-      );
+                  }
+                : customer
+            )
+          );
+        })
+        .catch((err) => {
+          console.error(err);
+          alert(
+            "An error occurred while adding the engagement. Please try again later."
+          );
+        });
     }
   };
 
@@ -170,7 +121,12 @@ const EngagementTablePage = () => {
                     ))}
                   </select>
                 </td>
-                <td>{customer.totalPoints}</td>
+                <td>
+                  {customer.engagements.length > 0
+                    ? customer.engagements[customer.engagements.length - 1]
+                        .points
+                    : "-"}
+                </td>
                 <td>
                   {customer.engagements.length > 0
                     ? customer.engagements[customer.engagements.length - 1]
@@ -193,7 +149,13 @@ const EngagementTablePage = () => {
 
       <div className="total-points">
         <h3>Total Points (all customers):</h3>
-        {customers.reduce((acc, customer) => acc + customer.totalPoints, 0)}
+        {customers.reduce((acc, customer) => {
+          const totalPoints = customer.engagements.reduce(
+            (sum, engagement) => sum + engagement.points,
+            0
+          );
+          return acc + totalPoints;
+        }, 0)}
       </div>
     </div>
   );
