@@ -44,13 +44,17 @@ const EngagementTablePage = () => {
       const customer = customers.find(
         (customer) => customer.SubscriptionID === subscriptionId
       );
-      const existingEngagement = customer.engagements.find(
+
+      // Ensure engagements array is defined
+      const customerEngagements = customer.engagements || [];
+
+      const existingEngagement = customerEngagements.find(
         (eng) => eng.engagement === selectedEngagement
       );
 
       if (existingEngagement) {
         // If the engagement type already exists, update the points
-        const updatedEngagements = customer.engagements.map((eng) =>
+        const updatedEngagements = customerEngagements.map((eng) =>
           eng.engagement === selectedEngagement
             ? {
                 ...eng,
@@ -171,12 +175,14 @@ const EngagementTablePage = () => {
                   </select>
                 </td>
                 <td>
-                  {customer.engagements
-                    .map((engagement) => engagement.points)
-                    .reduce((total, points) => total + points, 0)}
+                  {customer.engagements && customer.engagements.length > 0
+                    ? customer.engagements
+                        .map((engagement) => engagement.points)
+                        .reduce((total, points) => total + points, 0)
+                    : 0}
                 </td>
                 <td>
-                  {customer.engagements.length > 0
+                  {customer.engagements && customer.engagements.length > 0
                     ? customer.engagements[0].lastUpdated
                     : "-"}
                 </td>
