@@ -30,16 +30,6 @@ module.exports = async (req, res) => {
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  // 👇 Add body parsing for Vercel serverless functions
-  if (req.body && typeof req.body === "string") {
-    try {
-      req.body = JSON.parse(req.body);
-    } catch (err) {
-      console.error("Failed to parse body:", err);
-      return res.status(400).json({ error: "Invalid JSON body" });
-    }
-  }
-
   try {
     const pool = await getConnection();
 
@@ -101,15 +91,21 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Invalid field types" });
       }
 
-      // Insert new engagement
+      // Use MERGE to handle insertion or update
       await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID)
         .input("EngagementType", sql.VarChar, EngagementType)
         .input("EngagementPoints", sql.Int, EngagementPoints)
         .input("EngagementDate", sql.DateTime, new Date()).query(`
-          INSERT INTO Subscription_Engagements (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
-          VALUES (@SubscriptionID, @EngagementType, @EngagementPoints, @EngagementDate)
+          MERGE INTO dbo.Subscription_Engagements AS target
+          USING (SELECT @SubscriptionID AS SubscriptionID, @EngagementType AS EngagementType, @EngagementPoints AS EngagementPoints) AS source
+          ON target.SubscriptionID = source.SubscriptionID
+          WHEN MATCHED THEN
+              UPDATE SET target.EngagementType = source.EngagementType, target.EngagementPoints = source.EngagementPoints
+          WHEN NOT MATCHED THEN
+              INSERT (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
+              VALUES (source.SubscriptionID, source.EngagementType, source.EngagementPoints, @EngagementDate);
         `);
 
       // Update total points
@@ -133,7 +129,8 @@ module.exports = async (req, res) => {
         `);
 
       return res.status(200).json({
-        message: "Engagement added and total points updated successfully",
+        message:
+          "Engagement added (or updated) and total points updated successfully",
       });
     }
 
