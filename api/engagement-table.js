@@ -91,7 +91,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Invalid field types" });
       }
 
-      // Use MERGE to handle insertion or update and sum the points
+      // Simplified MERGE statement - only updates Subscription_Engagements table
       await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID)
@@ -101,18 +101,12 @@ module.exports = async (req, res) => {
           USING (SELECT @SubscriptionID AS SubscriptionID, @EngagementType AS EngagementType) AS source
           ON target.SubscriptionID = source.SubscriptionID AND target.EngagementType = source.EngagementType
           WHEN MATCHED THEN
-            UPDATE SET target.EngagementPoints = target.EngagementPoints + @EngagementPoints
+            UPDATE SET
+              target.EngagementPoints = target.EngagementPoints + @EngagementPoints,
+              target.EngagementDate = GETDATE()
           WHEN NOT MATCHED THEN
-            INSERT (SubscriptionID, EngagementType, EngagementPoints)
-            VALUES (@SubscriptionID, @EngagementType, @EngagementPoints);
-
-          -- Update the total points for the Subscription
-          UPDATE sl
-          SET sl.EngagementPoints = (
-            SELECT SUM(EngagementPoints) FROM Subscription_Engagements WHERE SubscriptionID = sl.SubscriptionID
-          )
-          FROM Subscription_Licenses sl
-          WHERE sl.SubscriptionID = @SubscriptionID;
+            INSERT (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
+            VALUES (@SubscriptionID, @EngagementType, @EngagementPoints, GETDATE());
         `);
 
       return res.status(200).json({ message: "Engagement added successfully" });
