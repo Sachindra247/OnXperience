@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import "./EngagementTable.css";
 
 const engagementTypes = [
@@ -11,38 +12,72 @@ const engagementTypes = [
 ];
 
 const EngagementTablePage = () => {
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState("");
   const [selectedEngagement, setSelectedEngagement] = useState("");
   const [engagementList, setEngagementList] = useState([]);
 
+  useEffect(() => {
+    // Fetch all customers from the backend
+    axios
+      .get("https://on-xperience.vercel.app/api/engagement-table")
+      .then((response) => {
+        setCustomers(response.data);
+      });
+  }, []);
+
   const handleSelectChange = (e) => {
+    setSelectedCustomer(e.target.value);
+  };
+
+  const handleEngagementChange = (e) => {
     setSelectedEngagement(e.target.value);
   };
 
   const handleAddEngagement = () => {
-    if (selectedEngagement) {
-      const selected = engagementTypes.find(
-        (engagement) => engagement.type === selectedEngagement
+    if (selectedCustomer && selectedEngagement) {
+      const engagement = engagementTypes.find(
+        (eng) => eng.type === selectedEngagement
       );
-      if (selected) {
-        setEngagementList((prevList) => [
-          ...prevList,
-          { type: selected.type, points: selected.points },
-        ]);
-        setSelectedEngagement("");
-      }
+      const engagementPoints = engagement ? engagement.points : 0;
+
+      axios
+        .post("https://on-xperience.vercel.app/api/engagement-table", {
+          SubscriptionID: selectedCustomer,
+          EngagementType: selectedEngagement,
+          EngagementPoints: engagementPoints,
+        })
+        .then(() => {
+          setEngagementList((prevList) => [
+            ...prevList,
+            {
+              customer: selectedCustomer,
+              engagement: selectedEngagement,
+              points: engagementPoints,
+            },
+          ]);
+        })
+        .catch((err) => console.error(err));
     }
   };
-
-  const totalPoints = engagementList.reduce(
-    (sum, item) => sum + item.points,
-    0
-  );
 
   return (
     <div className="engagement-table-page-container">
       <h2>Log Engagement</h2>
       <div className="engagement-form">
-        <select value={selectedEngagement} onChange={handleSelectChange}>
+        <select value={selectedCustomer} onChange={handleSelectChange}>
+          <option value="">Select Customer</option>
+          {customers.map((customer) => (
+            <option
+              key={customer.SubscriptionID}
+              value={customer.SubscriptionID}
+            >
+              {customer.CustomerName}
+            </option>
+          ))}
+        </select>
+
+        <select value={selectedEngagement} onChange={handleEngagementChange}>
           <option value="">Select Engagement Type</option>
           {engagementTypes.map((engagement) => (
             <option key={engagement.type} value={engagement.type}>
@@ -51,39 +86,34 @@ const EngagementTablePage = () => {
           ))}
         </select>
 
-        <button onClick={handleAddEngagement} disabled={!selectedEngagement}>
+        <button
+          onClick={handleAddEngagement}
+          disabled={!selectedCustomer || !selectedEngagement}
+        >
           Add Engagement
         </button>
       </div>
 
       <div className="engagement-table">
         <h3>Logged Engagements</h3>
-        {engagementList.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Engagement Type</th>
-                <th>Points</th>
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Engagement Type</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {engagementList.map((engagement, index) => (
+              <tr key={index}>
+                <td>{engagement.customer}</td>
+                <td>{engagement.engagement}</td>
+                <td>{engagement.points}</td>
               </tr>
-            </thead>
-            <tbody>
-              {engagementList.map((engagement, index) => (
-                <tr key={index}>
-                  <td>{index + 1}</td>
-                  <td>{engagement.type}</td>
-                  <td>{engagement.points}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No engagements logged yet.</p>
-        )}
-      </div>
-
-      <div className="total-points">
-        <h3>Total Points: {totalPoints}</h3>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
