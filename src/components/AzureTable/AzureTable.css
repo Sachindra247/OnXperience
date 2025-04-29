@@ -4,13 +4,6 @@
     --primary-hover: #106ebe;
     --secondary-color: #4a6fa5;
     --secondary-hover: #3a5a8f;
-    --save-color: #1890ff;
-    /* New Azure-style save color */
-    --save-hover: #1478d6;
-    /* Slightly darker hover state */
-    --success-color: #4CAF50;
-    --danger-color: #f44336;
-    --warning-color: #ff9800;
     --light-bg: #f9fafb;
     --card-bg: #ffffff;
     --border-color: #e5eaf0;
@@ -91,17 +84,17 @@ button {
     gap: 6px;
 }
 
-/* Updated Save button styling */
+/* Updated Save button styling to match View History */
 .save-btn {
-    background-color: var(--save-color);
+    background-color: var(--secondary-color);
     color: white;
 }
 
 .save-btn:hover:not(:disabled) {
-    background-color: var(--save-hover);
+    background-color: var(--secondary-hover);
 }
 
-/* View History button maintains previous styling */
+/* View History button */
 .view-history-btn {
     background-color: var(--secondary-color);
     color: white;
@@ -125,23 +118,23 @@ button:focus {
 
 /* Error states */
 .error {
-    border: 2px solid var(--danger-color);
+    border: 2px solid #ff4444;
     background-color: #ffebee;
 }
 
 .error-message {
-    color: var(--danger-color);
+    color: #ff4444;
     font-size: 0.8rem;
     margin-top: 4px;
 }
 
 .global-error-message {
     background-color: #ffebee;
-    color: var(--danger-color);
+    color: #ff4444;
     padding: 10px;
     margin-bottom: 15px;
     border-radius: 4px;
-    border-left: 4px solid var(--danger-color);
+    border-left: 4px solid #ff4444;
 }
 
 /* Utility classes */
