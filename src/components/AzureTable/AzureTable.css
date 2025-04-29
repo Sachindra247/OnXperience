@@ -1,58 +1,133 @@
 /* AzureTable.css */
+:root {
+    --primary-color: #0078d4;
+    --primary-hover: #106ebe;
+    --secondary-color: #4a6fa5;
+    --secondary-hover: #3a5a8f;
+    --success-color: #4CAF50;
+    --danger-color: #f44336;
+    --warning-color: #ff9800;
+    --light-bg: #f9fafb;
+    --card-bg: #ffffff;
+    --border-color: #e5eaf0;
+    --text-primary: #333333;
+    --text-secondary: #555555;
+    --shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
 
 .azure-table-wrapper {
     padding: 2rem;
-    background: #f9fafb;
+    background: var(--light-bg);
     min-height: 100vh;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
+    color: var(--text-primary);
 }
 
+/* Main table styling */
 .azure-table {
     width: 100%;
     max-width: 1100px;
-    border-collapse: collapse;
-    background-color: #ffffff;
-    border-radius: 16px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: var(--card-bg);
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease-in-out;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
 }
 
 .azure-table thead {
-    background-color: #f0f4f8;
-    color: #333;
-    font-weight: bold;
+    background-color: var(--primary-color);
+    color: white;
 }
 
-.azure-table th,
-.azure-table td {
+.azure-table th {
     padding: 16px 20px;
     text-align: left;
-    border-bottom: 1px solid #e5eaf0;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+}
+
+.azure-table td {
+    padding: 14px 20px;
+    text-align: left;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
 }
 
 .azure-table th:first-child,
 .azure-table td:first-child {
-    border-left: 4px solid #0078d4;
-}
-
-.azure-table tbody tr:hover {
-    background-color: #f6fbff;
-    transition: background-color 0.2s ease;
+    border-left: 4px solid var(--primary-color);
 }
 
 .azure-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-.azure-table td {
-    color: #555;
-    font-size: 14px;
+.azure-table tbody tr:hover {
+    background-color: rgba(0, 120, 212, 0.05);
 }
 
+/* Buttons and form elements */
+button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+button:disabled,
+.save-button-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #cccccc;
+}
+
+button:focus {
+    outline: 2px solid rgba(0, 120, 212, 0.5);
+    outline-offset: 2px;
+}
+
+/* Error states */
+.error {
+    border: 2px solid var(--danger-color);
+    background-color: #ffebee;
+}
+
+.error-message {
+    color: var(--danger-color);
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.global-error-message {
+    background-color: #ffebee;
+    color: var(--danger-color);
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border-left: 4px solid var(--danger-color);
+}
+
+/* Utility classes */
+.wide-column {
+    min-width: 200px;
+    max-width: 350px;
+    word-break: break-word;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .azure-table-wrapper {
         padding: 1rem;
@@ -68,40 +143,15 @@
     }
 }
 
+/* Animation for smoother transitions */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
 
-.error {
-    border: 2px solid #ff4444;
-    background-color: #ffebee;
-}
-
-.error-message {
-    color: #ff4444;
-    font-size: 0.8rem;
-    margin-top: 4px;
-}
-
-button:disabled,
-.save-button-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: #cccccc;
-}
-
-.global-error-message {
-    background-color: #ffebee;
-    color: #ff4444;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    border-left: 4px solid #ff4444;
-}
-
-.azure-table-wrapper {
-    padding: 20px;
-}
-
-.wide-column {
-    min-width: 200px;
-    max-width: 350px;
-    word-break: break-word;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
