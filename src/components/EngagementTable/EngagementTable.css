@@ -1,212 +1,265 @@
 /* EngagementTable.css */
+:root {
+    --primary-color: #0078d4;
+    --primary-hover: #106ebe;
+    --secondary-color: #4a6fa5;
+    --secondary-hover: #3a5a8f;
+    --success-color: #4CAF50;
+    --danger-color: #f44336;
+    --warning-color: #ff9800;
+    --light-bg: #f9fafb;
+    --card-bg: #ffffff;
+    --border-color: #e5eaf0;
+    --text-primary: #333333;
+    --text-secondary: #555555;
+    --shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
 
 .engagement-table-page-container {
     padding: 2rem;
-    background: #f9fafb;
+    background: var(--light-bg);
     min-height: 100vh;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
+    color: var(--text-primary);
 }
 
+/* Main table styling */
 .engagement-table {
     width: 100%;
     max-width: 1200px;
-    border-collapse: collapse;
-    background-color: #ffffff;
-    border-radius: 16px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: var(--card-bg);
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease-in-out;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
 }
 
 .engagement-table thead {
-    background-color: #f0f4f8;
-    color: #333;
-    font-weight: bold;
+    background-color: var(--primary-color);
+    color: white;
 }
 
-.engagement-table th,
-.engagement-table td {
+.engagement-table th {
     padding: 16px 20px;
     text-align: left;
-    border-bottom: 1px solid #e5eaf0;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
 }
 
-.engagement-table th:first-child,
-.engagement-table td:first-child {
-    border-left: 4px solid #0078d4;
-}
-
-.engagement-table tbody tr:hover {
-    background-color: #f6fbff;
-    transition: background-color 0.2s ease;
+.engagement-table td {
+    padding: 14px 20px;
+    text-align: left;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
 }
 
 .engagement-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-.engagement-table td {
-    color: #555;
-    font-size: 14px;
+.engagement-table tbody tr:hover {
+    background-color: rgba(0, 120, 212, 0.05);
 }
 
-.engagement-table-form {
+/* Action buttons */
+.actions-cell {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
 }
 
-.engagement-table-form select,
-.engagement-table-form button {
-    padding: 10px;
-    font-size: 14px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    transition: background-color 0.3s ease;
-}
-
-.engagement-table-form button {
-    background-color: #0078d4;
-    color: #fff;
+button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
     cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
-.engagement-table-form button:disabled {
-    background-color: #cccccc;
+button:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
-.engagement-table-form select:focus,
-.engagement-table-form button:focus {
-    border-color: #0078d4;
+button:focus {
+    outline: 2px solid rgba(0, 120, 212, 0.5);
+    outline-offset: 2px;
+}
+
+/* Specific button styles */
+.view-history-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.view-history-btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
+.add-engagement-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.add-engagement-btn:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+}
+
+.edit-btn {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.save-btn {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.cancel-btn {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+/* Form elements */
+select {
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: white;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+    min-width: 200px;
+}
+
+select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.count-input {
+    width: 60px;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+/* Engagement history section */
+.engagement-history-row {
+    background-color: rgba(240, 244, 248, 0.7);
+}
+
+.engagement-history {
+    padding: 20px;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.engagement-history h4 {
+    margin-top: 0;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.history-table th {
+    background-color: #f0f4f8;
+    color: var(--text-primary);
+    padding: 10px 12px;
+    font-weight: 500;
+}
+
+.history-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.history-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Status and utility classes */
+.loading-indicator {
+    padding: 12px;
+    background-color: rgba(0, 120, 212, 0.1);
+    color: var(--primary-color);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .total-points {
-    margin-top: 20px;
-    font-weight: bold;
-    font-size: 18px;
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background-color: var(--card-bg);
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    align-self: flex-start;
 }
 
-.error {
-    border: 2px solid #ff4444;
-    background-color: #ffebee;
+.total-points h3 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
 }
 
-.error-message {
-    color: #ff4444;
-    font-size: 0.8rem;
-    margin-top: 4px;
-}
-
-.global-error-message {
-    background-color: #ffebee;
-    color: #ff4444;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    border-left: 4px solid #ff4444;
-}
-
-.wide-column {
-    min-width: 200px;
-    max-width: 350px;
-    word-break: break-word;
-}
-
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .engagement-table-page-container {
         padding: 1rem;
-    }
-
-    .engagement-table {
-        font-size: 12px;
     }
 
     .engagement-table th,
     .engagement-table td {
         padding: 12px 14px;
     }
+
+    .actions-cell {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    button {
+        width: 100%;
+    }
 }
 
-.actions-cell {
-    display: flex;
-    gap: 10px;
-}
+/* Animation for smoother transitions */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
 
-.view-history-btn {
-    background-color: #4a6fa5;
-    color: white;
-}
-
-.view-history-btn:hover {
-    background-color: #3a5a8f;
-}
-
-.engagement-history-row {
-    background-color: #f8f9fa;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .engagement-history {
-    padding: 15px;
-    margin: 10px 0;
-    background-color: white;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.history-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.history-table th,
-.history-table td {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    text-align: left;
-}
-
-.history-table th {
-    background-color: #f2f2f2;
-}
-
-.count-input {
-    width: 50px;
-    padding: 4px;
-    margin-right: 5px;
-}
-
-.edit-btn,
-.save-btn,
-.cancel-btn {
-    padding: 4px 8px;
-    margin: 0 2px;
-    font-size: 0.8rem;
-}
-
-.edit-btn {
-    background-color: #4a6fa5;
-    color: white;
-}
-
-.save-btn {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.cancel-btn {
-    background-color: #f44336;
-    color: white;
-}
-
-.history-table th,
-.history-table td {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    text-align: left;
+    animation: fadeIn 0.3s ease-out;
 }
