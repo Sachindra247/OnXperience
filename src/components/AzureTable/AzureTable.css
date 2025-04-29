@@ -4,6 +4,10 @@
     --primary-hover: #106ebe;
     --secondary-color: #4a6fa5;
     --secondary-hover: #3a5a8f;
+    --save-color: #1890ff;
+    /* New Azure-style save color */
+    --save-hover: #1478d6;
+    /* Slightly darker hover state */
     --success-color: #4CAF50;
     --danger-color: #f44336;
     --warning-color: #ff9800;
@@ -87,13 +91,23 @@ button {
     gap: 6px;
 }
 
-/* Save button matching View History button */
+/* Updated Save button styling */
 .save-btn {
-    background-color: var(--secondary-color);
+    background-color: var(--save-color);
     color: white;
 }
 
 .save-btn:hover:not(:disabled) {
+    background-color: var(--save-hover);
+}
+
+/* View History button maintains previous styling */
+.view-history-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.view-history-btn:hover:not(:disabled) {
     background-color: var(--secondary-hover);
 }
 

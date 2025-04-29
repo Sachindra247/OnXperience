@@ -4,9 +4,8 @@
     --primary-hover: #106ebe;
     --secondary-color: #4a6fa5;
     --secondary-hover: #3a5a8f;
-    --success-color: #4CAF50;
-    --danger-color: #f44336;
-    --warning-color: #ff9800;
+    --light-blue: #e6f2ff;
+    /* New light blue for loading/status */
     --light-bg: #f9fafb;
     --card-bg: #ffffff;
     --border-color: #e5eaf0;
@@ -85,11 +84,13 @@ button {
     align-items: center;
     justify-content: center;
     gap: 6px;
+    color: white;
 }
 
 button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    background-color: #cccccc;
 }
 
 button:focus {
@@ -97,38 +98,36 @@ button:focus {
     outline-offset: 2px;
 }
 
-/* Specific button styles */
-.view-history-btn {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-.view-history-btn:hover:not(:disabled) {
-    background-color: var(--secondary-hover);
-}
-
+/* Button styles - all blue variations */
 .add-engagement-btn {
     background-color: var(--primary-color);
-    color: white;
 }
 
 .add-engagement-btn:hover:not(:disabled) {
     background-color: var(--primary-hover);
 }
 
+.view-history-btn {
+    background-color: var(--secondary-color);
+}
+
+.view-history-btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
 .edit-btn {
-    background-color: var(--warning-color);
-    color: white;
+    background-color: #3a8fd9;
+    /* New blue for edit */
 }
 
 .save-btn {
-    background-color: var(--success-color);
-    color: white;
+    background-color: #2b88d8;
+    /* New blue for save */
 }
 
 .cancel-btn {
-    background-color: var(--danger-color);
-    color: white;
+    background-color: #6c8cbf;
+    /* Muted blue for cancel */
 }
 
 /* Form elements */
@@ -199,7 +198,7 @@ select:focus {
 /* Status and utility classes */
 .loading-indicator {
     padding: 12px;
-    background-color: rgba(0, 120, 212, 0.1);
+    background-color: var(--light-blue);
     color: var(--primary-color);
     border-radius: 6px;
     margin-bottom: 1rem;
