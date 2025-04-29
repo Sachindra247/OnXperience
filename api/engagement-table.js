@@ -76,32 +76,59 @@ module.exports = async (req, res) => {
 
     if (req.method === "POST" || req.method === "PUT") {
       console.log("Request body received:", req.body);
-      const { SubscriptionID, EngagementType, EngagementPoints } = req.body;
+      const { SubscriptionID, EngagementType, EngagementPoints, UpdateType } =
+        req.body;
 
       if (!SubscriptionID || !EngagementType || EngagementPoints == null) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // Process engagement
-      const result = await pool
-        .request()
-        .input("SubscriptionID", sql.VarChar, SubscriptionID)
-        .input("EngagementType", sql.VarChar, EngagementType)
-        .input("EngagementPoints", sql.Int, EngagementPoints).query(`
-          MERGE INTO Subscription_Engagements AS target
-          USING (SELECT @SubscriptionID AS SubscriptionID,
-                        @EngagementType AS EngagementType,
-                        @EngagementPoints AS EngagementPoints) AS source
-          ON target.SubscriptionID = source.SubscriptionID
-             AND target.EngagementType = source.EngagementType
-          WHEN MATCHED THEN
-            UPDATE SET
-              target.EngagementPoints = target.EngagementPoints + source.EngagementPoints,
-              target.EngagementDate = GETDATE()
-          WHEN NOT MATCHED THEN
-            INSERT (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
-            VALUES (source.SubscriptionID, source.EngagementType, source.EngagementPoints, GETDATE());
-        `);
+      if (req.method === "PUT" && UpdateType === "exact") {
+        // Handle exact count updates (from the edit count feature)
+        await pool
+          .request()
+          .input("SubscriptionID", sql.VarChar, SubscriptionID)
+          .input("EngagementType", sql.VarChar, EngagementType).query(`
+            DELETE FROM Subscription_Engagements
+            WHERE SubscriptionID = @SubscriptionID
+            AND EngagementType = @EngagementType
+          `);
+
+        // Only insert new record if points > 0
+        if (EngagementPoints > 0) {
+          await pool
+            .request()
+            .input("SubscriptionID", sql.VarChar, SubscriptionID)
+            .input("EngagementType", sql.VarChar, EngagementType)
+            .input("EngagementPoints", sql.Int, EngagementPoints).query(`
+              INSERT INTO Subscription_Engagements
+                (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
+              VALUES
+                (@SubscriptionID, @EngagementType, @EngagementPoints, GETDATE())
+            `);
+        }
+      } else {
+        // Original merge behavior for POST requests and PUT without UpdateType
+        await pool
+          .request()
+          .input("SubscriptionID", sql.VarChar, SubscriptionID)
+          .input("EngagementType", sql.VarChar, EngagementType)
+          .input("EngagementPoints", sql.Int, EngagementPoints).query(`
+            MERGE INTO Subscription_Engagements AS target
+            USING (SELECT @SubscriptionID AS SubscriptionID,
+                          @EngagementType AS EngagementType,
+                          @EngagementPoints AS EngagementPoints) AS source
+            ON target.SubscriptionID = source.SubscriptionID
+               AND target.EngagementType = source.EngagementType
+            WHEN MATCHED THEN
+              UPDATE SET
+                target.EngagementPoints = target.EngagementPoints + source.EngagementPoints,
+                target.EngagementDate = GETDATE()
+            WHEN NOT MATCHED THEN
+              INSERT (SubscriptionID, EngagementType, EngagementPoints, EngagementDate)
+              VALUES (source.SubscriptionID, source.EngagementType, source.EngagementPoints, GETDATE());
+          `);
+      }
 
       return res.status(200).json({
         message: "Engagement updated successfully",

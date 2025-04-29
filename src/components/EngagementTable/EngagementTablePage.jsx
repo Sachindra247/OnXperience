@@ -144,6 +144,7 @@ const EngagementTablePage = () => {
         SubscriptionID: subscriptionId,
         EngagementType: engagementType,
         EngagementPoints: newPoints,
+        UpdateType: "exact", // Add this flag to indicate exact update
       });
 
       const response = await axios.get(
