@@ -87,6 +87,16 @@ button {
     gap: 6px;
 }
 
+/* Save button matching View History button */
+.save-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.save-btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
 button:disabled,
 .save-button-disabled {
     opacity: 0.6;
