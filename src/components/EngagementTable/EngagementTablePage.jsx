@@ -257,6 +257,7 @@ const EngagementTablePage = () => {
                         !updatedEngagements[customer.SubscriptionID] ||
                         isLoading
                       }
+                      className="add-engagement-btn"
                     >
                       {isLoading ? "Processing..." : "Add Engagement"}
                     </button>

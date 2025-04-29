@@ -85,6 +85,7 @@ button {
     justify-content: center;
     gap: 6px;
     color: white;
+    background-color: var(--primary-color);
 }
 
 button:disabled {

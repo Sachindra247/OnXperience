@@ -191,7 +191,10 @@ const AzureTablePage = () => {
                     })}
                     <td>
                       {isRowEdited(row.SubscriptionID) && (
-                        <button onClick={() => handleSave(row.SubscriptionID)}>
+                        <button
+                          className="save-btn"
+                          onClick={() => handleSave(row.SubscriptionID)}
+                        >
                           Save
                         </button>
                       )}
