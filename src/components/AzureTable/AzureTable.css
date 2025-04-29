@@ -87,7 +87,7 @@ button {
 /* Updated Save button styling to match View History */
 .save-btn {
     background-color: var(--primary-color);
-    color: #55D1C0;
+    color: white;
 }
 
 .save-btn:hover:not(:disabled) {
