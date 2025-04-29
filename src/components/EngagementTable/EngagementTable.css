@@ -174,3 +174,39 @@
 .history-table th {
     background-color: #f2f2f2;
 }
+
+.count-input {
+    width: 50px;
+    padding: 4px;
+    margin-right: 5px;
+}
+
+.edit-btn,
+.save-btn,
+.cancel-btn {
+    padding: 4px 8px;
+    margin: 0 2px;
+    font-size: 0.8rem;
+}
+
+.edit-btn {
+    background-color: #4a6fa5;
+    color: white;
+}
+
+.save-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.cancel-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.history-table th,
+.history-table td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}

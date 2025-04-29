@@ -16,6 +16,8 @@ const EngagementTablePage = () => {
   const [updatedEngagements, setUpdatedEngagements] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [expandedSubscription, setExpandedSubscription] = useState(null);
+  const [editingCount, setEditingCount] = useState(null);
+  const [countValue, setCountValue] = useState(0);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -112,6 +114,88 @@ const EngagementTablePage = () => {
     setExpandedSubscription(
       expandedSubscription === subscriptionId ? null : subscriptionId
     );
+    setEditingCount(null); // Reset editing when toggling history
+  };
+
+  const startEditingCount = (engagementType, currentPoints, engagement) => {
+    const basePoints =
+      engagementTypes.find((e) => e.type === engagementType)?.points || 1;
+    setEditingCount(engagementType);
+    setCountValue(Math.round(currentPoints / basePoints));
+  };
+
+  const handleCountChange = (e) => {
+    setCountValue(Number(e.target.value));
+  };
+
+  const saveCount = async (subscriptionId, engagementType) => {
+    if (countValue < 1) {
+      alert("Count must be at least 1");
+      return;
+    }
+
+    const basePoints =
+      engagementTypes.find((e) => e.type === engagementType)?.points || 1;
+    const newPoints = basePoints * countValue;
+
+    setIsLoading(true);
+    try {
+      await axios.put("https://on-xperience.vercel.app/api/engagement-table", {
+        SubscriptionID: subscriptionId,
+        EngagementType: engagementType,
+        EngagementPoints: newPoints,
+      });
+
+      const response = await axios.get(
+        "https://on-xperience.vercel.app/api/engagement-table"
+      );
+      const updatedCustomers = response.data.map((customer) => ({
+        ...customer,
+        engagements: customer.engagements || [],
+        totalPoints: (customer.engagements || []).reduce(
+          (sum, engagement) => sum + (engagement.points || 0),
+          0
+        ),
+      }));
+      setCustomers(updatedCustomers);
+      setEditingCount(null);
+    } catch (err) {
+      console.error("Error updating engagement count:", err);
+      alert(
+        `Error: ${
+          err.response?.data?.error || err.message || "Failed to update count"
+        }`
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Group engagements by type to show counts
+  const getGroupedEngagements = (engagements) => {
+    const grouped = {};
+    engagements.forEach((engagement) => {
+      if (!grouped[engagement.engagement]) {
+        grouped[engagement.engagement] = {
+          points: 0,
+          lastUpdated: null,
+          basePoints:
+            engagementTypes.find((e) => e.type === engagement.engagement)
+              ?.points || 1,
+          instances: [],
+        };
+      }
+      grouped[engagement.engagement].points += engagement.points;
+      grouped[engagement.engagement].instances.push(engagement);
+      if (
+        !grouped[engagement.engagement].lastUpdated ||
+        new Date(engagement.lastUpdated) >
+          new Date(grouped[engagement.engagement].lastUpdated)
+      ) {
+        grouped[engagement.engagement].lastUpdated = engagement.lastUpdated;
+      }
+    });
+    return grouped;
   };
 
   return (
@@ -156,7 +240,6 @@ const EngagementTablePage = () => {
                   <td>
                     {customer.engagements.length > 0
                       ? new Date(
-                          // Sort engagements by date and get the most recent one
                           [...customer.engagements].sort(
                             (a, b) =>
                               new Date(b.lastUpdated) - new Date(a.lastUpdated)
@@ -198,19 +281,73 @@ const EngagementTablePage = () => {
                             <thead>
                               <tr>
                                 <th>Type</th>
-                                <th>Points</th>
-                                <th>Date</th>
+                                <th>Count</th>
+                                <th>Total Points</th>
+                                <th>Last Updated</th>
+                                <th>Actions</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {customer.engagements.map((engagement, index) => (
-                                <tr key={index}>
-                                  <td>{engagement.engagement}</td>
-                                  <td>{engagement.points}</td>
+                              {Object.entries(
+                                getGroupedEngagements(customer.engagements)
+                              ).map(([type, data]) => (
+                                <tr key={type}>
+                                  <td>{type}</td>
+                                  <td>
+                                    {editingCount === type ? (
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={countValue}
+                                        onChange={handleCountChange}
+                                        className="count-input"
+                                      />
+                                    ) : (
+                                      Math.round(data.points / data.basePoints)
+                                    )}
+                                  </td>
+                                  <td>{data.points}</td>
                                   <td>
                                     {new Date(
-                                      engagement.lastUpdated
+                                      data.lastUpdated
                                     ).toLocaleString()}
+                                  </td>
+                                  <td>
+                                    {editingCount === type ? (
+                                      <>
+                                        <button
+                                          onClick={() =>
+                                            saveCount(
+                                              customer.SubscriptionID,
+                                              type
+                                            )
+                                          }
+                                          className="save-btn"
+                                          disabled={isLoading}
+                                        >
+                                          Save
+                                        </button>
+                                        <button
+                                          onClick={() => setEditingCount(null)}
+                                          className="cancel-btn"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <button
+                                        onClick={() =>
+                                          startEditingCount(
+                                            type,
+                                            data.points,
+                                            data.instances[0]
+                                          )
+                                        }
+                                        className="edit-btn"
+                                      >
+                                        Edit
+                                      </button>
+                                    )}
                                   </td>
                                 </tr>
                               ))}
