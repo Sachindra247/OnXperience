@@ -195,6 +195,14 @@ select:focus {
     border-bottom: none;
 }
 
+.history-table .actions-cell {
+    display: flex;
+    gap: 12px;
+    /* Increased from default 10px to 12px */
+    padding: 8px 0;
+    /* Added vertical padding */
+}
+
 /* Status and utility classes */
 .loading-indicator {
     padding: 12px;
