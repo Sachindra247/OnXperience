@@ -285,7 +285,7 @@ const EngagementTablePage = () => {
                                 <th>Count</th>
                                 <th>Total Points</th>
                                 <th>Last Updated</th>
-                                <th>Actions</th>
+                                <th></th>
                               </tr>
                             </thead>
                             <tbody>
