@@ -33,6 +33,7 @@ html {
     flex-direction: column;
     position: relative;
     transition: transform 0.3s ease;
+    z-index: 100;
 }
 
 .tree-menu {
@@ -135,6 +136,7 @@ html {
     background-color: #fff;
     overflow-y: auto;
     width: calc(100% - 300px);
+    transition: margin-left 0.3s ease;
 }
 
 .home-report {
@@ -169,10 +171,10 @@ html {
         left: 0;
         top: 60px;
         bottom: 0;
-        width: 300px;
+        width: 280px;
         transform: translateX(-100%);
         z-index: 999;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
     }
 
     .sidebar.mobile-visible {
@@ -181,17 +183,32 @@ html {
 
     .report-container {
         width: 100%;
+        padding: 15px;
+        margin-left: 0;
+        position: relative;
     }
 
-    /* Close sidebar when clicking on main content */
-    .report-container {
-        margin-left: 0;
+    /* Overlay effect when sidebar is open */
+    .sidebar.mobile-visible~.report-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 998;
+        pointer-events: auto;
     }
 }
 
-/* Larger screens - ensure sidebar is always visible */
+/* Desktop Styles - Reset mobile modifications */
 @media (min-width: 769px) {
     .sidebar.mobile-visible {
         transform: translateX(0) !important;
+    }
+
+    .report-container::before {
+        display: none !important;
     }
 }
