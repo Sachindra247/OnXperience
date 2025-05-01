@@ -91,14 +91,213 @@
 
 //my current homepage
 
-import React, { useState, useEffect, useRef } from "react";
+// import React, { useState, useEffect, useRef } from "react";
+// import { Link, useLocation } from "react-router-dom";
+// import "./HomePage.css";
+// import { PowerBIEmbed } from "powerbi-client-react";
+// import AzureTablePage from "../../components/AzureTable/AzureTablePage";
+// import EngagementTablePage from "../../components/EngagementTable/EngagementTablePage";
+// import { models } from "powerbi-client";
+// import { FaPlus, FaMinus } from "react-icons/fa";
+// import Header from "../../components/Header/Header";
+// import axios from "axios";
+
+// const reports = {
+//   homepage: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "42339bb3bbdb295ed7c8",
+//   },
+//   growth: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "34c6fffab0536014a095",
+//   },
+//   adoption: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "8e9801e82496355a41ee",
+//   },
+//   engagement: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "1a80fca4b9d06e022019",
+//   },
+//   feedback: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "2bc6242386de992b4428",
+//   },
+//   healthscore: {
+//     id: "b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431",
+//     embedUrl:
+//       "https://app.powerbi.com/reportEmbed?reportId=b31ca3d5-b9e5-4aee-bf94-e94ed5fa2431&groupId=599772eb-f174-4a90-8ff5-5023a4b7f72a",
+//     pageId: "42339bb3bbdb295ed7c8",
+//   },
+// };
+
+// const HomePage = () => {
+//   const [expandedSection, setExpandedSection] = useState(null);
+//   const [embedToken, setEmbedToken] = useState(null);
+//   const location = useLocation();
+
+//   // Fetching Power BI embed token
+//   useEffect(() => {
+//     const fetchEmbedToken = async () => {
+//       try {
+//         const response = await axios.get("https://on-xperience.vercel.app/api");
+//         setEmbedToken(response.data.embedToken);
+//       } catch (error) {
+//         console.error("Error fetching embed token:", error);
+//       }
+//     };
+//     fetchEmbedToken();
+//   }, []);
+
+//   const toggleSection = (section, event) => {
+//     event.stopPropagation();
+//     setExpandedSection((prev) => (prev === section ? null : section));
+//   };
+
+//   const currentRoute = location.pathname.split("/")[1];
+//   const currentReport = reports[currentRoute] || reports.homepage;
+
+//   return (
+//     <div className="homepage-container">
+//       <Header />
+//       <div className="content">
+//         <aside className="sidebar">
+//           <nav className="nav-menu">
+//             <ul className="tree-menu">
+//               <li>
+//                 <span
+//                   className="expand-icon"
+//                   onClick={(e) => toggleSection("healthScore", e)}
+//                   style={{ float: "right" }}
+//                 >
+//                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
+//                 </span>
+//                 <Link to="/healthscore"> Health Score</Link>
+//                 {expandedSection === "healthScore" && (
+//                   <ul
+//                     className="submenu expanded"
+//                     style={{ display: "block", border: "none" }}
+//                   >
+//                     <li>
+//                       <Link to="/growth">Growth</Link>
+//                     </li>
+//                     <li>
+//                       <Link to="/adoption">Adoption</Link>
+//                     </li>
+//                     <li>
+//                       <Link to="/engagement">Engagement</Link>
+//                     </li>
+//                     <li>
+//                       <Link to="/feedback">Feedback</Link>
+//                     </li>
+//                   </ul>
+//                 )}
+//               </li>
+//               <li>
+//                 <span
+//                   className="expand-icon"
+//                   onClick={(e) => toggleSection("renewals", e)}
+//                   style={{ float: "right" }}
+//                 >
+//                   {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
+//                 </span>
+//                 <Link to="/renewals">Renewals</Link>
+//                 {expandedSection === "renewals" && (
+//                   <ul className="submenu expanded">
+//                     <li>Dummy Page</li>
+//                   </ul>
+//                 )}
+//               </li>
+//               <li>
+//                 <span
+//                   className="expand-icon"
+//                   onClick={(e) => toggleSection("financials", e)}
+//                   style={{ float: "right" }}
+//                 >
+//                   {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
+//                 </span>
+//                 <Link to="/financials">Financials</Link>
+//                 {expandedSection === "financials" && (
+//                   <ul className="submenu expanded">
+//                     <li>Dummy Page</li>
+//                   </ul>
+//                 )}
+//               </li>
+//               <li>
+//                 <Link to="/statistics">Statistics</Link>
+//               </li>
+//               <li>
+//                 <Link to="/azure-sql-table">Licenses</Link>
+//               </li>
+//               <li>
+//                 <Link to="/engagement-table">Engagement Log</Link>
+//               </li>
+//             </ul>
+//             <ul className="tree-menu bottom-links">
+//               <li>
+//                 <Link to="/settings">Settings</Link>
+//               </li>
+//               <li>
+//                 <Link to="/help">Help</Link>
+//               </li>
+//             </ul>
+//           </nav>
+//         </aside>
+
+//         <main className="report-container">
+//           {currentRoute === "azure-sql-table" ? (
+//             <AzureTablePage />
+//           ) : currentRoute === "engagement-table" ? (
+//             <EngagementTablePage />
+//           ) : embedToken ? (
+//             <PowerBIEmbed
+//               embedConfig={{
+//                 type: "report",
+//                 id: currentReport.id,
+//                 embedUrl: currentReport.embedUrl,
+//                 accessToken: embedToken,
+//                 tokenType: models.TokenType.Embed,
+//                 settings: {
+//                   panes: { filters: { expanded: false, visible: false } },
+//                   background: models.BackgroundType.Default,
+//                   navContentPaneEnabled: false,
+//                 },
+//                 pageName: currentReport.pageId,
+//               }}
+//               cssClassName="home-report"
+//               key={location.pathname}
+//             />
+//           ) : (
+//             <p>Loading Power BI report...</p>
+//           )}
+//         </main>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default HomePage;
+
+//code with mobile view
+
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
 import AzureTablePage from "../../components/AzureTable/AzureTablePage";
 import EngagementTablePage from "../../components/EngagementTable/EngagementTablePage";
 import { models } from "powerbi-client";
-import { FaPlus, FaMinus } from "react-icons/fa";
+import { FaPlus, FaMinus, FaBars } from "react-icons/fa";
 import Header from "../../components/Header/Header";
 import axios from "axios";
 
@@ -144,6 +343,7 @@ const reports = {
 const HomePage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
   const [embedToken, setEmbedToken] = useState(null);
+  const [showSidebar, setShowSidebar] = useState(false);
   const location = useLocation();
 
   // Fetching Power BI embed token
@@ -164,14 +364,21 @@ const HomePage = () => {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
+  const toggleSidebar = () => {
+    setShowSidebar(!showSidebar);
+  };
+
   const currentRoute = location.pathname.split("/")[1];
   const currentReport = reports[currentRoute] || reports.homepage;
 
   return (
     <div className="homepage-container">
       <Header />
+      <button className="mobile-menu-toggle" onClick={toggleSidebar}>
+        <FaBars />
+      </button>
       <div className="content">
-        <aside className="sidebar">
+        <aside className={`sidebar ${showSidebar ? "mobile-visible" : ""}`}>
           <nav className="nav-menu">
             <ul className="tree-menu">
               <li>
@@ -182,23 +389,42 @@ const HomePage = () => {
                 >
                   {expandedSection === "healthScore" ? <FaMinus /> : <FaPlus />}
                 </span>
-                <Link to="/healthscore"> Health Score</Link>
+                <Link to="/healthscore" onClick={() => setShowSidebar(false)}>
+                  Health Score
+                </Link>
                 {expandedSection === "healthScore" && (
                   <ul
                     className="submenu expanded"
                     style={{ display: "block", border: "none" }}
                   >
                     <li>
-                      <Link to="/growth">Growth</Link>
+                      <Link to="/growth" onClick={() => setShowSidebar(false)}>
+                        Growth
+                      </Link>
                     </li>
                     <li>
-                      <Link to="/adoption">Adoption</Link>
+                      <Link
+                        to="/adoption"
+                        onClick={() => setShowSidebar(false)}
+                      >
+                        Adoption
+                      </Link>
                     </li>
                     <li>
-                      <Link to="/engagement">Engagement</Link>
+                      <Link
+                        to="/engagement"
+                        onClick={() => setShowSidebar(false)}
+                      >
+                        Engagement
+                      </Link>
                     </li>
                     <li>
-                      <Link to="/feedback">Feedback</Link>
+                      <Link
+                        to="/feedback"
+                        onClick={() => setShowSidebar(false)}
+                      >
+                        Feedback
+                      </Link>
                     </li>
                   </ul>
                 )}
@@ -211,7 +437,9 @@ const HomePage = () => {
                 >
                   {expandedSection === "renewals" ? <FaMinus /> : <FaPlus />}
                 </span>
-                <Link to="/renewals">Renewals</Link>
+                <Link to="/renewals" onClick={() => setShowSidebar(false)}>
+                  Renewals
+                </Link>
                 {expandedSection === "renewals" && (
                   <ul className="submenu expanded">
                     <li>Dummy Page</li>
@@ -226,7 +454,9 @@ const HomePage = () => {
                 >
                   {expandedSection === "financials" ? <FaMinus /> : <FaPlus />}
                 </span>
-                <Link to="/financials">Financials</Link>
+                <Link to="/financials" onClick={() => setShowSidebar(false)}>
+                  Financials
+                </Link>
                 {expandedSection === "financials" && (
                   <ul className="submenu expanded">
                     <li>Dummy Page</li>
@@ -234,27 +464,46 @@ const HomePage = () => {
                 )}
               </li>
               <li>
-                <Link to="/statistics">Statistics</Link>
+                <Link to="/statistics" onClick={() => setShowSidebar(false)}>
+                  Statistics
+                </Link>
               </li>
               <li>
-                <Link to="/azure-sql-table">Licenses</Link>
+                <Link
+                  to="/azure-sql-table"
+                  onClick={() => setShowSidebar(false)}
+                >
+                  Licenses
+                </Link>
               </li>
               <li>
-                <Link to="/engagement-table">Engagement Log</Link>
+                <Link
+                  to="/engagement-table"
+                  onClick={() => setShowSidebar(false)}
+                >
+                  Engagement Log
+                </Link>
               </li>
             </ul>
             <ul className="tree-menu bottom-links">
               <li>
-                <Link to="/settings">Settings</Link>
+                <Link to="/settings" onClick={() => setShowSidebar(false)}>
+                  Settings
+                </Link>
               </li>
               <li>
-                <Link to="/help">Help</Link>
+                <Link to="/help" onClick={() => setShowSidebar(false)}>
+                  Help
+                </Link>
               </li>
             </ul>
           </nav>
         </aside>
 
-        <main className="report-container">
+        <main
+          className="report-container"
+          onClick={() => setShowSidebar(false)}
+        >
           {currentRoute === "azure-sql-table" ? (
             <AzureTablePage />
           ) : currentRoute === "engagement-table" ? (
@@ -287,5 +536,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
-//code with modal
