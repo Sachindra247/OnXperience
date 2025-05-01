@@ -268,3 +268,65 @@ select:focus {
 .engagement-history {
     animation: fadeIn 0.3s ease-out;
 }
+
+/* Add these styles to your existing EngagementTable.css */
+
+@media (max-width: 768px) {
+
+    /* Make the table container horizontally scrollable */
+    .engagement-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        /* Smooth scrolling on iOS */
+    }
+
+    /* Ensure the table maintains its full width */
+    .engagement-table table {
+        width: 100%;
+        min-width: 600px;
+        /* Minimum width to show all columns */
+    }
+
+    /* Keep header row fixed during horizontal scroll */
+    .engagement-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    /* Adjust padding for mobile */
+    .engagement-table th,
+    .engagement-table td {
+        padding: 12px 14px;
+    }
+
+    /* Keep action buttons stacked vertically */
+    .actions-cell {
+        flex-direction: column;
+        gap: 8px;
+        white-space: normal;
+        /* Allow button text to wrap */
+    }
+
+    /* Full width buttons */
+    button {
+        width: 100%;
+        white-space: normal;
+    }
+
+    /* Ensure select dropdowns are usable */
+    select {
+        min-width: 180px;
+    }
+
+    /* History table adjustments */
+    .engagement-history {
+        overflow-x: auto;
+    }
+
+    .history-table {
+        min-width: 500px;
+    }
+}
