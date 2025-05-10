@@ -296,6 +296,7 @@ import "./HomePage.css";
 import { PowerBIEmbed } from "powerbi-client-react";
 import AzureTablePage from "../../components/AzureTable/AzureTablePage";
 import EngagementTablePage from "../../components/EngagementTable/EngagementTablePage";
+import FeedbackTablePage from "../../components/FeedbackTable/FeedbackTablePage";
 import { models } from "powerbi-client";
 import { FaPlus, FaMinus, FaBars } from "react-icons/fa";
 import Header from "../../components/Header/Header";
@@ -484,6 +485,14 @@ const HomePage = () => {
                   Engagement Log
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/feedback-table"
+                  onClick={() => setShowSidebar(false)}
+                >
+                  Feedback Log
+                </Link>
+              </li>
             </ul>
             <ul className="tree-menu bottom-links">
               <li>
@@ -508,6 +517,8 @@ const HomePage = () => {
             <AzureTablePage />
           ) : currentRoute === "engagement-table" ? (
             <EngagementTablePage />
+          ) : currentRoute === "feedback-table" ? (
+            <FeedbackTablePage />
           ) : embedToken ? (
             <PowerBIEmbed
               embedConfig={{

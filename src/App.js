@@ -104,6 +104,7 @@ import {
 import "./global.css";
 import AzureTablePage from "./components/AzureTable/AzureTablePage";
 import EngagementTablePage from "./components/EngagementTable/EngagementTablePage";
+import FeedbackPageTable from "./components/FeedbackTable/FeedbackTablePage";
 
 const RouteWrapper = ({ children }) => {
   const location = useLocation();
@@ -168,6 +169,14 @@ function App() {
           element={
             <RouteWrapper>
               {(path) => <HomePage route="engagement-table" path={path} />}
+            </RouteWrapper>
+          }
+        />
+        <Route
+          path="/feedback-table"
+          element={
+            <RouteWrapper>
+              {(path) => <HomePage route="feedback-table" path={path} />}
             </RouteWrapper>
           }
         />
