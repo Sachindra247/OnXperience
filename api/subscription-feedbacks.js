@@ -44,35 +44,21 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST" || req.method === "PUT") {
-      const { SubscriptionID, SurveyQ1, SurveyQ2, SurveyQ3, NPSPercentage } =
-        req.body;
+      const { SubscriptionID, SurveyScore, NPSScore } = req.body;
 
-      if (
-        !SubscriptionID ||
-        SurveyQ1 == null ||
-        SurveyQ2 == null ||
-        SurveyQ3 == null ||
-        NPSPercentage == null
-      ) {
+      if (!SubscriptionID || SurveyScore == null || NPSScore == null) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // Transform scores
-      const q1 = Math.round(SurveyQ1 * 2);
-      const q2 = Math.round(SurveyQ2 * 2);
-      const q3 = Math.round(SurveyQ3 * 2);
-      const surveyScore = Math.round(q1 * 0.4 + q2 * 0.3 + q3 * 0.3);
-
-      const npsScore = Math.min(
-        10,
-        Math.max(0, Math.round(NPSPercentage / 10))
-      );
+      // Clamp values between 0 and 10
+      const clampedSurvey = Math.max(0, Math.min(10, Math.round(SurveyScore)));
+      const clampedNPS = Math.max(0, Math.min(10, Math.round(NPSScore)));
 
       await pool
         .request()
         .input("SubscriptionID", sql.VarChar, SubscriptionID)
-        .input("SurveyScore", sql.Int, surveyScore)
-        .input("NPSScore", sql.Int, npsScore).query(`
+        .input("SurveyScore", sql.Int, clampedSurvey)
+        .input("NPSScore", sql.Int, clampedNPS).query(`
           MERGE INTO Subscription_Feedbacks AS target
           USING (SELECT @SubscriptionID AS SubscriptionID) AS source
           ON target.SubscriptionID = source.SubscriptionID
@@ -87,14 +73,15 @@ module.exports = async (req, res) => {
 
       return res
         .status(200)
-        .json({ message: "Feedback submitted", SubscriptionID });
+        .json({ message: "Feedback saved", SubscriptionID });
     }
 
     res.status(405).end(); // Method Not Allowed
   } catch (err) {
     console.error("Error in subscription-feedbacks handler:", err);
-    res
-      .status(500)
-      .json({ error: "Internal Server Error", details: err.message });
+    res.status(500).json({
+      error: "Internal Server Error",
+      details: err.message,
+    });
   }
 };
