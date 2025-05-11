@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import "./FeedbackTable.css";
 
 const FeedbackTablePage = () => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -118,17 +119,23 @@ const FeedbackTablePage = () => {
               <td className="border px-3 py-2">{feedback.CustomerName}</td>
               {["Q1Rating", "Q2Rating", "Q3Rating"].map((field) => (
                 <td key={field} className="border px-3 py-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="1"
-                    value={feedback[field] ?? ""}
-                    onChange={(e) =>
-                      handleInputChange(index, field, e.target.value)
-                    }
-                    className="w-16 border rounded px-1 py-0.5"
-                  />
+                  <div className="star-rating">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <span
+                        key={i}
+                        className={`star ${
+                          i < feedback[field] ? "filled" : ""
+                        }`}
+                        onClick={() => handleInputChange(index, field, i + 1)}
+                        onContextMenu={(e) => {
+                          e.preventDefault(); // right-click to clear
+                          handleInputChange(index, field, "");
+                        }}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
                 </td>
               ))}
               <td className="border px-3 py-2 text-center">

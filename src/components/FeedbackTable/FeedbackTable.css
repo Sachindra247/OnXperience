@@ -1,0 +1,25 @@
+.star-rating {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.star {
+    font-size: 20px;
+    color: #d1d5db;
+    /* Tailwind gray-300 */
+    transition: color 0.2s ease;
+    user-select: none;
+}
+
+.star.filled {
+    color: #facc15;
+    /* Tailwind yellow-400 */
+}
+
+.star:hover,
+.star:hover~.star {
+    color: #fde68a;
+    /* Tailwind yellow-200 on hover */
+}
