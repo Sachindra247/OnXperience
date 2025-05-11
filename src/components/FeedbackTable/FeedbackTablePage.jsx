@@ -33,7 +33,7 @@ const FeedbackTablePage = () => {
 
     const scaledValues = rawValues.map((v) => v * 2); // scale to 0–10
     const avg = scaledValues.reduce((sum, v) => sum + v, 0) / 3;
-    return Math.round(avg * 10) / 10; // round to 1 decimal
+    return Math.min(10, Math.max(0, avg)); // no rounding, clamp to 0–10
   };
 
   const handleInputChange = (index, field, value) => {
@@ -74,8 +74,7 @@ const FeedbackTablePage = () => {
       NPSScore,
     } = feedback;
 
-    const finalNPSScore =
-      NPSScore === "" ? "" : Math.round((NPSScore / 10) * 10) / 10; // convert % to 0-10
+    const finalNPSScore = NPSScore === "" ? "" : NPSScore / 10; // convert % to 0-10
 
     setSavingId(SubscriptionID);
     try {
