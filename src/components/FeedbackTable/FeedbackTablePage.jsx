@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./FeedbackTable.css"; // Reuse styling for consistency
+import "./FeedbackTable.css"; // reuse styling for consistent UI
 
 const feedbackTypes = [
   { type: "Excellent", score: 5 },
@@ -14,7 +14,7 @@ const FeedbackTablePage = () => {
   const [customers, setCustomers] = useState([]);
   const [updatedFeedbacks, setUpdatedFeedbacks] = useState({});
   const [expandedSubscription, setExpandedSubscription] = useState(null);
-  const [editingType, setEditingType] = useState(null);
+  const [editingFeedbackId, setEditingFeedbackId] = useState(null);
   const [scoreValue, setScoreValue] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -94,11 +94,11 @@ const FeedbackTablePage = () => {
     setExpandedSubscription(
       expandedSubscription === subscriptionId ? null : subscriptionId
     );
-    setEditingType(null);
+    setEditingFeedbackId(null);
   };
 
-  const startEditingScore = (type, currentScore) => {
-    setEditingType(type);
+  const startEditingFeedback = (feedbackId, currentScore) => {
+    setEditingFeedbackId(feedbackId);
     setScoreValue(currentScore);
   };
 
@@ -106,7 +106,7 @@ const FeedbackTablePage = () => {
     setScoreValue(Number(e.target.value));
   };
 
-  const saveScore = async (subscriptionId, feedbackType) => {
+  const saveScore = async (subscriptionId, feedbackId) => {
     if (scoreValue < 1 || scoreValue > 5) {
       alert("Score must be between 1 and 5");
       return;
@@ -118,41 +118,19 @@ const FeedbackTablePage = () => {
         "https://on-xperience.vercel.app/api/subscription-feedbacks",
         {
           SubscriptionID: subscriptionId,
-          FeedbackType: feedbackType,
+          FeedbackID: feedbackId,
           FeedbackScore: scoreValue,
           UpdateType: "exact",
         }
       );
       fetchCustomers();
-      setEditingType(null);
+      setEditingFeedbackId(null);
     } catch (err) {
       console.error("Update error:", err);
       alert("Failed to update feedback.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getGroupedFeedbacks = (feedbacks) => {
-    const grouped = {};
-    feedbacks.forEach((fb) => {
-      if (!grouped[fb.feedback]) {
-        grouped[fb.feedback] = {
-          totalScore: 0,
-          lastUpdated: null,
-          instances: [],
-        };
-      }
-      grouped[fb.feedback].totalScore += fb.score;
-      grouped[fb.feedback].instances.push(fb);
-      if (
-        !grouped[fb.feedback].lastUpdated ||
-        new Date(fb.lastUpdated) > new Date(grouped[fb.feedback].lastUpdated)
-      ) {
-        grouped[fb.feedback].lastUpdated = fb.lastUpdated;
-      }
-    });
-    return grouped;
   };
 
   return (
@@ -233,21 +211,17 @@ const FeedbackTablePage = () => {
                             <thead>
                               <tr>
                                 <th>Type</th>
-                                <th>Count</th>
-                                <th>Total Score</th>
+                                <th>Score</th>
                                 <th>Last Updated</th>
                                 <th></th>
                               </tr>
                             </thead>
                             <tbody>
-                              {Object.entries(
-                                getGroupedFeedbacks(customer.feedback)
-                              ).map(([type, data]) => (
-                                <tr key={type}>
-                                  <td>{type}</td>
-                                  <td>{data.instances.length}</td>
+                              {customer.feedback.map((fb) => (
+                                <tr key={fb.id}>
+                                  <td>{fb.feedback}</td>
                                   <td>
-                                    {editingType === type ? (
+                                    {editingFeedbackId === fb.id ? (
                                       <input
                                         type="number"
                                         min="1"
@@ -257,22 +231,20 @@ const FeedbackTablePage = () => {
                                         className="count-input"
                                       />
                                     ) : (
-                                      data.totalScore
+                                      fb.score
                                     )}
                                   </td>
                                   <td>
-                                    {new Date(
-                                      data.lastUpdated
-                                    ).toLocaleString()}
+                                    {new Date(fb.lastUpdated).toLocaleString()}
                                   </td>
                                   <td>
-                                    {editingType === type ? (
+                                    {editingFeedbackId === fb.id ? (
                                       <>
                                         <button
                                           onClick={() =>
                                             saveScore(
                                               customer.SubscriptionID,
-                                              type
+                                              fb.id
                                             )
                                           }
                                           className="save-btn"
@@ -281,7 +253,9 @@ const FeedbackTablePage = () => {
                                           Save
                                         </button>
                                         <button
-                                          onClick={() => setEditingType(null)}
+                                          onClick={() =>
+                                            setEditingFeedbackId(null)
+                                          }
                                           className="cancel-btn"
                                         >
                                           Cancel
@@ -290,10 +264,7 @@ const FeedbackTablePage = () => {
                                     ) : (
                                       <button
                                         onClick={() =>
-                                          startEditingScore(
-                                            type,
-                                            data.totalScore
-                                          )
+                                          startEditingFeedback(fb.id, fb.score)
                                         }
                                         className="edit-btn"
                                       >
