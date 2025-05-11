@@ -18,10 +18,7 @@ const FeedbackTablePage = () => {
         Q2Rating: item.Q2Rating ?? "",
         Q3Rating: item.Q3Rating ?? "",
         SurveyScore: item.SurveyScore ?? "",
-        NPSScore:
-          item.NPSScore !== null && item.NPSScore !== undefined
-            ? Number((item.NPSScore * 10).toFixed(2)) // 0–100 with 2 decimals
-            : "",
+        NPSScore: item.NPSScore ? item.NPSScore * 10 : "", // display as %
       }));
       setFeedbacks(dataWithRatings);
     } catch (err) {
@@ -34,10 +31,9 @@ const FeedbackTablePage = () => {
     const rawValues = [q1, q2, q3].map((v) => (v === "" ? null : Number(v)));
     if (rawValues.some((v) => v === null)) return "";
 
-    const scaledValues = rawValues.map((v) => v * 2);
+    const scaledValues = rawValues.map((v) => v * 2); // scale to 0–10
     const avg = scaledValues.reduce((sum, v) => sum + v, 0) / 3;
-    const clamped = Math.min(10, Math.max(0, avg));
-    return Number(clamped.toFixed(2)); // 2 decimal places
+    return Math.round(avg * 10) / 10; // round to 1 decimal
   };
 
   const handleInputChange = (index, field, value) => {
@@ -79,7 +75,7 @@ const FeedbackTablePage = () => {
     } = feedback;
 
     const finalNPSScore =
-      NPSScore === "" ? "" : Number((NPSScore / 10).toFixed(2));
+      NPSScore === "" ? "" : Math.round((NPSScore / 10) * 10) / 10; // convert % to 0-10
 
     setSavingId(SubscriptionID);
     try {
