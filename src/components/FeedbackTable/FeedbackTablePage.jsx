@@ -27,21 +27,28 @@ const FeedbackTablePage = () => {
       const res = await axios.get(
         "https://on-xperience.vercel.app/api/subscription-feedbacks"
       );
-      const enriched = res.data.map((c) => ({
-        ...c,
-        feedback: c.feedback || [],
-        avgScore:
-          c.feedback.length > 0
-            ? Math.round(
-                c.feedback.reduce((sum, fb) => sum + fb.score, 0) /
-                  c.feedback.length
-              )
-            : 0,
-      }));
+      const rawData = Array.isArray(res.data) ? res.data : [];
+
+      const enriched = rawData.map((c) => {
+        const feedbackList = Array.isArray(c.feedback) ? c.feedback : [];
+        return {
+          ...c,
+          feedback: feedbackList,
+          avgScore:
+            feedbackList.length > 0
+              ? Math.round(
+                  feedbackList.reduce((sum, fb) => sum + fb.score, 0) /
+                    feedbackList.length
+                )
+              : 0,
+        };
+      });
+
       setCustomers(enriched);
     } catch (err) {
       console.error("Fetch error:", err);
       alert("Error loading feedback data.");
+      setCustomers([]); // fallback to empty array on failure
     }
   };
 
