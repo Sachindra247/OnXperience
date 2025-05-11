@@ -136,20 +136,21 @@ const FeedbackTablePage = () => {
   const getGroupedFeedbacks = (feedbacks) => {
     const grouped = {};
     feedbacks.forEach((fb) => {
-      if (!grouped[fb.feedback]) {
-        grouped[fb.feedback] = {
+      const type = fb.feedbackType || "Unknown";
+      if (!grouped[type]) {
+        grouped[type] = {
           totalScore: 0,
           lastUpdated: null,
           instances: [],
         };
       }
-      grouped[fb.feedback].totalScore += fb.score;
-      grouped[fb.feedback].instances.push(fb);
+      grouped[type].totalScore += fb.score;
+      grouped[type].instances.push(fb);
       if (
-        !grouped[fb.feedback].lastUpdated ||
-        new Date(fb.lastUpdated) > new Date(grouped[fb.feedback].lastUpdated)
+        !grouped[type].lastUpdated ||
+        new Date(fb.lastUpdated) > new Date(grouped[type].lastUpdated)
       ) {
-        grouped[fb.feedback].lastUpdated = fb.lastUpdated;
+        grouped[type].lastUpdated = fb.lastUpdated;
       }
     });
     return grouped;
