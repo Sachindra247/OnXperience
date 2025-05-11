@@ -1,21 +1,36 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./FeedbackTable.css"; // reuse styling for consistent UI
+import "./FeedbackTable.css";
 
-const feedbackTypes = [
-  { type: "Excellent", score: 5 },
-  { type: "Good", score: 4 },
-  { type: "Average", score: 3 },
-  { type: "Poor", score: 2 },
-  { type: "Very Poor", score: 1 },
+const surveyQuestions = [
+  "Ease of Use",
+  "Product Reliability",
+  "Customer Support",
+  "Feature Satisfaction",
+  "Value for Money",
 ];
+
+const StarRating = ({ score, onChange, max = 5 }) => {
+  return (
+    <div className="star-rating">
+      {[...Array(max)].map((_, i) => (
+        <span
+          key={i}
+          className={`star ${i < score ? "filled" : ""}`}
+          onClick={() => onChange(i + 1)}
+        >
+          ★
+        </span>
+      ))}
+    </div>
+  );
+};
 
 const FeedbackTablePage = () => {
   const [customers, setCustomers] = useState([]);
-  const [updatedFeedbacks, setUpdatedFeedbacks] = useState({});
-  const [expandedSubscription, setExpandedSubscription] = useState(null);
-  const [editingFeedbackId, setEditingFeedbackId] = useState(null);
-  const [scoreValue, setScoreValue] = useState(1);
+  const [expanded, setExpanded] = useState(null);
+  const [surveyInputs, setSurveyInputs] = useState({});
+  const [npsInputs, setNpsInputs] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -27,267 +42,160 @@ const FeedbackTablePage = () => {
       const res = await axios.get(
         "https://on-xperience.vercel.app/api/subscription-feedbacks"
       );
-      const rawData = Array.isArray(res.data) ? res.data : [];
-
-      const enriched = rawData.map((c) => {
-        const feedbackList = Array.isArray(c.feedback) ? c.feedback : [];
-        return {
-          ...c,
-          feedback: feedbackList,
-          avgScore:
-            feedbackList.length > 0
-              ? Math.round(
-                  feedbackList.reduce((sum, fb) => sum + fb.score, 0) /
-                    feedbackList.length
-                )
-              : 0,
-        };
-      });
-
-      setCustomers(enriched);
+      const data = Array.isArray(res.data) ? res.data : [];
+      setCustomers(data);
     } catch (err) {
-      console.error("Fetch error:", err);
-      alert("Error loading feedback data.");
-      setCustomers([]);
+      console.error("Error fetching feedback data:", err);
     }
   };
 
-  const handleFeedbackChange = (e, subscriptionId) => {
-    const { value } = e.target;
-    setUpdatedFeedbacks((prev) => ({
+  const handleStarChange = (subscriptionId, question, value) => {
+    setSurveyInputs((prev) => ({
       ...prev,
-      [subscriptionId]: value,
+      [subscriptionId]: {
+        ...prev[subscriptionId],
+        [question]: value,
+      },
     }));
   };
 
-  const handleAddFeedback = async (subscriptionId) => {
-    const selected = updatedFeedbacks[subscriptionId];
-    if (!selected) {
-      alert("Please select a feedback type.");
-      return;
-    }
+  const handleNpsChange = (subscriptionId, value) => {
+    const clamped = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+    setNpsInputs((prev) => ({
+      ...prev,
+      [subscriptionId]: clamped,
+    }));
+  };
 
-    const feedback = feedbackTypes.find((f) => f.type === selected);
-    if (!feedback) return alert("Invalid feedback type.");
+  const calculateSurveyScore = (answers) => {
+    const scores = Object.values(answers || {});
+    if (scores.length === 0) return 0;
+    const average = scores.reduce((sum, s) => sum + s, 0) / scores.length;
+    return Math.round((average / 5) * 10 * 10) / 10; // scale to 10 and round to 1 decimal
+  };
 
-    setIsLoading(true);
+  const calculateNpsScore = (percent) => {
+    return Math.round((percent / 100) * 10 * 10) / 10;
+  };
+
+  const handleSubmitFeedback = async (subscriptionId) => {
+    const survey = surveyInputs[subscriptionId] || {};
+    const npsPercent = npsInputs[subscriptionId] || 0;
+    const surveyScore = calculateSurveyScore(survey);
+    const npsScore = calculateNpsScore(npsPercent);
+
+    const formattedSurvey = Object.entries(survey).map(([question, score]) => ({
+      question,
+      score,
+    }));
+
     try {
+      setIsLoading(true);
       await axios.post(
         "https://on-xperience.vercel.app/api/subscription-feedbacks",
         {
           SubscriptionID: subscriptionId,
-          FeedbackType: selected,
-          FeedbackScore: feedback.score,
+          SurveyScores: formattedSurvey,
+          NPSPercentage: npsPercent,
+          SurveyScore: surveyScore,
+          NPSScore: npsScore,
         }
       );
-      setUpdatedFeedbacks((prev) => ({ ...prev, [subscriptionId]: "" }));
-      fetchCustomers();
+      await fetchCustomers();
+      alert("Feedback submitted successfully.");
     } catch (err) {
-      console.error("Add error:", err);
-      alert("Failed to add feedback.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleHistory = (subscriptionId) => {
-    setExpandedSubscription(
-      expandedSubscription === subscriptionId ? null : subscriptionId
-    );
-    setEditingFeedbackId(null);
-  };
-
-  const startEditingFeedback = (feedbackId, currentScore) => {
-    setEditingFeedbackId(feedbackId);
-    setScoreValue(currentScore);
-  };
-
-  const handleScoreChange = (e) => {
-    setScoreValue(Number(e.target.value));
-  };
-
-  const saveScore = async (subscriptionId, feedbackId) => {
-    if (scoreValue < 1 || scoreValue > 5) {
-      alert("Score must be between 1 and 5");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await axios.put(
-        "https://on-xperience.vercel.app/api/subscription-feedbacks",
-        {
-          SubscriptionID: subscriptionId,
-          FeedbackID: feedbackId,
-          FeedbackScore: scoreValue,
-          UpdateType: "exact",
-        }
-      );
-      fetchCustomers();
-      setEditingFeedbackId(null);
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("Failed to update feedback.");
+      console.error("Submit error:", err);
+      alert("Failed to submit feedback.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="engagement-table-page-container">
-      {isLoading && <div className="loading-indicator">Processing...</div>}
-      <div className="engagement-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Customer Name</th>
-              <th>Subscription ID</th>
-              <th>Feedback Type</th>
-              <th>Avg. Score</th>
-              <th>Last Feedback</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((customer) => (
-              <React.Fragment key={customer.SubscriptionID}>
+    <div className="feedback-table-container">
+      <h2>Customer Feedback</h2>
+      <table className="feedback-table">
+        <thead>
+          <tr>
+            <th>Customer Name</th>
+            <th>Subscription ID</th>
+            <th>Survey</th>
+            <th>NPS %</th>
+            <th>Submit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {customers.map((cust) => (
+            <React.Fragment key={cust.SubscriptionID}>
+              <tr>
+                <td>{cust.CustomerName}</td>
+                <td>{cust.SubscriptionID}</td>
+                <td>
+                  <button
+                    onClick={() =>
+                      setExpanded(
+                        expanded === cust.SubscriptionID
+                          ? null
+                          : cust.SubscriptionID
+                      )
+                    }
+                    className="toggle-btn"
+                  >
+                    {expanded === cust.SubscriptionID
+                      ? "Hide Questions"
+                      : "Rate Survey"}
+                  </button>
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    value={npsInputs[cust.SubscriptionID] || ""}
+                    onChange={(e) =>
+                      handleNpsChange(cust.SubscriptionID, e.target.value)
+                    }
+                    placeholder="0-100"
+                    min="0"
+                    max="100"
+                    className="nps-input"
+                  />
+                </td>
+                <td>
+                  <button
+                    onClick={() => handleSubmitFeedback(cust.SubscriptionID)}
+                    disabled={isLoading}
+                    className="submit-btn"
+                  >
+                    Submit
+                  </button>
+                </td>
+              </tr>
+              {expanded === cust.SubscriptionID && (
                 <tr>
-                  <td>{customer.CustomerName}</td>
-                  <td>{customer.SubscriptionID}</td>
-                  <td>
-                    <select
-                      value={updatedFeedbacks[customer.SubscriptionID] || ""}
-                      onChange={(e) =>
-                        handleFeedbackChange(e, customer.SubscriptionID)
-                      }
-                      disabled={isLoading}
-                    >
-                      <option value="">Select Feedback</option>
-                      {feedbackTypes.map((type) => (
-                        <option key={type.type} value={type.type}>
-                          {type.type}
-                        </option>
+                  <td colSpan="5">
+                    <div className="survey-section">
+                      {surveyQuestions.map((q) => (
+                        <div key={q} className="question-row">
+                          <label>{q}</label>
+                          <StarRating
+                            score={
+                              surveyInputs[cust.SubscriptionID]?.[q]
+                                ? surveyInputs[cust.SubscriptionID][q]
+                                : 0
+                            }
+                            onChange={(val) =>
+                              handleStarChange(cust.SubscriptionID, q, val)
+                            }
+                          />
+                        </div>
                       ))}
-                    </select>
-                  </td>
-                  <td>{customer.avgScore}</td>
-                  <td>
-                    {customer.feedback.length > 0
-                      ? new Date(
-                          [...customer.feedback].sort(
-                            (a, b) =>
-                              new Date(b.lastUpdated) - new Date(a.lastUpdated)
-                          )[0].lastUpdated
-                        ).toLocaleString()
-                      : "-"}
-                  </td>
-                  <td className="actions-cell">
-                    <button
-                      onClick={() => handleAddFeedback(customer.SubscriptionID)}
-                      disabled={
-                        !updatedFeedbacks[customer.SubscriptionID] || isLoading
-                      }
-                      className="add-engagement-btn"
-                    >
-                      Add Feedback
-                    </button>
-                    <button
-                      onClick={() => toggleHistory(customer.SubscriptionID)}
-                      className="view-history-btn"
-                    >
-                      {expandedSubscription === customer.SubscriptionID
-                        ? "Hide History"
-                        : "View History"}
-                    </button>
+                    </div>
                   </td>
                 </tr>
-                {expandedSubscription === customer.SubscriptionID && (
-                  <tr className="engagement-history-row">
-                    <td colSpan="6">
-                      <div className="engagement-history">
-                        <h4>Feedback History for {customer.CustomerName}</h4>
-                        {customer.feedback.length > 0 ? (
-                          <table className="history-table">
-                            <thead>
-                              <tr>
-                                <th>Type</th>
-                                <th>Score</th>
-                                <th>Last Updated</th>
-                                <th></th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {customer.feedback.map((fb) => (
-                                <tr key={fb.id}>
-                                  <td>{fb.feedback}</td>
-                                  <td>
-                                    {editingFeedbackId === fb.id ? (
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        max="5"
-                                        value={scoreValue}
-                                        onChange={handleScoreChange}
-                                        className="count-input"
-                                      />
-                                    ) : (
-                                      fb.score
-                                    )}
-                                  </td>
-                                  <td>
-                                    {new Date(fb.lastUpdated).toLocaleString()}
-                                  </td>
-                                  <td>
-                                    {editingFeedbackId === fb.id ? (
-                                      <>
-                                        <button
-                                          onClick={() =>
-                                            saveScore(
-                                              customer.SubscriptionID,
-                                              fb.id
-                                            )
-                                          }
-                                          className="save-btn"
-                                          disabled={isLoading}
-                                        >
-                                          Save
-                                        </button>
-                                        <button
-                                          onClick={() =>
-                                            setEditingFeedbackId(null)
-                                          }
-                                          className="cancel-btn"
-                                        >
-                                          Cancel
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <button
-                                        onClick={() =>
-                                          startEditingFeedback(fb.id, fb.score)
-                                        }
-                                        className="edit-btn"
-                                      >
-                                        Edit
-                                      </button>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        ) : (
-                          <p>No feedback history found</p>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </React.Fragment>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
