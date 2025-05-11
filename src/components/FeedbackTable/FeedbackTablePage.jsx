@@ -1,179 +1,309 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./FeedbackTable.css";
+import "./FeedbackTable.css"; // reuse styling for consistent UI
+
+const feedbackTypes = [
+  { type: "Excellent", score: 5 },
+  { type: "Good", score: 4 },
+  { type: "Average", score: 3 },
+  { type: "Poor", score: 2 },
+  { type: "Very Poor", score: 1 },
+];
 
 const FeedbackTablePage = () => {
-  const [feedbacks, setFeedbacks] = useState([]);
-  const [savingId, setSavingId] = useState(null);
+  const [customers, setCustomers] = useState([]);
+  const [updatedFeedbacks, setUpdatedFeedbacks] = useState({});
+  const [expandedSubscription, setExpandedSubscription] = useState(null);
+  const [editingType, setEditingType] = useState(null);
+  const [scoreValue, setScoreValue] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFeedbacks();
+    fetchCustomers();
   }, []);
 
-  const fetchFeedbacks = async () => {
+  const fetchCustomers = async () => {
     try {
-      const res = await axios.get("/api/subscription-feedbacks");
-      const dataWithRatings = res.data.map((item) => ({
-        ...item,
-        Q1Rating: item.Q1Rating ?? "",
-        Q2Rating: item.Q2Rating ?? "",
-        Q3Rating: item.Q3Rating ?? "",
-        SurveyScore: item.SurveyScore ?? "",
-        NPSScore: item.NPSScore ? item.NPSScore * 10 : "", // display as %
+      const res = await axios.get(
+        "https://on-xperience.vercel.app/api/feedback-table"
+      );
+      const enriched = res.data.map((c) => ({
+        ...c,
+        feedback: c.feedback || [],
+        avgScore:
+          c.feedback.length > 0
+            ? Math.round(
+                c.feedback.reduce((sum, fb) => sum + fb.score, 0) /
+                  c.feedback.length
+              )
+            : 0,
       }));
-      setFeedbacks(dataWithRatings);
+      setCustomers(enriched);
     } catch (err) {
-      console.error("Failed to fetch feedbacks", err);
+      console.error("Fetch error:", err);
+      alert("Error loading feedback data.");
     }
   };
 
-  // Ratings are 0-5; internally multiplied by 2 for scoring
-  const calculateSurveyScore = (q1, q2, q3) => {
-    const rawValues = [q1, q2, q3].map((v) => (v === "" ? null : Number(v)));
-    if (rawValues.some((v) => v === null)) return "";
-
-    const scaledValues = rawValues.map((v) => v * 2); // scale to 0–10
-    const avg = scaledValues.reduce((sum, v) => sum + v, 0) / 3;
-    return Math.round(avg * 10) / 10; // round to 1 decimal
+  const handleFeedbackChange = (e, subscriptionId) => {
+    const { value } = e.target;
+    setUpdatedFeedbacks((prev) => ({
+      ...prev,
+      [subscriptionId]: value,
+    }));
   };
 
-  const handleInputChange = (index, field, value) => {
-    let safeValue = value === "" ? "" : Number(value);
-
-    // Clamp ranges
-    if (["Q1Rating", "Q2Rating", "Q3Rating"].includes(field)) {
-      safeValue = Math.max(0, Math.min(5, safeValue)); // 0-5 input
-    } else if (field === "NPSScore") {
-      safeValue = Math.max(0, Math.min(100, safeValue)); // 0–100 percent input
+  const handleAddFeedback = async (subscriptionId) => {
+    const selected = updatedFeedbacks[subscriptionId];
+    if (!selected) {
+      alert("Please select a feedback type.");
+      return;
     }
 
-    setFeedbacks((prev) => {
-      const updated = [...prev];
-      const item = { ...updated[index], [field]: safeValue };
+    const feedback = feedbackTypes.find((f) => f.type === selected);
+    if (!feedback) return alert("Invalid feedback type.");
 
-      // Recalculate Survey Score
-      if (["Q1Rating", "Q2Rating", "Q3Rating"].includes(field)) {
-        item.SurveyScore = calculateSurveyScore(
-          item.Q1Rating,
-          item.Q2Rating,
-          item.Q3Rating
-        );
-      }
-
-      updated[index] = item;
-      return updated;
-    });
-  };
-
-  const handleSave = async (feedback) => {
-    const {
-      SubscriptionID,
-      Q1Rating,
-      Q2Rating,
-      Q3Rating,
-      SurveyScore,
-      NPSScore,
-    } = feedback;
-
-    const finalNPSScore =
-      NPSScore === "" ? "" : Math.round((NPSScore / 10) * 10) / 10; // convert % to 0-10
-
-    setSavingId(SubscriptionID);
+    setIsLoading(true);
     try {
-      await axios.post("/api/subscription-feedbacks", {
-        SubscriptionID,
-        Q1Rating,
-        Q2Rating,
-        Q3Rating,
-        SurveyScore,
-        NPSScore: finalNPSScore,
+      await axios.post("https://on-xperience.vercel.app/api/feedback-table", {
+        SubscriptionID: subscriptionId,
+        FeedbackType: selected,
+        FeedbackScore: feedback.score,
       });
-      await fetchFeedbacks(); // refresh
+      setUpdatedFeedbacks((prev) => ({ ...prev, [subscriptionId]: "" }));
+      fetchCustomers();
     } catch (err) {
-      console.error("Failed to save", err);
+      console.error("Add error:", err);
+      alert("Failed to add feedback.");
     } finally {
-      setSavingId(null);
+      setIsLoading(false);
     }
+  };
+
+  const toggleHistory = (subscriptionId) => {
+    setExpandedSubscription(
+      expandedSubscription === subscriptionId ? null : subscriptionId
+    );
+    setEditingType(null);
+  };
+
+  const startEditingScore = (type, currentScore) => {
+    setEditingType(type);
+    setScoreValue(currentScore);
+  };
+
+  const handleScoreChange = (e) => {
+    setScoreValue(Number(e.target.value));
+  };
+
+  const saveScore = async (subscriptionId, feedbackType) => {
+    if (scoreValue < 1 || scoreValue > 5) {
+      alert("Score must be between 1 and 5");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await axios.put("https://on-xperience.vercel.app/api/feedback-table", {
+        SubscriptionID: subscriptionId,
+        FeedbackType: feedbackType,
+        FeedbackScore: scoreValue,
+        UpdateType: "exact",
+      });
+      fetchCustomers();
+      setEditingType(null);
+    } catch (err) {
+      console.error("Update error:", err);
+      alert("Failed to update feedback.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getGroupedFeedbacks = (feedbacks) => {
+    const grouped = {};
+    feedbacks.forEach((fb) => {
+      if (!grouped[fb.feedback]) {
+        grouped[fb.feedback] = {
+          totalScore: 0,
+          lastUpdated: null,
+          instances: [],
+        };
+      }
+      grouped[fb.feedback].totalScore += fb.score;
+      grouped[fb.feedback].instances.push(fb);
+      if (
+        !grouped[fb.feedback].lastUpdated ||
+        new Date(fb.lastUpdated) > new Date(grouped[fb.feedback].lastUpdated)
+      ) {
+        grouped[fb.feedback].lastUpdated = fb.lastUpdated;
+      }
+    });
+    return grouped;
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Customer Feedback Table</h2>
-      <table className="min-w-full border border-gray-300">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-3 py-2">Subscription ID</th>
-            <th className="border px-3 py-2">Customer Name</th>
-            <th className="border px-3 py-2">Q1 Rating (0–5)</th>
-            <th className="border px-3 py-2">Q2 Rating (0–5)</th>
-            <th className="border px-3 py-2">Q3 Rating (0–5)</th>
-            <th className="border px-3 py-2">Survey Score (0–10)</th>
-            <th className="border px-3 py-2">NPS Score (%)</th>
-            <th className="border px-3 py-2">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {feedbacks.map((feedback, index) => (
-            <tr key={feedback.SubscriptionID}>
-              <td className="border px-3 py-2">{feedback.SubscriptionID}</td>
-              <td className="border px-3 py-2">{feedback.CustomerName}</td>
-              {["Q1Rating", "Q2Rating", "Q3Rating"].map((field) => (
-                <td key={field} className="border px-3 py-2">
-                  <div className="star-rating">
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <span
-                        key={i}
-                        className={`star ${
-                          i < feedback[field] ? "filled" : ""
-                        }`}
-                        onClick={() => handleInputChange(index, field, i + 1)}
-                        onContextMenu={(e) => {
-                          e.preventDefault(); // right-click to clear
-                          handleInputChange(index, field, "");
-                        }}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                </td>
-              ))}
-              <td className="border px-3 py-2 text-center">
-                {feedback.SurveyScore !== "" ? feedback.SurveyScore : "--"}
-              </td>
-              <td className="border px-3 py-2">
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={feedback.NPSScore ?? ""}
-                  onChange={(e) =>
-                    handleInputChange(index, "NPSScore", e.target.value)
-                  }
-                  className="w-20 border rounded px-1 py-0.5"
-                />
-              </td>
-              <td className="border px-3 py-2">
-                <button
-                  onClick={() => handleSave(feedback)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                  disabled={savingId === feedback.SubscriptionID}
-                >
-                  {savingId === feedback.SubscriptionID ? "Saving..." : "Save"}
-                </button>
-              </td>
-            </tr>
-          ))}
-          {feedbacks.length === 0 && (
+    <div className="engagement-table-page-container">
+      {isLoading && <div className="loading-indicator">Processing...</div>}
+      <div className="engagement-table">
+        <table>
+          <thead>
             <tr>
-              <td colSpan="8" className="text-center py-4">
-                No subscriptions found.
-              </td>
+              <th>Customer Name</th>
+              <th>Subscription ID</th>
+              <th>Feedback Type</th>
+              <th>Avg. Score</th>
+              <th>Last Feedback</th>
+              <th></th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {customers.map((customer) => (
+              <React.Fragment key={customer.SubscriptionID}>
+                <tr>
+                  <td>{customer.CustomerName}</td>
+                  <td>{customer.SubscriptionID}</td>
+                  <td>
+                    <select
+                      value={updatedFeedbacks[customer.SubscriptionID] || ""}
+                      onChange={(e) =>
+                        handleFeedbackChange(e, customer.SubscriptionID)
+                      }
+                      disabled={isLoading}
+                    >
+                      <option value="">Select Feedback</option>
+                      {feedbackTypes.map((type) => (
+                        <option key={type.type} value={type.type}>
+                          {type.type}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>{customer.avgScore}</td>
+                  <td>
+                    {customer.feedback.length > 0
+                      ? new Date(
+                          [...customer.feedback].sort(
+                            (a, b) =>
+                              new Date(b.lastUpdated) - new Date(a.lastUpdated)
+                          )[0].lastUpdated
+                        ).toLocaleString()
+                      : "-"}
+                  </td>
+                  <td className="actions-cell">
+                    <button
+                      onClick={() => handleAddFeedback(customer.SubscriptionID)}
+                      disabled={
+                        !updatedFeedbacks[customer.SubscriptionID] || isLoading
+                      }
+                      className="add-engagement-btn"
+                    >
+                      Add Feedback
+                    </button>
+                    <button
+                      onClick={() => toggleHistory(customer.SubscriptionID)}
+                      className="view-history-btn"
+                    >
+                      {expandedSubscription === customer.SubscriptionID
+                        ? "Hide History"
+                        : "View History"}
+                    </button>
+                  </td>
+                </tr>
+                {expandedSubscription === customer.SubscriptionID && (
+                  <tr className="engagement-history-row">
+                    <td colSpan="6">
+                      <div className="engagement-history">
+                        <h4>Feedback History for {customer.CustomerName}</h4>
+                        {customer.feedback.length > 0 ? (
+                          <table className="history-table">
+                            <thead>
+                              <tr>
+                                <th>Type</th>
+                                <th>Count</th>
+                                <th>Total Score</th>
+                                <th>Last Updated</th>
+                                <th></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(
+                                getGroupedFeedbacks(customer.feedback)
+                              ).map(([type, data]) => (
+                                <tr key={type}>
+                                  <td>{type}</td>
+                                  <td>{data.instances.length}</td>
+                                  <td>
+                                    {editingType === type ? (
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        max="5"
+                                        value={scoreValue}
+                                        onChange={handleScoreChange}
+                                        className="count-input"
+                                      />
+                                    ) : (
+                                      data.totalScore
+                                    )}
+                                  </td>
+                                  <td>
+                                    {new Date(
+                                      data.lastUpdated
+                                    ).toLocaleString()}
+                                  </td>
+                                  <td>
+                                    {editingType === type ? (
+                                      <>
+                                        <button
+                                          onClick={() =>
+                                            saveScore(
+                                              customer.SubscriptionID,
+                                              type
+                                            )
+                                          }
+                                          className="save-btn"
+                                          disabled={isLoading}
+                                        >
+                                          Save
+                                        </button>
+                                        <button
+                                          onClick={() => setEditingType(null)}
+                                          className="cancel-btn"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <button
+                                        onClick={() =>
+                                          startEditingScore(
+                                            type,
+                                            data.totalScore
+                                          )
+                                        }
+                                        className="edit-btn"
+                                      >
+                                        Edit
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <p>No feedback history found</p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

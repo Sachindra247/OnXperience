@@ -1,3 +1,124 @@
+/* FeedbackTable.css */
+:root {
+    --primary-color: #0078d4;
+    --primary-hover: #106ebe;
+    --secondary-color: #4a6fa5;
+    --secondary-hover: #3a5a8f;
+    --light-blue: #e6f2ff;
+    --light-bg: #f9fafb;
+    --card-bg: #ffffff;
+    --border-color: #e5eaf0;
+    --text-primary: #333333;
+    --text-secondary: #555555;
+    --shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.feedback-table-page-container {
+    padding: 2rem;
+    background: var(--light-bg);
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-primary);
+}
+
+/* Table styling */
+.feedback-table {
+    width: 100%;
+    max-width: 1200px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.feedback-table thead {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.feedback-table th {
+    padding: 16px 20px;
+    text-align: left;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+}
+
+.feedback-table td {
+    padding: 14px 20px;
+    text-align: left;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+}
+
+.feedback-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.feedback-table tbody tr:hover {
+    background-color: rgba(0, 120, 212, 0.05);
+}
+
+/* Action buttons */
+.actions-cell {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: white;
+    background-color: var(--primary-color);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #cccccc;
+}
+
+button:focus {
+    outline: 2px solid rgba(0, 120, 212, 0.5);
+    outline-offset: 2px;
+}
+
+.add-feedback-btn {
+    background-color: var(--primary-color);
+}
+
+.add-feedback-btn:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+}
+
+.edit-btn {
+    background-color: #3a8fd9;
+}
+
+.save-btn {
+    background-color: #2b88d8;
+}
+
+.cancel-btn {
+    background-color: #6c8cbf;
+}
+
+/* Star rating */
 .star-rating {
     display: flex;
     justify-content: center;
@@ -8,18 +129,85 @@
 .star {
     font-size: 20px;
     color: #d1d5db;
-    /* Tailwind gray-300 */
     transition: color 0.2s ease;
     user-select: none;
 }
 
 .star.filled {
     color: #facc15;
-    /* Tailwind yellow-400 */
 }
 
 .star:hover,
 .star:hover~.star {
     color: #fde68a;
-    /* Tailwind yellow-200 on hover */
+}
+
+/* Form inputs */
+textarea,
+input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: white;
+    font-size: 14px;
+    resize: vertical;
+}
+
+textarea:focus,
+input[type="text"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+/* Status and utility */
+.loading-indicator {
+    padding: 12px;
+    background-color: var(--light-blue);
+    color: var(--primary-color);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .feedback-table-page-container {
+        padding: 1rem;
+    }
+
+    .feedback-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .feedback-table table {
+        width: 100%;
+        min-width: 600px;
+    }
+
+    .feedback-table th,
+    .feedback-table td {
+        padding: 12px 14px;
+    }
+
+    .actions-cell {
+        flex-direction: column;
+        gap: 8px;
+        white-space: normal;
+    }
+
+    button {
+        width: 100%;
+        white-space: normal;
+    }
+
+    textarea,
+    input[type="text"] {
+        min-width: 180px;
+    }
 }
