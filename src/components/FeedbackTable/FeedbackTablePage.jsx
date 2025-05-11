@@ -25,7 +25,7 @@ const FeedbackTablePage = () => {
   const fetchCustomers = async () => {
     try {
       const res = await axios.get(
-        "https://on-xperience.vercel.app/api/feedback-table"
+        "https://on-xperience.vercel.app/api/subscription-feedbacks"
       );
       const enriched = res.data.map((c) => ({
         ...c,
@@ -65,11 +65,14 @@ const FeedbackTablePage = () => {
 
     setIsLoading(true);
     try {
-      await axios.post("https://on-xperience.vercel.app/api/feedback-table", {
-        SubscriptionID: subscriptionId,
-        FeedbackType: selected,
-        FeedbackScore: feedback.score,
-      });
+      await axios.post(
+        "https://on-xperience.vercel.app/api/subscription-feedbacks",
+        {
+          SubscriptionID: subscriptionId,
+          FeedbackType: selected,
+          FeedbackScore: feedback.score,
+        }
+      );
       setUpdatedFeedbacks((prev) => ({ ...prev, [subscriptionId]: "" }));
       fetchCustomers();
     } catch (err) {
@@ -104,12 +107,15 @@ const FeedbackTablePage = () => {
 
     setIsLoading(true);
     try {
-      await axios.put("https://on-xperience.vercel.app/api/feedback-table", {
-        SubscriptionID: subscriptionId,
-        FeedbackType: feedbackType,
-        FeedbackScore: scoreValue,
-        UpdateType: "exact",
-      });
+      await axios.put(
+        "https://on-xperience.vercel.app/api/subscription-feedbacks",
+        {
+          SubscriptionID: subscriptionId,
+          FeedbackType: feedbackType,
+          FeedbackScore: scoreValue,
+          UpdateType: "exact",
+        }
+      );
       fetchCustomers();
       setEditingType(null);
     } catch (err) {
