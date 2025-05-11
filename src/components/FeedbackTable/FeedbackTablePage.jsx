@@ -1,88 +1,115 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const FeedbackTablePage = () => {
-  const [surveyQ1, setSurveyQ1] = useState(0);
-  const [surveyQ2, setSurveyQ2] = useState(0);
-  const [surveyQ3, setSurveyQ3] = useState(0);
-  const [npsScore, setNpsScore] = useState(0);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [q1, setQ1] = useState(1);
+  const [q2, setQ2] = useState(1);
+  const [q3, setQ3] = useState(1);
+  const [nps, setNps] = useState(0);
+  const [message, setMessage] = useState("");
 
-  const [finalSurveyScore, setFinalSurveyScore] = useState(0);
+  useEffect(() => {
+    axios
+      .get("https://on-xperience.vercel.app/api/subscription-feedbacks")
+      .then((res) => {
+        setSubscriptions(res.data);
+      });
+  }, []);
 
-  const handleSubmit = () => {
-    // Calculate Survey Score (weighted average)
-    const weightedSurveyScore =
-      surveyQ1 * 0.4 + surveyQ2 * 0.3 + surveyQ3 * 0.3;
-    setFinalSurveyScore(weightedSurveyScore);
+  const handleSubmit = async () => {
+    if (!selected) {
+      alert("Select a subscription.");
+      return;
+    }
 
-    // You can add code here to store the data in the 'Subscription_Feedbacks' table
-    const feedbackData = {
-      surveyQ1,
-      surveyQ2,
-      surveyQ3,
-      npsScore,
-      finalSurveyScore: weightedSurveyScore,
-    };
-
-    // Assuming you have an API or function to save the feedback
-    // saveFeedback(feedbackData);
+    try {
+      await axios.post(
+        "https://on-xperience.vercel.app/api/subscription-feedbacks",
+        {
+          SubscriptionID: selected.SubscriptionID,
+          SurveyQ1: q1,
+          SurveyQ2: q2,
+          SurveyQ3: q3,
+          NPSPercentage: nps,
+        }
+      );
+      setMessage("Feedback submitted successfully.");
+    } catch (err) {
+      console.error(err);
+      setMessage("Error submitting feedback.");
+    }
   };
 
   return (
     <div>
       <h2>Customer Feedback</h2>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
+      <label>Select Subscription:</label>
+      <select
+        onChange={(e) => {
+          const sub = subscriptions.find(
+            (s) => s.SubscriptionID === e.target.value
+          );
+          setSelected(sub);
+          setMessage("");
         }}
+        value={selected?.SubscriptionID || ""}
       >
-        <div>
-          <label>Survey Question 1 (1-10):</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            value={surveyQ1}
-            onChange={(e) => setSurveyQ1(Number(e.target.value))}
-          />
-        </div>
-        <div>
-          <label>Survey Question 2 (1-10):</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            value={surveyQ2}
-            onChange={(e) => setSurveyQ2(Number(e.target.value))}
-          />
-        </div>
-        <div>
-          <label>Survey Question 3 (1-10):</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            value={surveyQ3}
-            onChange={(e) => setSurveyQ3(Number(e.target.value))}
-          />
-        </div>
-        <div>
-          <label>NPS Score (1-10):</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            value={npsScore}
-            onChange={(e) => setNpsScore(Number(e.target.value))}
-          />
-        </div>
-        <div>
-          <button type="submit">Submit Feedback</button>
-        </div>
-      </form>
-      <div>
-        <h3>Calculated Survey Score: {finalSurveyScore}</h3>
-      </div>
+        <option value="">-- Select --</option>
+        {subscriptions.map((s) => (
+          <option key={s.SubscriptionID} value={s.SubscriptionID}>
+            {s.SubscriptionID} - {s.CustomerName}
+          </option>
+        ))}
+      </select>
+
+      {selected && (
+        <>
+          <div>
+            <label>Survey Q1 (1-5):</label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={q1}
+              onChange={(e) => setQ1(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>Survey Q2 (1-5):</label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={q2}
+              onChange={(e) => setQ2(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>Survey Q3 (1-5):</label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={q3}
+              onChange={(e) => setQ3(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>NPS Score (%):</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={nps}
+              onChange={(e) => setNps(Number(e.target.value))}
+            />
+          </div>
+          <button onClick={handleSubmit}>Submit Feedback</button>
+          {message && <p>{message}</p>}
+        </>
+      )}
     </div>
   );
 };
