@@ -18,6 +18,7 @@ const FeedbackTablePage = () => {
         Q2Rating: item.Q2Rating ?? "",
         Q3Rating: item.Q3Rating ?? "",
         SurveyScore: item.SurveyScore ?? "",
+        NPSScore: item.NPSScore ? item.NPSScore * 10 : "", // display as %
       }));
       setFeedbacks(dataWithRatings);
     } catch (err) {
@@ -25,22 +26,31 @@ const FeedbackTablePage = () => {
     }
   };
 
+  // Ratings are 0-5; internally multiplied by 2 for scoring
   const calculateSurveyScore = (q1, q2, q3) => {
-    const values = [q1, q2, q3].map((v) => (v === "" ? null : Number(v)));
-    if (values.some((v) => v === null)) return "";
-    const avg = values.reduce((sum, v) => sum + v, 0) / 3;
-    return Math.round(avg * 10) / 10; // One decimal
+    const rawValues = [q1, q2, q3].map((v) => (v === "" ? null : Number(v)));
+    if (rawValues.some((v) => v === null)) return "";
+
+    const scaledValues = rawValues.map((v) => v * 2); // scale to 0–10
+    const avg = scaledValues.reduce((sum, v) => sum + v, 0) / 3;
+    return Math.round(avg * 10) / 10; // round to 1 decimal
   };
 
   const handleInputChange = (index, field, value) => {
-    const safeValue =
-      value === "" ? "" : Math.max(0, Math.min(10, Number(value)));
+    let safeValue = value === "" ? "" : Number(value);
+
+    // Clamp ranges
+    if (["Q1Rating", "Q2Rating", "Q3Rating"].includes(field)) {
+      safeValue = Math.max(0, Math.min(5, safeValue)); // 0-5 input
+    } else if (field === "NPSScore") {
+      safeValue = Math.max(0, Math.min(100, safeValue)); // 0–100 percent input
+    }
 
     setFeedbacks((prev) => {
       const updated = [...prev];
       const item = { ...updated[index], [field]: safeValue };
 
-      // Update SurveyScore if any question rating changes
+      // Recalculate Survey Score
       if (["Q1Rating", "Q2Rating", "Q3Rating"].includes(field)) {
         item.SurveyScore = calculateSurveyScore(
           item.Q1Rating,
@@ -64,7 +74,8 @@ const FeedbackTablePage = () => {
       NPSScore,
     } = feedback;
 
-    const safeNpsScore = Math.max(0, Math.min(10, Math.round(NPSScore || 0)));
+    const finalNPSScore =
+      NPSScore === "" ? "" : Math.round((NPSScore / 10) * 10) / 10; // convert % to 0-10
 
     setSavingId(SubscriptionID);
     try {
@@ -74,9 +85,9 @@ const FeedbackTablePage = () => {
         Q2Rating,
         Q3Rating,
         SurveyScore,
-        NPSScore: safeNpsScore,
+        NPSScore: finalNPSScore,
       });
-      await fetchFeedbacks(); // Refresh data
+      await fetchFeedbacks(); // refresh
     } catch (err) {
       console.error("Failed to save", err);
     } finally {
@@ -92,11 +103,11 @@ const FeedbackTablePage = () => {
           <tr>
             <th className="border px-3 py-2">Subscription ID</th>
             <th className="border px-3 py-2">Customer Name</th>
-            <th className="border px-3 py-2">Q1 Rating</th>
-            <th className="border px-3 py-2">Q2 Rating</th>
-            <th className="border px-3 py-2">Q3 Rating</th>
-            <th className="border px-3 py-2">Survey Score</th>
-            <th className="border px-3 py-2">NPS Score (0-10)</th>
+            <th className="border px-3 py-2">Q1 Rating (0–5)</th>
+            <th className="border px-3 py-2">Q2 Rating (0–5)</th>
+            <th className="border px-3 py-2">Q3 Rating (0–5)</th>
+            <th className="border px-3 py-2">Survey Score (0–10)</th>
+            <th className="border px-3 py-2">NPS Score (%)</th>
             <th className="border px-3 py-2">Action</th>
           </tr>
         </thead>
@@ -110,7 +121,8 @@ const FeedbackTablePage = () => {
                   <input
                     type="number"
                     min="0"
-                    max="10"
+                    max="5"
+                    step="1"
                     value={feedback[field] ?? ""}
                     onChange={(e) =>
                       handleInputChange(index, field, e.target.value)
@@ -126,12 +138,13 @@ const FeedbackTablePage = () => {
                 <input
                   type="number"
                   min="0"
-                  max="10"
+                  max="100"
+                  step="1"
                   value={feedback.NPSScore ?? ""}
                   onChange={(e) =>
                     handleInputChange(index, "NPSScore", e.target.value)
                   }
-                  className="w-16 border rounded px-1 py-0.5"
+                  className="w-20 border rounded px-1 py-0.5"
                 />
               </td>
               <td className="border px-3 py-2">
