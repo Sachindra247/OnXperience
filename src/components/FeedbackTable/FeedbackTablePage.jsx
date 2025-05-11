@@ -12,10 +12,24 @@ const FeedbackTablePage = () => {
   const fetchFeedbacks = async () => {
     try {
       const res = await axios.get("/api/subscription-feedbacks");
-      setFeedbacks(res.data);
+      const dataWithRatings = res.data.map((item) => ({
+        ...item,
+        Q1Rating: item.Q1Rating ?? "",
+        Q2Rating: item.Q2Rating ?? "",
+        Q3Rating: item.Q3Rating ?? "",
+        SurveyScore: item.SurveyScore ?? "",
+      }));
+      setFeedbacks(dataWithRatings);
     } catch (err) {
       console.error("Failed to fetch feedbacks", err);
     }
+  };
+
+  const calculateSurveyScore = (q1, q2, q3) => {
+    const values = [q1, q2, q3].map((v) => (v === "" ? null : Number(v)));
+    if (values.some((v) => v === null)) return "";
+    const avg = values.reduce((sum, v) => sum + v, 0) / 3;
+    return Math.round(avg * 10) / 10; // One decimal
   };
 
   const handleInputChange = (index, field, value) => {
@@ -24,28 +38,45 @@ const FeedbackTablePage = () => {
 
     setFeedbacks((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: safeValue };
+      const item = { ...updated[index], [field]: safeValue };
+
+      // Update SurveyScore if any question rating changes
+      if (["Q1Rating", "Q2Rating", "Q3Rating"].includes(field)) {
+        item.SurveyScore = calculateSurveyScore(
+          item.Q1Rating,
+          item.Q2Rating,
+          item.Q3Rating
+        );
+      }
+
+      updated[index] = item;
       return updated;
     });
   };
 
   const handleSave = async (feedback) => {
-    const { SubscriptionID, SurveyScore, NPSScore } = feedback;
+    const {
+      SubscriptionID,
+      Q1Rating,
+      Q2Rating,
+      Q3Rating,
+      SurveyScore,
+      NPSScore,
+    } = feedback;
 
-    const safeSurveyScore = Math.max(
-      0,
-      Math.min(10, Math.round(SurveyScore || 0))
-    );
     const safeNpsScore = Math.max(0, Math.min(10, Math.round(NPSScore || 0)));
 
     setSavingId(SubscriptionID);
     try {
       await axios.post("/api/subscription-feedbacks", {
         SubscriptionID,
-        SurveyScore: safeSurveyScore,
+        Q1Rating,
+        Q2Rating,
+        Q3Rating,
+        SurveyScore,
         NPSScore: safeNpsScore,
       });
-      await fetchFeedbacks(); // refresh data
+      await fetchFeedbacks(); // Refresh data
     } catch (err) {
       console.error("Failed to save", err);
     } finally {
@@ -61,7 +92,10 @@ const FeedbackTablePage = () => {
           <tr>
             <th className="border px-3 py-2">Subscription ID</th>
             <th className="border px-3 py-2">Customer Name</th>
-            <th className="border px-3 py-2">Survey Score (0-10)</th>
+            <th className="border px-3 py-2">Q1 Rating</th>
+            <th className="border px-3 py-2">Q2 Rating</th>
+            <th className="border px-3 py-2">Q3 Rating</th>
+            <th className="border px-3 py-2">Survey Score</th>
             <th className="border px-3 py-2">NPS Score (0-10)</th>
             <th className="border px-3 py-2">Action</th>
           </tr>
@@ -71,17 +105,22 @@ const FeedbackTablePage = () => {
             <tr key={feedback.SubscriptionID}>
               <td className="border px-3 py-2">{feedback.SubscriptionID}</td>
               <td className="border px-3 py-2">{feedback.CustomerName}</td>
-              <td className="border px-3 py-2">
-                <input
-                  type="number"
-                  min="0"
-                  max="10"
-                  value={feedback.SurveyScore ?? ""}
-                  onChange={(e) =>
-                    handleInputChange(index, "SurveyScore", e.target.value)
-                  }
-                  className="w-16 border rounded px-1 py-0.5"
-                />
+              {["Q1Rating", "Q2Rating", "Q3Rating"].map((field) => (
+                <td key={field} className="border px-3 py-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={feedback[field] ?? ""}
+                    onChange={(e) =>
+                      handleInputChange(index, field, e.target.value)
+                    }
+                    className="w-16 border rounded px-1 py-0.5"
+                  />
+                </td>
+              ))}
+              <td className="border px-3 py-2 text-center">
+                {feedback.SurveyScore !== "" ? feedback.SurveyScore : "--"}
               </td>
               <td className="border px-3 py-2">
                 <input
@@ -108,7 +147,7 @@ const FeedbackTablePage = () => {
           ))}
           {feedbacks.length === 0 && (
             <tr>
-              <td colSpan="5" className="text-center py-4">
+              <td colSpan="8" className="text-center py-4">
                 No subscriptions found.
               </td>
             </tr>
