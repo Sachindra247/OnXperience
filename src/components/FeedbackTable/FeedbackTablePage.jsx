@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./FeedbackTable.css"; // reuse styling for consistent UI
+import "./FeedbackTable.css"; // Reuse styling for consistency
 
 const feedbackTypes = [
   { type: "Excellent", score: 5 },
@@ -48,7 +48,7 @@ const FeedbackTablePage = () => {
     } catch (err) {
       console.error("Fetch error:", err);
       alert("Error loading feedback data.");
-      setCustomers([]); // fallback to empty array on failure
+      setCustomers([]);
     }
   };
 
@@ -136,21 +136,20 @@ const FeedbackTablePage = () => {
   const getGroupedFeedbacks = (feedbacks) => {
     const grouped = {};
     feedbacks.forEach((fb) => {
-      const type = fb.feedbackType || "Unknown";
-      if (!grouped[type]) {
-        grouped[type] = {
+      if (!grouped[fb.feedback]) {
+        grouped[fb.feedback] = {
           totalScore: 0,
           lastUpdated: null,
           instances: [],
         };
       }
-      grouped[type].totalScore += fb.score;
-      grouped[type].instances.push(fb);
+      grouped[fb.feedback].totalScore += fb.score;
+      grouped[fb.feedback].instances.push(fb);
       if (
-        !grouped[type].lastUpdated ||
-        new Date(fb.lastUpdated) > new Date(grouped[type].lastUpdated)
+        !grouped[fb.feedback].lastUpdated ||
+        new Date(fb.lastUpdated) > new Date(grouped[fb.feedback].lastUpdated)
       ) {
-        grouped[type].lastUpdated = fb.lastUpdated;
+        grouped[fb.feedback].lastUpdated = fb.lastUpdated;
       }
     });
     return grouped;
