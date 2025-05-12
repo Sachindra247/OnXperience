@@ -26,6 +26,12 @@ const StarRating = ({ score, onChange, max = 5 }) => {
   );
 };
 
+const getNpsLabelAndColor = (score) => {
+  if (score >= 90) return { label: "Promoter", color: "#34d399" };
+  if (score >= 70) return { label: "Passive", color: "#fbbf24" };
+  return { label: "Detractor", color: "#f87171" };
+};
+
 const FeedbackTablePage = () => {
   const [customers, setCustomers] = useState([]);
   const [expanded, setExpanded] = useState(null);
@@ -71,7 +77,7 @@ const FeedbackTablePage = () => {
     const scores = Object.values(answers || {});
     if (scores.length === 0) return 0;
     const average = scores.reduce((sum, s) => sum + s, 0) / scores.length;
-    return Math.round((average / 5) * 10 * 10) / 10; // scale to 10 and round to 1 decimal
+    return Math.round((average / 5) * 10 * 10) / 10;
   };
 
   const calculateNpsScore = (percent) => {
@@ -147,17 +153,41 @@ const FeedbackTablePage = () => {
                   </button>
                 </td>
                 <td>
-                  <input
-                    type="number"
-                    value={npsInputs[cust.SubscriptionID] || ""}
-                    onChange={(e) =>
-                      handleNpsChange(cust.SubscriptionID, e.target.value)
-                    }
-                    placeholder="0-100"
-                    min="0"
-                    max="100"
-                    className="nps-input"
-                  />
+                  <div className="nps-score-container">
+                    <input
+                      type="number"
+                      value={npsInputs[cust.SubscriptionID] || ""}
+                      onChange={(e) =>
+                        handleNpsChange(cust.SubscriptionID, e.target.value)
+                      }
+                      placeholder="0-100"
+                      min="0"
+                      max="100"
+                      className="nps-input"
+                    />
+                    {typeof npsInputs[cust.SubscriptionID] !== "undefined" && (
+                      <>
+                        <div className="nps-bar-wrapper">
+                          <div
+                            className="nps-bar-fill"
+                            style={{
+                              width: `${npsInputs[cust.SubscriptionID]}%`,
+                              backgroundColor: getNpsLabelAndColor(
+                                npsInputs[cust.SubscriptionID]
+                              ).color,
+                            }}
+                          ></div>
+                        </div>
+                        <div className="nps-score-text">
+                          {npsInputs[cust.SubscriptionID]}%{" "}
+                          {
+                            getNpsLabelAndColor(npsInputs[cust.SubscriptionID])
+                              .label
+                          }
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </td>
                 <td>
                   <button
@@ -177,11 +207,7 @@ const FeedbackTablePage = () => {
                         <div key={q} className="question-row">
                           <label>{q}</label>
                           <StarRating
-                            score={
-                              surveyInputs[cust.SubscriptionID]?.[q]
-                                ? surveyInputs[cust.SubscriptionID][q]
-                                : 0
-                            }
+                            score={surveyInputs[cust.SubscriptionID]?.[q] || 0}
                             onChange={(val) =>
                               handleStarChange(cust.SubscriptionID, q, val)
                             }

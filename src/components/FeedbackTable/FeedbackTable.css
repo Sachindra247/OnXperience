@@ -93,6 +93,34 @@
     color: #fde68a;
 }
 
+/* Star input wrapper to toggle editable states */
+.star-rating-editable {
+    display: flex;
+    justify-content: center;
+}
+
+.star-rating-readonly {
+    display: flex;
+    justify-content: center;
+}
+
+/* Editable inputs */
+.editable-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: white;
+    font-size: 14px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.editable-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
 /* Action buttons */
 .actions-cell {
     display: flex;
@@ -160,25 +188,6 @@ button:focus {
     background-color: #5a77a0;
 }
 
-/* Form inputs */
-textarea,
-input[type="text"] {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background-color: white;
-    font-size: 14px;
-    resize: vertical;
-    box-sizing: border-box;
-}
-
-textarea:focus,
-input[type="text"]:focus {
-    border-color: var(--primary-color);
-    outline: none;
-}
-
 /* Loading indicator */
 .loading-indicator {
     padding: 12px;
@@ -230,4 +239,50 @@ input[type="text"]:focus {
     input[type="text"] {
         min-width: 180px;
     }
+}
+
+/* NPS Input Container */
+.nps-score-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+/* Input Box for NPS % */
+.nps-input {
+    width: 80px;
+    padding: 6px 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-align: center;
+    background-color: #fff;
+    transition: border 0.2s ease;
+}
+
+.nps-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+/* NPS Score Bar */
+.nps-bar-wrapper {
+    width: 100%;
+    height: 10px;
+    background-color: #e5e7eb;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.nps-bar-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* NPS Label Text */
+.nps-score-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
 }
