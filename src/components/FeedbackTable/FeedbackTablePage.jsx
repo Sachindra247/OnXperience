@@ -153,41 +153,17 @@ const FeedbackTablePage = () => {
                   </button>
                 </td>
                 <td>
-                  <div className="nps-score-container">
-                    <input
-                      type="number"
-                      value={npsInputs[cust.SubscriptionID] || ""}
-                      onChange={(e) =>
-                        handleNpsChange(cust.SubscriptionID, e.target.value)
+                  {npsInputs[cust.SubscriptionID] != null ? (
+                    <div className="nps-score-text-inline">
+                      {npsInputs[cust.SubscriptionID]}%{" "}
+                      {
+                        getNpsLabelAndColor(npsInputs[cust.SubscriptionID])
+                          .label
                       }
-                      placeholder="0-100"
-                      min="0"
-                      max="100"
-                      className="nps-input"
-                    />
-                    {typeof npsInputs[cust.SubscriptionID] !== "undefined" && (
-                      <>
-                        <div className="nps-bar-wrapper">
-                          <div
-                            className="nps-bar-fill"
-                            style={{
-                              width: `${npsInputs[cust.SubscriptionID]}%`,
-                              backgroundColor: getNpsLabelAndColor(
-                                npsInputs[cust.SubscriptionID]
-                              ).color,
-                            }}
-                          ></div>
-                        </div>
-                        <div className="nps-score-text">
-                          {npsInputs[cust.SubscriptionID]}%{" "}
-                          {
-                            getNpsLabelAndColor(npsInputs[cust.SubscriptionID])
-                              .label
-                          }
-                        </div>
-                      </>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <span className="nps-score-text-inline">Not Rated</span>
+                  )}
                 </td>
                 <td>
                   <button
@@ -214,6 +190,46 @@ const FeedbackTablePage = () => {
                           />
                         </div>
                       ))}
+
+                      {/* NPS Input section */}
+                      <div className="question-row">
+                        <label>Net Promoter Score (NPS) %</label>
+                        <input
+                          type="number"
+                          value={npsInputs[cust.SubscriptionID] || ""}
+                          onChange={(e) =>
+                            handleNpsChange(cust.SubscriptionID, e.target.value)
+                          }
+                          placeholder="0-100"
+                          min="0"
+                          max="100"
+                          className="nps-input"
+                        />
+                        {typeof npsInputs[cust.SubscriptionID] !==
+                          "undefined" && (
+                          <>
+                            <div className="nps-bar-wrapper">
+                              <div
+                                className="nps-bar-fill"
+                                style={{
+                                  width: `${npsInputs[cust.SubscriptionID]}%`,
+                                  backgroundColor: getNpsLabelAndColor(
+                                    npsInputs[cust.SubscriptionID]
+                                  ).color,
+                                }}
+                              ></div>
+                            </div>
+                            <div className="nps-score-text">
+                              {npsInputs[cust.SubscriptionID]}%{" "}
+                              {
+                                getNpsLabelAndColor(
+                                  npsInputs[cust.SubscriptionID]
+                                ).label
+                              }
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
