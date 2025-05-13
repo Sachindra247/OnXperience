@@ -89,7 +89,7 @@ module.exports = async (req, res) => {
     if (req.method === "PUT") {
       let transaction;
       try {
-        const { SubscriptionID, NPSScore } = req.body;
+        const { SubscriptionID, NPSScore, SurveyScore } = req.body;
 
         if (!SubscriptionID) {
           return res.status(400).json({
@@ -104,17 +104,19 @@ module.exports = async (req, res) => {
         const mergeRequest = new sql.Request(transaction);
         await mergeRequest
           .input("SubscriptionID", sql.VarChar, SubscriptionID)
-          .input("NPSScore", sql.Int, NPSScore || 0).query(`
+          .input("NPSScore", sql.Int, NPSScore || 0)
+          .input("SurveyScore", sql.Int, SurveyScore || 0).query(`
             MERGE INTO Subscription_Feedbacks AS target
             USING (SELECT @SubscriptionID AS SubscriptionID) AS source
             ON target.SubscriptionID = source.SubscriptionID
             WHEN MATCHED THEN
               UPDATE SET
                 NPSScore = @NPSScore,
+                SurveyScore = @SurveyScore,
                 LastUpdated = GETDATE()
             WHEN NOT MATCHED THEN
-              INSERT (SubscriptionID, NPSScore)
-              VALUES (@SubscriptionID, @NPSScore);
+              INSERT (SubscriptionID, NPSScore, SurveyScore)
+              VALUES (@SubscriptionID, @NPSScore, @SurveyScore);
           `);
 
         await transaction.commit();
@@ -124,6 +126,7 @@ module.exports = async (req, res) => {
           message: "Feedback updated successfully",
           SubscriptionID,
           NPSScore: NPSScore || 0,
+          SurveyScore: SurveyScore || 0,
         });
       } catch (err) {
         console.error("PUT Error:", err);
