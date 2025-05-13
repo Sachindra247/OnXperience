@@ -43,7 +43,12 @@ const FeedbackTablePage = () => {
 
       data.forEach((cust) => {
         nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
-        survey[cust.SubscriptionID] = Math.round(cust.SurveyScore / 2);
+        const avg = Math.round(cust.SurveyScore / 2);
+        survey[cust.SubscriptionID] = {
+          q1: avg,
+          q2: avg,
+          q3: avg,
+        };
       });
 
       setNpsInputs(nps);
@@ -67,8 +72,23 @@ const FeedbackTablePage = () => {
     setNpsInputs((prev) => ({ ...prev, [id]: safeValue }));
   };
 
-  const updateSurveyInput = (id, rating) => {
-    setSurveyInputs((prev) => ({ ...prev, [id]: rating }));
+  const updateSurveyInput = (id, question, value) => {
+    setSurveyInputs((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [question]: value,
+      },
+    }));
+  };
+
+  const getNpsCategory = (score) => {
+    if (score >= 0 && score <= 6)
+      return { label: "Detractor", color: "#dc3545" };
+    if (score >= 7 && score <= 8) return { label: "Passive", color: "#ffc107" };
+    if (score >= 9 && score <= 10)
+      return { label: "Promoter", color: "#28a745" };
+    return { label: "", color: "transparent" };
   };
 
   const handleSave = async (id) => {
@@ -76,10 +96,13 @@ const FeedbackTablePage = () => {
       setLoading(true);
       setError(null);
 
+      const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
+      const avg = Math.round(((survey.q1 + survey.q2 + survey.q3) / 3) * 2);
+
       const payload = {
         SubscriptionID: id,
         NPSScore: Math.round((npsInputs[id] || 0) / 10),
-        SurveyScore: Math.round((surveyInputs[id] || 0) * 2),
+        SurveyScore: avg,
       };
 
       await axios.put(
@@ -132,13 +155,24 @@ const FeedbackTablePage = () => {
         <tbody>
           {customers.map((cust) => {
             const isExpanded = expanded === cust.SubscriptionID;
+            const npsScore = Math.round(npsInputs[cust.SubscriptionID] / 10);
+            const npsInfo = getNpsCategory(npsScore);
+            const survey = surveyInputs[cust.SubscriptionID] || {
+              q1: 0,
+              q2: 0,
+              q3: 0,
+            };
+            const avgSurvey = Math.round(
+              ((survey.q1 + survey.q2 + survey.q3) / 3) * 2
+            );
+
             return (
               <React.Fragment key={cust.SubscriptionID}>
                 <tr>
                   <td>{cust.CustomerName}</td>
                   <td>{cust.SubscriptionID}</td>
-                  <td>{cust.NPSScore * 10}%</td>
-                  <td>{cust.SurveyScore}/10</td>
+                  <td>{npsInputs[cust.SubscriptionID]}%</td>
+                  <td>{avgSurvey}/10</td>
                   <td>
                     <button
                       onClick={() =>
@@ -171,36 +205,62 @@ const FeedbackTablePage = () => {
                               )
                             }
                           />
+                          <div
+                            style={{
+                              marginTop: "6px",
+                              fontWeight: "bold",
+                              color: npsInfo.color,
+                            }}
+                          >
+                            {npsInfo.label}
+                          </div>
                         </div>
 
                         <div className="survey-section">
-                          <label>Survey Rating (0–5)</label>
-                          <div className="star-rating">
-                            {[...Array(5)].map((_, i) => {
-                              const starVal = i + 1;
-                              return (
-                                <FaStar
-                                  key={starVal}
-                                  size={24}
-                                  style={{
-                                    cursor: "pointer",
-                                    marginRight: 5,
-                                  }}
-                                  color={
-                                    starVal <=
-                                    (surveyInputs[cust.SubscriptionID] || 0)
-                                      ? "#ffc107"
-                                      : "#e4e5e9"
-                                  }
-                                  onClick={() =>
-                                    updateSurveyInput(
-                                      cust.SubscriptionID,
-                                      starVal
-                                    )
-                                  }
-                                />
-                              );
-                            })}
+                          <label>Survey Questions (Star Ratings)</label>
+                          {[
+                            "How easy is it to use our platform?",
+                            "How satisfied are you with the support?",
+                            "How likely are you to recommend us?",
+                          ].map((label, idx) => {
+                            const q = `q${idx + 1}`;
+                            return (
+                              <div key={q} style={{ marginBottom: "8px" }}>
+                                <p style={{ margin: 0 }}>{label}</p>
+                                <div className="star-rating">
+                                  {[...Array(5)].map((_, i) => {
+                                    const starVal = i + 1;
+                                    return (
+                                      <FaStar
+                                        key={starVal}
+                                        size={22}
+                                        style={{
+                                          cursor: "pointer",
+                                          marginRight: 4,
+                                        }}
+                                        color={
+                                          starVal <= (survey[q] || 0)
+                                            ? "#ffc107"
+                                            : "#e4e5e9"
+                                        }
+                                        onClick={() =>
+                                          updateSurveyInput(
+                                            cust.SubscriptionID,
+                                            q,
+                                            starVal
+                                          )
+                                        }
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <div
+                            style={{ fontStyle: "italic", marginTop: "4px" }}
+                          >
+                            Average Score: {avgSurvey}/10
                           </div>
                         </div>
 
