@@ -50,6 +50,23 @@ const FeedbackTablePage = () => {
       );
       const data = Array.isArray(res.data) ? res.data : [];
       setCustomers(data);
+
+      // Initialize survey inputs with existing data
+      const initialSurveyInputs = {};
+      const initialNpsInputs = {};
+      data.forEach((cust) => {
+        if (cust.SurveyScores) {
+          initialSurveyInputs[cust.SubscriptionID] = {};
+          cust.SurveyScores.forEach((q) => {
+            initialSurveyInputs[cust.SubscriptionID][q.Question] = q.Score;
+          });
+        }
+        if (cust.NPSPercentage != null) {
+          initialNpsInputs[cust.SubscriptionID] = cust.NPSPercentage;
+        }
+      });
+      setSurveyInputs(initialSurveyInputs);
+      setNpsInputs(initialNpsInputs);
     } catch (err) {
       console.error("Error fetching feedback data:", err);
     }
@@ -129,9 +146,10 @@ const FeedbackTablePage = () => {
           <tr>
             <th>Customer Name</th>
             <th>Subscription ID</th>
-            <th>Survey</th>
+            <th>Survey Score</th>
             <th>NPS %</th>
-            <th>Submit</th>
+            <th>NPS Score</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -140,6 +158,27 @@ const FeedbackTablePage = () => {
               <tr>
                 <td>{cust.CustomerName}</td>
                 <td>{cust.SubscriptionID}</td>
+                <td>
+                  {cust.SurveyScore != null ? (
+                    <div className="score-badge">{cust.SurveyScore}/10</div>
+                  ) : (
+                    <span className="not-rated">Not Rated</span>
+                  )}
+                </td>
+                <td>
+                  {cust.NPSPercentage != null ? (
+                    <div className="score-badge">{cust.NPSPercentage}%</div>
+                  ) : (
+                    <span className="not-rated">Not Rated</span>
+                  )}
+                </td>
+                <td>
+                  {cust.NPSScore != null ? (
+                    <div className="score-badge">{cust.NPSScore}/10</div>
+                  ) : (
+                    <span className="not-rated">-</span>
+                  )}
+                </td>
                 <td>
                   <button
                     onClick={() =>
@@ -152,103 +191,81 @@ const FeedbackTablePage = () => {
                     className="toggle-btn"
                   >
                     {expanded === cust.SubscriptionID
-                      ? "Hide Questions"
-                      : "Rate Survey"}
-                  </button>
-                </td>
-                <td>
-                  {npsInputs[cust.SubscriptionID] != null ? (
-                    <div className="nps-score-text-inline">
-                      {npsInputs[cust.SubscriptionID]}%{" "}
-                      {
-                        getNpsLabelAndColor(npsInputs[cust.SubscriptionID])
-                          .label
-                      }
-                    </div>
-                  ) : (
-                    <span className="nps-score-text-inline">Not Rated</span>
-                  )}
-                </td>
-                <td>
-                  <button
-                    onClick={() => handleSubmitFeedback(cust.SubscriptionID)}
-                    disabled={isLoading}
-                    className="submit-btn"
-                  >
-                    Submit
+                      ? "Cancel"
+                      : "Edit Feedback"}
                   </button>
                 </td>
               </tr>
               {expanded === cust.SubscriptionID && (
-                <tr>
-                  <td colSpan="5">
-                    <div className="survey-section">
-                      {surveyQuestions.map((q) => (
-                        <div key={q} className="question-row">
-                          <label>{q}</label>
-                          <StarRating
-                            score={surveyInputs[cust.SubscriptionID]?.[q] || 0}
-                            onChange={(val) =>
-                              handleStarChange(cust.SubscriptionID, q, val)
+                <tr className="expanded-row">
+                  <td colSpan="6">
+                    <div className="survey-form">
+                      <h4>Edit Feedback for {cust.CustomerName}</h4>
+                      <div className="survey-questions">
+                        {surveyQuestions.map((q) => (
+                          <div key={q} className="question-row">
+                            <label>{q}</label>
+                            <StarRating
+                              score={
+                                surveyInputs[cust.SubscriptionID]?.[q] || 0
+                              }
+                              onChange={(val) =>
+                                handleStarChange(cust.SubscriptionID, q, val)
+                              }
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="nps-section">
+                        <div className="question-row">
+                          <label>Net Promoter Score (NPS) %</label>
+                          <input
+                            type="number"
+                            value={npsInputs[cust.SubscriptionID] || ""}
+                            onChange={(e) =>
+                              handleNpsChange(
+                                cust.SubscriptionID,
+                                e.target.value
+                              )
                             }
+                            placeholder="0-100"
+                            min="0"
+                            max="100"
+                            className="nps-input"
                           />
-                        </div>
-                      ))}
-                      <div className="question-row">
-                        <label>Net Promoter Score (NPS) %</label>
-                        <input
-                          type="number"
-                          value={npsInputs[cust.SubscriptionID] || ""}
-                          onChange={(e) =>
-                            handleNpsChange(cust.SubscriptionID, e.target.value)
-                          }
-                          placeholder="0-100"
-                          min="0"
-                          max="100"
-                          className="nps-input"
-                        />
-                        <div className="nps-bar-wrapper">
-                          <div
-                            className="nps-bar-fill"
-                            style={{
-                              width: `${npsInputs[cust.SubscriptionID] || 0}%`,
-                              backgroundColor: getNpsLabelAndColor(
-                                npsInputs[cust.SubscriptionID] || 0
-                              ).color,
-                            }}
-                          ></div>
+                          <div className="nps-bar-wrapper">
+                            <div
+                              className="nps-bar-fill"
+                              style={{
+                                width: `${
+                                  npsInputs[cust.SubscriptionID] || 0
+                                }%`,
+                                backgroundColor: getNpsLabelAndColor(
+                                  npsInputs[cust.SubscriptionID] || 0
+                                ).color,
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="question-row">
-                        <label>Overall Rating (1-5)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="5"
-                          value={ratingInputs[cust.SubscriptionID] || ""}
-                          onChange={(e) =>
-                            setRatingInputs((prev) => ({
-                              ...prev,
-                              [cust.SubscriptionID]: parseInt(e.target.value),
-                            }))
+                      <div className="form-actions">
+                        <button
+                          onClick={() =>
+                            handleSubmitFeedback(cust.SubscriptionID)
                           }
-                        />
-                      </div>
-
-                      <div className="question-row">
-                        <label>Comment</label>
-                        <textarea
-                          value={commentInputs[cust.SubscriptionID] || ""}
-                          onChange={(e) =>
-                            setCommentInputs((prev) => ({
-                              ...prev,
-                              [cust.SubscriptionID]: e.target.value,
-                            }))
-                          }
-                          rows={3}
-                          style={{ width: "100%" }}
-                        />
+                          disabled={isLoading}
+                          className="submit-btn"
+                        >
+                          {isLoading ? "Saving..." : "Save Changes"}
+                        </button>
+                        <button
+                          onClick={() => setExpanded(null)}
+                          className="cancel-btn"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
                   </td>

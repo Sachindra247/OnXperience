@@ -34,87 +34,139 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const result = await pool.request().query(`
-        SELECT sl.SubscriptionID, sl.CustomerName, sf.SurveyScore, sf.NPSScore
+        SELECT
+          sl.SubscriptionID,
+          sl.CustomerName,
+          sf.SurveyScore,
+          sf.NPSScore,
+          sf.NPSPercentage,
+          sf.Rating,
+          sf.Comment,
+          (
+            SELECT
+              Question AS question,
+              Score AS score
+            FROM Subscription_Feedback_Questions
+            WHERE SubscriptionID = sl.SubscriptionID
+            FOR JSON PATH
+          ) AS SurveyScores
         FROM Subscription_Licenses sl
         LEFT JOIN Subscription_Feedbacks sf ON sl.SubscriptionID = sf.SubscriptionID
-        ORDER BY sl.SubscriptionID
+        ORDER BY sl.CustomerName, sl.SubscriptionID
       `);
 
-      return res.status(200).json(result.recordset);
+      // Parse the JSON survey scores
+      const data = result.recordset.map((row) => ({
+        ...row,
+        SurveyScores: row.SurveyScores ? JSON.parse(row.SurveyScores) : null,
+      }));
+
+      return res.status(200).json(data);
     }
 
-    if (req.method === "POST" || req.method === "PUT") {
+    if (req.method === "PUT") {
       const {
         SubscriptionID,
-        SurveyScore,
-        NPSScore,
         SurveyScores,
+        SurveyScore,
         NPSPercentage,
+        NPSScore,
+        Rating,
+        Comment,
       } = req.body;
 
-      if (!SubscriptionID || SurveyScore == null || NPSScore == null) {
-        return res.status(400).json({ error: "Missing required fields" });
+      if (!SubscriptionID) {
+        return res.status(400).json({ error: "SubscriptionID is required" });
       }
-
-      const clampedSurvey = Math.max(0, Math.min(10, Math.round(SurveyScore)));
-      const clampedNPS = Math.max(0, Math.min(10, Math.round(NPSScore)));
 
       const transaction = new sql.Transaction(pool);
       await transaction.begin();
 
       try {
-        const request = new sql.Request(transaction);
-
-        await request
+        // Update or insert main feedback record
+        await new sql.Request(transaction)
           .input("SubscriptionID", sql.VarChar, SubscriptionID)
-          .input("SurveyScore", sql.Int, clampedSurvey)
-          .input("NPSScore", sql.Int, clampedNPS).query(`
+          .input("SurveyScore", sql.Decimal(5, 2), SurveyScore || 0)
+          .input("NPSPercentage", sql.Int, NPSPercentage || 0)
+          .input("NPSScore", sql.Decimal(5, 2), NPSScore || 0)
+          .input("Rating", sql.Int, Rating || 0)
+          .input("Comment", sql.NVarChar, Comment || "").query(`
             MERGE INTO Subscription_Feedbacks AS target
             USING (SELECT @SubscriptionID AS SubscriptionID) AS source
             ON target.SubscriptionID = source.SubscriptionID
             WHEN MATCHED THEN
-              UPDATE SET SurveyScore = @SurveyScore, NPSScore = @NPSScore
+              UPDATE SET
+                SurveyScore = @SurveyScore,
+                NPSPercentage = @NPSPercentage,
+                NPSScore = @NPSScore,
+                Rating = @Rating,
+                Comment = @Comment,
+                LastUpdated = GETDATE()
             WHEN NOT MATCHED THEN
-              INSERT (SubscriptionID, SurveyScore, NPSScore)
-              VALUES (@SubscriptionID, @SurveyScore, @NPSScore);
+              INSERT (
+                SubscriptionID,
+                SurveyScore,
+                NPSPercentage,
+                NPSScore,
+                Rating,
+                Comment
+              )
+              VALUES (
+                @SubscriptionID,
+                @SurveyScore,
+                @NPSPercentage,
+                @NPSScore,
+                @Rating,
+                @Comment
+              );
           `);
 
-        if (Array.isArray(SurveyScores)) {
-          const deleteReq = new sql.Request(transaction);
-          await deleteReq
-            .input("SubscriptionID", sql.VarChar, SubscriptionID)
-            .query(
-              "DELETE FROM Subscription_Feedback_Questions WHERE SubscriptionID = @SubscriptionID"
-            );
+        // Update survey questions
+        await new sql.Request(transaction)
+          .input("SubscriptionID", sql.VarChar, SubscriptionID)
+          .query(
+            "DELETE FROM Subscription_Feedback_Questions WHERE SubscriptionID = @SubscriptionID"
+          );
 
+        if (Array.isArray(SurveyScores)) {
           for (const q of SurveyScores) {
             if (q.question && typeof q.score === "number") {
-              const insertReq = new sql.Request(transaction);
-              await insertReq
+              await new sql.Request(transaction)
                 .input("SubscriptionID", sql.VarChar, SubscriptionID)
-                .input("Question", sql.VarChar, q.question)
+                .input("Question", sql.NVarChar, q.question)
                 .input("Score", sql.Int, q.score).query(`
-                  INSERT INTO Subscription_Feedback_Questions (SubscriptionID, Question, Score)
-                  VALUES (@SubscriptionID, @Question, @Score);
+                  INSERT INTO Subscription_Feedback_Questions (
+                    SubscriptionID,
+                    Question,
+                    Score
+                  ) VALUES (
+                    @SubscriptionID,
+                    @Question,
+                    @Score
+                  );
                 `);
             }
           }
         }
 
         await transaction.commit();
-
-        return res
-          .status(200)
-          .json({ message: "Feedback saved", SubscriptionID });
+        return res.status(200).json({
+          success: true,
+          SubscriptionID,
+          SurveyScore,
+          NPSScore,
+          NPSPercentage,
+        });
       } catch (innerErr) {
         await transaction.rollback();
+        console.error("Transaction error:", innerErr);
         throw innerErr;
       }
     }
 
     res.status(405).end();
   } catch (err) {
-    console.error("Error in subscription-feedbacks handler:", err);
+    console.error("API error:", err);
     res.status(500).json({
       error: "Internal Server Error",
       details: err.message,
