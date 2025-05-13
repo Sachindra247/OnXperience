@@ -28,7 +28,7 @@ const FeedbackTablePage = () => {
   const [customers, setCustomers] = useState([]);
   const [expanded, setExpanded] = useState(null);
   const [surveyInputs, setSurveyInputs] = useState({});
-  const [npsInputs, setNpsInputs] = useState({});
+  const [npsScoreInputs, setNpsScoreInputs] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -60,33 +60,30 @@ const FeedbackTablePage = () => {
         ...item,
         SurveyScores: item.SurveyScores || [],
         SurveyScore: item.SurveyScore ?? 0,
-        NPSPercentage: item.NPSPercentage ?? 0,
         NPSScore: item.NPSScore ?? 0,
       }));
 
       setCustomers(data);
 
-      // Initialize form inputs
       const initialSurveyInputs = {};
-      const initialNpsInputs = {};
+      const initialNpsScoreInputs = {};
 
       data.forEach((cust) => {
         initialSurveyInputs[cust.SubscriptionID] = {};
         cust.SurveyScores.forEach((q) => {
           initialSurveyInputs[cust.SubscriptionID][q.question] = q.score;
         });
-        initialNpsInputs[cust.SubscriptionID] = cust.NPSPercentage || 0;
+        initialNpsScoreInputs[cust.SubscriptionID] = cust.NPSScore || 0;
       });
 
       setSurveyInputs(initialSurveyInputs);
-      setNpsInputs(initialNpsInputs);
+      setNpsScoreInputs(initialNpsScoreInputs);
     } catch (err) {
       console.error("Fetch error:", err);
       setError(
         err.response?.data?.error || err.message || "Failed to load data"
       );
 
-      // Auto-retry logic (max 3 times)
       if (retryCount < 3) {
         setTimeout(() => {
           setRetryCount(retryCount + 1);
@@ -111,9 +108,9 @@ const FeedbackTablePage = () => {
     }));
   };
 
-  const handleNpsChange = (subscriptionId, value) => {
+  const handleNpsScoreChange = (subscriptionId, value) => {
     const clamped = Math.max(0, Math.min(100, Number(value) || 0));
-    setNpsInputs((prev) => ({
+    setNpsScoreInputs((prev) => ({
       ...prev,
       [subscriptionId]: clamped,
     }));
@@ -125,9 +122,8 @@ const FeedbackTablePage = () => {
       setError(null);
 
       const survey = surveyInputs[subscriptionId] || {};
-      const npsPercent = npsInputs[subscriptionId] || 0;
+      const npsScore = npsScoreInputs[subscriptionId] || 0;
 
-      // Calculate scores
       const surveyScore =
         Object.values(survey).length > 0
           ? Math.round(
@@ -137,8 +133,6 @@ const FeedbackTablePage = () => {
                 100
             )
           : 0;
-
-      const npsScore = Math.round((npsPercent / 100) * 100);
 
       const formattedSurvey = Object.entries(survey).map(
         ([question, score]) => ({
@@ -150,8 +144,6 @@ const FeedbackTablePage = () => {
       console.log("Submitting feedback:", {
         SubscriptionID: subscriptionId,
         SurveyScores: formattedSurvey,
-        SurveyScore: surveyScore,
-        NPSPercentage: npsPercent,
         NPSScore: npsScore,
       });
 
@@ -160,8 +152,6 @@ const FeedbackTablePage = () => {
         {
           SubscriptionID: subscriptionId,
           SurveyScores: formattedSurvey,
-          SurveyScore: surveyScore,
-          NPSPercentage: npsPercent,
           NPSScore: npsScore,
         },
         {
@@ -169,7 +159,6 @@ const FeedbackTablePage = () => {
         }
       );
 
-      // Refresh data
       await fetchCustomers();
       setExpanded(null);
     } catch (err) {
@@ -222,7 +211,6 @@ const FeedbackTablePage = () => {
             <th>Customer</th>
             <th>Subscription ID</th>
             <th>Survey Score</th>
-            <th>NPS %</th>
             <th>NPS Score</th>
             <th>Actions</th>
           </tr>
@@ -234,7 +222,6 @@ const FeedbackTablePage = () => {
                 <td>{cust.CustomerName}</td>
                 <td>{cust.SubscriptionID}</td>
                 <td>{cust.SurveyScore}/100</td>
-                <td>{cust.NPSPercentage}%</td>
                 <td>{cust.NPSScore}/100</td>
                 <td>
                   <button
@@ -254,7 +241,7 @@ const FeedbackTablePage = () => {
 
               {expanded === cust.SubscriptionID && (
                 <tr className="expanded-row">
-                  <td colSpan="6">
+                  <td colSpan="5">
                     <div className="feedback-form">
                       <h3>Edit Feedback for {cust.CustomerName}</h3>
 
@@ -275,14 +262,17 @@ const FeedbackTablePage = () => {
                       </div>
 
                       <div className="nps-section">
-                        <label>NPS Percentage (0-100)</label>
+                        <label>NPS Score (0-100)</label>
                         <input
                           type="number"
                           min="0"
                           max="100"
-                          value={npsInputs[cust.SubscriptionID] || ""}
+                          value={npsScoreInputs[cust.SubscriptionID] || ""}
                           onChange={(e) =>
-                            handleNpsChange(cust.SubscriptionID, e.target.value)
+                            handleNpsScoreChange(
+                              cust.SubscriptionID,
+                              e.target.value
+                            )
                           }
                         />
                       </div>

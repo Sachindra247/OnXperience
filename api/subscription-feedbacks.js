@@ -27,10 +27,9 @@ const getPool = async () => {
     console.log("Creating new database connection pool...");
     pool = new sql.ConnectionPool(dbConfig);
 
-    // Attach error handler
     pool.on("error", (err) => {
       console.error("Database pool error:", err);
-      pool = null; // Force new pool creation on next request
+      pool = null;
     });
 
     await pool.connect();
@@ -44,15 +43,13 @@ const getPool = async () => {
 
 const calculateSurveyScore = (surveyScores) => {
   if (!surveyScores?.length) return 0;
-
   const totalScore = surveyScores.reduce((sum, q) => sum + q.score, 0);
   const averageScore = totalScore / surveyScores.length;
-  const normalizedScore = (averageScore / 5) * 100; // Convert 0-5 scale to 0-100
+  const normalizedScore = (averageScore / 5) * 100;
   return Math.round(normalizedScore);
 };
 
 module.exports = async (req, res) => {
-  // Enhanced CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -63,18 +60,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    console.log(`Handling ${req.method} request for ${req.url}`);
     const pool = await getPool();
 
     if (req.method === "GET") {
       try {
-        console.log("Executing GET query...");
         const result = await pool.request().query(`
           SELECT TOP 100
             sl.SubscriptionID,
             sl.CustomerName,
             sf.SurveyScore,
-            sf.NPSPercentage,
             sf.NPSScore,
             sf.LastUpdated,
             (
@@ -90,15 +84,11 @@ module.exports = async (req, res) => {
           ORDER BY sf.LastUpdated DESC
         `);
 
-        if (!result.recordset) {
-          throw new Error("No data returned from query");
-        }
-
-        console.log(`Retrieved ${result.recordset.length} records`);
-
         const data = result.recordset.map((row) => ({
           ...row,
           SurveyScores: row.SurveyScores ? JSON.parse(row.SurveyScores) : [],
+          SurveyScore: row.SurveyScore ?? 0,
+          NPSScore: row.NPSScore ?? 0,
         }));
 
         return res.status(200).json(data);
@@ -114,15 +104,9 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "PUT") {
-      let transaction; // Declare transaction at the function scope
-
+      let transaction;
       try {
-        const { SubscriptionID, SurveyScores, NPSPercentage } = req.body;
-        console.log("PUT request data:", {
-          SubscriptionID,
-          SurveyScores,
-          NPSPercentage,
-        });
+        const { SubscriptionID, SurveyScores, NPSScore } = req.body;
 
         if (!SubscriptionID) {
           return res.status(400).json({
@@ -131,49 +115,37 @@ module.exports = async (req, res) => {
           });
         }
 
-        // Start transaction
         transaction = new sql.Transaction(pool);
         await transaction.begin();
-        console.log("Transaction started");
 
-        // Calculate scores
         const surveyScore = calculateSurveyScore(SurveyScores);
-        const npsScore = Math.round((NPSPercentage / 100) * 100);
-        console.log("Calculated scores:", { surveyScore, npsScore });
 
-        // Update main feedback record
         const mergeRequest = new sql.Request(transaction);
         await mergeRequest
           .input("SubscriptionID", sql.VarChar, SubscriptionID)
           .input("SurveyScore", sql.Int, surveyScore)
-          .input("NPSPercentage", sql.Int, NPSPercentage || 0)
-          .input("NPSScore", sql.Int, npsScore || 0).query(`
+          .input("NPSScore", sql.Int, NPSScore || 0).query(`
             MERGE INTO Subscription_Feedbacks AS target
             USING (SELECT @SubscriptionID AS SubscriptionID) AS source
             ON target.SubscriptionID = source.SubscriptionID
             WHEN MATCHED THEN
               UPDATE SET
                 SurveyScore = @SurveyScore,
-                NPSPercentage = @NPSPercentage,
                 NPSScore = @NPSScore,
                 LastUpdated = GETDATE()
             WHEN NOT MATCHED THEN
-              INSERT (SubscriptionID, SurveyScore, NPSPercentage, NPSScore)
-              VALUES (@SubscriptionID, @SurveyScore, @NPSPercentage, @NPSScore);
+              INSERT (SubscriptionID, SurveyScore, NPSScore)
+              VALUES (@SubscriptionID, @SurveyScore, @NPSScore);
           `);
-        console.log("Main feedback record updated");
 
-        // Update survey questions
         const deleteRequest = new sql.Request(transaction);
         await deleteRequest.input("SubscriptionID", sql.VarChar, SubscriptionID)
           .query(`
             DELETE FROM Subscription_Feedback_Questions
             WHERE SubscriptionID = @SubscriptionID
           `);
-        console.log("Cleared existing survey questions");
 
         if (SurveyScores?.length > 0) {
-          console.log(`Inserting ${SurveyScores.length} survey questions`);
           for (const q of SurveyScores) {
             const insertRequest = new sql.Request(transaction);
             await insertRequest
@@ -188,15 +160,13 @@ module.exports = async (req, res) => {
         }
 
         await transaction.commit();
-        console.log("Transaction committed successfully");
 
         return res.status(200).json({
           success: true,
           message: "Feedback updated successfully",
           SubscriptionID,
           SurveyScore: surveyScore,
-          NPSPercentage,
-          NPSScore: npsScore,
+          NPSScore: NPSScore || 0,
         });
       } catch (err) {
         console.error("PUT Error:", err);
