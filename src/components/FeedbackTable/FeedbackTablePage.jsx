@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./FeedbackTable.css";
+import { FaStar } from "react-icons/fa";
 
 const FeedbackTablePage = () => {
   const [customers, setCustomers] = useState([]);
   const [expanded, setExpanded] = useState(null);
   const [npsScoreInputs, setNpsScoreInputs] = useState({});
+  const [surveyScores, setSurveyScores] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -14,7 +16,6 @@ const FeedbackTablePage = () => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log("Fetching customer feedback data...");
 
       const res = await axios.get(
         "https://on-xperience.vercel.app/api/subscription-feedbacks",
@@ -27,8 +28,6 @@ const FeedbackTablePage = () => {
         }
       );
 
-      console.log("API response:", res.data);
-
       if (!res.data || !Array.isArray(res.data)) {
         throw new Error("Invalid data format received from server");
       }
@@ -36,26 +35,26 @@ const FeedbackTablePage = () => {
       const data = res.data.map((item) => ({
         ...item,
         NPSScore: item.NPSScore ?? 0,
+        SurveyScore: item.SurveyScore ?? 0,
       }));
 
       setCustomers(data);
 
-      const initialNpsScoreInputs = {};
+      const npsInputs = {},
+        surveyInputs = {};
       data.forEach((cust) => {
-        initialNpsScoreInputs[cust.SubscriptionID] = cust.NPSScore || 0;
+        npsInputs[cust.SubscriptionID] = Math.round((cust.NPSScore || 0) * 10);
+        surveyInputs[cust.SubscriptionID] = Math.round(
+          (cust.SurveyScore || 0) / 2
+        );
       });
 
-      setNpsScoreInputs(initialNpsScoreInputs);
+      setNpsScoreInputs(npsInputs);
+      setSurveyScores(surveyInputs);
     } catch (err) {
-      console.error("Fetch error:", err);
-      setError(
-        err.response?.data?.error || err.message || "Failed to load data"
-      );
-
+      setError(err.message);
       if (retryCount < 3) {
-        setTimeout(() => {
-          setRetryCount(retryCount + 1);
-        }, 3000);
+        setTimeout(() => setRetryCount(retryCount + 1), 3000);
       }
     } finally {
       setIsLoading(false);
@@ -68,10 +67,11 @@ const FeedbackTablePage = () => {
 
   const handleNpsScoreChange = (subscriptionId, value) => {
     const clamped = Math.max(0, Math.min(100, Number(value) || 0));
-    setNpsScoreInputs((prev) => ({
-      ...prev,
-      [subscriptionId]: clamped,
-    }));
+    setNpsScoreInputs((prev) => ({ ...prev, [subscriptionId]: clamped }));
+  };
+
+  const handleSurveyScoreChange = (subscriptionId, rating) => {
+    setSurveyScores((prev) => ({ ...prev, [subscriptionId]: rating }));
   };
 
   const handleSubmitFeedback = async (subscriptionId) => {
@@ -79,43 +79,33 @@ const FeedbackTablePage = () => {
       setIsLoading(true);
       setError(null);
 
-      const npsScore = npsScoreInputs[subscriptionId] || 0;
+      const npsPercentage = npsScoreInputs[subscriptionId] || 0;
+      const surveyRating = surveyScores[subscriptionId] || 0;
 
-      console.log("Submitting feedback:", {
-        SubscriptionID: subscriptionId,
-        NPSScore: npsScore,
-      });
+      const npsScore = Math.round(npsPercentage / 10);
+      const surveyScore = Math.round(surveyRating * 2);
 
       await axios.put(
         "https://on-xperience.vercel.app/api/subscription-feedbacks",
         {
           SubscriptionID: subscriptionId,
           NPSScore: npsScore,
+          SurveyScore: surveyScore,
         },
-        {
-          timeout: 10000,
-        }
+        { timeout: 10000 }
       );
 
       await fetchCustomers();
       setExpanded(null);
     } catch (err) {
-      console.error("Submit error:", err);
-      setError(
-        err.response?.data?.error || err.message || "Failed to submit feedback"
-      );
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   if (isLoading && customers.length === 0) {
-    return (
-      <div className="loading">
-        Loading customer feedback data...
-        {retryCount > 0 && <span> (Retry {retryCount}/3)</span>}
-      </div>
-    );
+    return <div className="loading">Loading... (Retry {retryCount}/3)</div>;
   }
 
   if (error) {
@@ -149,6 +139,7 @@ const FeedbackTablePage = () => {
             <th>Customer</th>
             <th>Subscription ID</th>
             <th>NPS Score</th>
+            <th>Survey Score</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -158,7 +149,8 @@ const FeedbackTablePage = () => {
               <tr>
                 <td>{cust.CustomerName}</td>
                 <td>{cust.SubscriptionID}</td>
-                <td>{cust.NPSScore}/100</td>
+                <td>{cust.NPSScore * 10}%</td>
+                <td>{cust.SurveyScore}/10</td>
                 <td>
                   <button
                     onClick={() =>
@@ -177,12 +169,12 @@ const FeedbackTablePage = () => {
 
               {expanded === cust.SubscriptionID && (
                 <tr className="expanded-row">
-                  <td colSpan="4">
+                  <td colSpan="5">
                     <div className="feedback-form">
-                      <h3>Edit NPS Score for {cust.CustomerName}</h3>
+                      <h3>Edit Feedback for {cust.CustomerName}</h3>
 
                       <div className="nps-section">
-                        <label>NPS Score (0-100)</label>
+                        <label>NPS Score (0-100%)</label>
                         <input
                           type="number"
                           min="0"
@@ -195,6 +187,34 @@ const FeedbackTablePage = () => {
                             )
                           }
                         />
+                      </div>
+
+                      <div className="survey-section">
+                        <label>Survey Question Rating (0-5)</label>
+                        <div className="star-rating">
+                          {[...Array(5)].map((_, idx) => {
+                            const ratingValue = idx + 1;
+                            return (
+                              <FaStar
+                                key={ratingValue}
+                                size={24}
+                                style={{ cursor: "pointer", marginRight: 5 }}
+                                color={
+                                  ratingValue <=
+                                  (surveyScores[cust.SubscriptionID] || 0)
+                                    ? "#ffc107"
+                                    : "#e4e5e9"
+                                }
+                                onClick={() =>
+                                  handleSurveyScoreChange(
+                                    cust.SubscriptionID,
+                                    ratingValue
+                                  )
+                                }
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
 
                       <div className="form-actions">
