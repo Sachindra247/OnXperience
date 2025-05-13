@@ -31,53 +31,75 @@ const FeedbackTablePage = () => {
   const [npsInputs, setNpsInputs] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const fetchCustomers = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log("Fetching customer feedback data...");
+
+      const res = await axios.get(
+        "https://on-xperience.vercel.app/api/subscription-feedbacks",
+        {
+          timeout: 10000,
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        }
+      );
+
+      console.log("API response:", res.data);
+
+      if (!res.data || !Array.isArray(res.data)) {
+        throw new Error("Invalid data format received from server");
+      }
+
+      const data = res.data.map((item) => ({
+        ...item,
+        SurveyScores: item.SurveyScores || [],
+        SurveyScore: item.SurveyScore ?? 0,
+        NPSPercentage: item.NPSPercentage ?? 0,
+        NPSScore: item.NPSScore ?? 0,
+      }));
+
+      setCustomers(data);
+
+      // Initialize form inputs
+      const initialSurveyInputs = {};
+      const initialNpsInputs = {};
+
+      data.forEach((cust) => {
+        initialSurveyInputs[cust.SubscriptionID] = {};
+        cust.SurveyScores.forEach((q) => {
+          initialSurveyInputs[cust.SubscriptionID][q.question] = q.score;
+        });
+        initialNpsInputs[cust.SubscriptionID] = cust.NPSPercentage || 0;
+      });
+
+      setSurveyInputs(initialSurveyInputs);
+      setNpsInputs(initialNpsInputs);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError(
+        err.response?.data?.error || err.message || "Failed to load data"
+      );
+
+      // Auto-retry logic (max 3 times)
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount(retryCount + 1);
+        }, 3000);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const res = await axios.get(
-          "https://on-xperience.vercel.app/api/subscription-feedbacks"
-        );
-
-        if (!res.data || !Array.isArray(res.data)) {
-          throw new Error("Invalid data format received from server");
-        }
-
-        const data = res.data.map((item) => ({
-          ...item,
-          SurveyScores: item.SurveyScores || [],
-        }));
-
-        setCustomers(data);
-
-        // Initialize form inputs
-        const initialSurveyInputs = {};
-        const initialNpsInputs = {};
-
-        data.forEach((cust) => {
-          initialSurveyInputs[cust.SubscriptionID] = {};
-          cust.SurveyScores.forEach((q) => {
-            initialSurveyInputs[cust.SubscriptionID][q.question] = q.score;
-          });
-          initialNpsInputs[cust.SubscriptionID] = cust.NPSPercentage || 0;
-        });
-
-        setSurveyInputs(initialSurveyInputs);
-        setNpsInputs(initialNpsInputs);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        setError(
-          err.response?.data?.error || err.message || "Failed to load data"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchCustomers();
-  }, []);
+  }, [retryCount]);
 
   const handleStarChange = (subscriptionId, question, value) => {
     setSurveyInputs((prev) => ({
@@ -125,6 +147,14 @@ const FeedbackTablePage = () => {
         })
       );
 
+      console.log("Submitting feedback:", {
+        SubscriptionID: subscriptionId,
+        SurveyScores: formattedSurvey,
+        SurveyScore: surveyScore,
+        NPSPercentage: npsPercent,
+        NPSScore: npsScore,
+      });
+
       await axios.put(
         "https://on-xperience.vercel.app/api/subscription-feedbacks",
         {
@@ -133,14 +163,14 @@ const FeedbackTablePage = () => {
           SurveyScore: surveyScore,
           NPSPercentage: npsPercent,
           NPSScore: npsScore,
+        },
+        {
+          timeout: 10000,
         }
       );
 
       // Refresh data
-      const res = await axios.get(
-        "https://on-xperience.vercel.app/api/subscription-feedbacks"
-      );
-      setCustomers(res.data || []);
+      await fetchCustomers();
       setExpanded(null);
     } catch (err) {
       console.error("Submit error:", err);
@@ -153,11 +183,33 @@ const FeedbackTablePage = () => {
   };
 
   if (isLoading && customers.length === 0) {
-    return <div className="loading">Loading customer feedback data...</div>;
+    return (
+      <div className="loading">
+        Loading customer feedback data...
+        {retryCount > 0 && <span> (Retry {retryCount}/3)</span>}
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error">Error: {error}</div>;
+    return (
+      <div className="error">
+        <h3>Error Loading Data</h3>
+        <p>{error}</p>
+        {retryCount < 3 ? (
+          <p>Retrying in 3 seconds...</p>
+        ) : (
+          <button
+            onClick={() => {
+              setRetryCount(0);
+              fetchCustomers();
+            }}
+          >
+            Retry Now
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -181,9 +233,9 @@ const FeedbackTablePage = () => {
               <tr>
                 <td>{cust.CustomerName}</td>
                 <td>{cust.SubscriptionID}</td>
-                <td>{cust.SurveyScore ?? "-"}/100</td>
-                <td>{cust.NPSPercentage ?? "-"}%</td>
-                <td>{cust.NPSScore ?? "-"}/100</td>
+                <td>{cust.SurveyScore}/100</td>
+                <td>{cust.NPSPercentage}%</td>
+                <td>{cust.NPSScore}/100</td>
                 <td>
                   <button
                     onClick={() =>
