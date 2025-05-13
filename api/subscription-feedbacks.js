@@ -41,14 +41,6 @@ const getPool = async () => {
   }
 };
 
-const calculateSurveyScore = (surveyScores) => {
-  if (!surveyScores?.length) return 0;
-  const totalScore = surveyScores.reduce((sum, q) => sum + q.score, 0);
-  const averageScore = totalScore / surveyScores.length;
-  const normalizedScore = (averageScore / 5) * 100;
-  return Math.round(normalizedScore);
-};
-
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
@@ -70,15 +62,7 @@ module.exports = async (req, res) => {
             sl.CustomerName,
             sf.SurveyScore,
             sf.NPSScore,
-            sf.LastUpdated,
-            (
-              SELECT
-                Question AS question,
-                Score AS score
-              FROM Subscription_Feedback_Questions
-              WHERE SubscriptionID = sl.SubscriptionID
-              FOR JSON PATH
-            ) AS SurveyScores
+            sf.LastUpdated
           FROM Subscription_Licenses sl
           LEFT JOIN Subscription_Feedbacks sf ON sl.SubscriptionID = sf.SubscriptionID
           ORDER BY sf.LastUpdated DESC
@@ -86,7 +70,6 @@ module.exports = async (req, res) => {
 
         const data = result.recordset.map((row) => ({
           ...row,
-          SurveyScores: row.SurveyScores ? JSON.parse(row.SurveyScores) : [],
           SurveyScore: row.SurveyScore ?? 0,
           NPSScore: row.NPSScore ?? 0,
         }));
@@ -106,7 +89,7 @@ module.exports = async (req, res) => {
     if (req.method === "PUT") {
       let transaction;
       try {
-        const { SubscriptionID, SurveyScores, NPSScore } = req.body;
+        const { SubscriptionID, NPSScore } = req.body;
 
         if (!SubscriptionID) {
           return res.status(400).json({
@@ -118,46 +101,21 @@ module.exports = async (req, res) => {
         transaction = new sql.Transaction(pool);
         await transaction.begin();
 
-        const surveyScore = calculateSurveyScore(SurveyScores);
-
         const mergeRequest = new sql.Request(transaction);
         await mergeRequest
           .input("SubscriptionID", sql.VarChar, SubscriptionID)
-          .input("SurveyScore", sql.Int, surveyScore)
           .input("NPSScore", sql.Int, NPSScore || 0).query(`
             MERGE INTO Subscription_Feedbacks AS target
             USING (SELECT @SubscriptionID AS SubscriptionID) AS source
             ON target.SubscriptionID = source.SubscriptionID
             WHEN MATCHED THEN
               UPDATE SET
-                SurveyScore = @SurveyScore,
                 NPSScore = @NPSScore,
                 LastUpdated = GETDATE()
             WHEN NOT MATCHED THEN
-              INSERT (SubscriptionID, SurveyScore, NPSScore)
-              VALUES (@SubscriptionID, @SurveyScore, @NPSScore);
+              INSERT (SubscriptionID, NPSScore)
+              VALUES (@SubscriptionID, @NPSScore);
           `);
-
-        const deleteRequest = new sql.Request(transaction);
-        await deleteRequest.input("SubscriptionID", sql.VarChar, SubscriptionID)
-          .query(`
-            DELETE FROM Subscription_Feedback_Questions
-            WHERE SubscriptionID = @SubscriptionID
-          `);
-
-        if (SurveyScores?.length > 0) {
-          for (const q of SurveyScores) {
-            const insertRequest = new sql.Request(transaction);
-            await insertRequest
-              .input("SubscriptionID", sql.VarChar, SubscriptionID)
-              .input("Question", sql.NVarChar, q.question)
-              .input("Score", sql.Int, q.score).query(`
-                INSERT INTO Subscription_Feedback_Questions
-                (SubscriptionID, Question, Score)
-                VALUES (@SubscriptionID, @Question, @Score)
-              `);
-          }
-        }
 
         await transaction.commit();
 
@@ -165,7 +123,6 @@ module.exports = async (req, res) => {
           success: true,
           message: "Feedback updated successfully",
           SubscriptionID,
-          SurveyScore: surveyScore,
           NPSScore: NPSScore || 0,
         });
       } catch (err) {

@@ -2,32 +2,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./FeedbackTable.css";
 
-const surveyQuestions = [
-  "Ease of Use",
-  "Product Reliability",
-  "Customer Support",
-  "Feature Satisfaction",
-  "Value for Money",
-];
-
-const StarRating = ({ score, onChange, max = 5 }) => (
-  <div className="star-rating">
-    {[...Array(max)].map((_, i) => (
-      <span
-        key={i}
-        className={`star ${i < score ? "filled" : ""}`}
-        onClick={() => onChange(i + 1)}
-      >
-        ★
-      </span>
-    ))}
-  </div>
-);
-
 const FeedbackTablePage = () => {
   const [customers, setCustomers] = useState([]);
   const [expanded, setExpanded] = useState(null);
-  const [surveyInputs, setSurveyInputs] = useState({});
   const [npsScoreInputs, setNpsScoreInputs] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -58,25 +35,16 @@ const FeedbackTablePage = () => {
 
       const data = res.data.map((item) => ({
         ...item,
-        SurveyScores: item.SurveyScores || [],
-        SurveyScore: item.SurveyScore ?? 0,
         NPSScore: item.NPSScore ?? 0,
       }));
 
       setCustomers(data);
 
-      const initialSurveyInputs = {};
       const initialNpsScoreInputs = {};
-
       data.forEach((cust) => {
-        initialSurveyInputs[cust.SubscriptionID] = {};
-        cust.SurveyScores.forEach((q) => {
-          initialSurveyInputs[cust.SubscriptionID][q.question] = q.score;
-        });
         initialNpsScoreInputs[cust.SubscriptionID] = cust.NPSScore || 0;
       });
 
-      setSurveyInputs(initialSurveyInputs);
       setNpsScoreInputs(initialNpsScoreInputs);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -98,16 +66,6 @@ const FeedbackTablePage = () => {
     fetchCustomers();
   }, [retryCount]);
 
-  const handleStarChange = (subscriptionId, question, value) => {
-    setSurveyInputs((prev) => ({
-      ...prev,
-      [subscriptionId]: {
-        ...prev[subscriptionId],
-        [question]: value,
-      },
-    }));
-  };
-
   const handleNpsScoreChange = (subscriptionId, value) => {
     const clamped = Math.max(0, Math.min(100, Number(value) || 0));
     setNpsScoreInputs((prev) => ({
@@ -121,29 +79,10 @@ const FeedbackTablePage = () => {
       setIsLoading(true);
       setError(null);
 
-      const survey = surveyInputs[subscriptionId] || {};
       const npsScore = npsScoreInputs[subscriptionId] || 0;
-
-      const surveyScore =
-        Object.values(survey).length > 0
-          ? Math.round(
-              (Object.values(survey).reduce((a, b) => a + b, 0) /
-                Object.values(survey).length /
-                5) *
-                100
-            )
-          : 0;
-
-      const formattedSurvey = Object.entries(survey).map(
-        ([question, score]) => ({
-          question,
-          score,
-        })
-      );
 
       console.log("Submitting feedback:", {
         SubscriptionID: subscriptionId,
-        SurveyScores: formattedSurvey,
         NPSScore: npsScore,
       });
 
@@ -151,7 +90,6 @@ const FeedbackTablePage = () => {
         "https://on-xperience.vercel.app/api/subscription-feedbacks",
         {
           SubscriptionID: subscriptionId,
-          SurveyScores: formattedSurvey,
           NPSScore: npsScore,
         },
         {
@@ -210,7 +148,6 @@ const FeedbackTablePage = () => {
           <tr>
             <th>Customer</th>
             <th>Subscription ID</th>
-            <th>Survey Score</th>
             <th>NPS Score</th>
             <th>Actions</th>
           </tr>
@@ -221,7 +158,6 @@ const FeedbackTablePage = () => {
               <tr>
                 <td>{cust.CustomerName}</td>
                 <td>{cust.SubscriptionID}</td>
-                <td>{cust.SurveyScore}/100</td>
                 <td>{cust.NPSScore}/100</td>
                 <td>
                   <button
@@ -241,25 +177,9 @@ const FeedbackTablePage = () => {
 
               {expanded === cust.SubscriptionID && (
                 <tr className="expanded-row">
-                  <td colSpan="5">
+                  <td colSpan="4">
                     <div className="feedback-form">
-                      <h3>Edit Feedback for {cust.CustomerName}</h3>
-
-                      <div className="survey-section">
-                        {surveyQuestions.map((q) => (
-                          <div key={q} className="question-row">
-                            <label>{q}</label>
-                            <StarRating
-                              score={
-                                surveyInputs[cust.SubscriptionID]?.[q] || 0
-                              }
-                              onChange={(val) =>
-                                handleStarChange(cust.SubscriptionID, q, val)
-                              }
-                            />
-                          </div>
-                        ))}
-                      </div>
+                      <h3>Edit NPS Score for {cust.CustomerName}</h3>
 
                       <div className="nps-section">
                         <label>NPS Score (0-100)</label>
