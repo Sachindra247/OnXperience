@@ -10,21 +10,19 @@ const surveyQuestions = [
   "Value for Money",
 ];
 
-const StarRating = ({ score, onChange, max = 5 }) => {
-  return (
-    <div className="star-rating">
-      {[...Array(max)].map((_, i) => (
-        <span
-          key={i}
-          className={`star ${i < score ? "filled" : ""}`}
-          onClick={() => onChange(i + 1)}
-        >
-          ★
-        </span>
-      ))}
-    </div>
-  );
-};
+const StarRating = ({ score, onChange, max = 5 }) => (
+  <div className="star-rating">
+    {[...Array(max)].map((_, i) => (
+      <span
+        key={i}
+        className={`star ${i < score ? "filled" : ""}`}
+        onClick={() => onChange(i + 1)}
+      >
+        ★
+      </span>
+    ))}
+  </div>
+);
 
 const getNpsLabelAndColor = (score) => {
   if (score >= 90) return { label: "Promoter", color: "#34d399" };
@@ -37,6 +35,8 @@ const FeedbackTablePage = () => {
   const [expanded, setExpanded] = useState(null);
   const [surveyInputs, setSurveyInputs] = useState({});
   const [npsInputs, setNpsInputs] = useState({});
+  const [ratingInputs, setRatingInputs] = useState({});
+  const [commentInputs, setCommentInputs] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -89,6 +89,8 @@ const FeedbackTablePage = () => {
     const npsPercent = npsInputs[subscriptionId] || 0;
     const surveyScore = calculateSurveyScore(survey);
     const npsScore = calculateNpsScore(npsPercent);
+    const rating = ratingInputs[subscriptionId] || 0;
+    const comment = commentInputs[subscriptionId] || "";
 
     const formattedSurvey = Object.entries(survey).map(([question, score]) => ({
       question,
@@ -97,14 +99,16 @@ const FeedbackTablePage = () => {
 
     try {
       setIsLoading(true);
-      await axios.post(
+      await axios.put(
         "https://on-xperience.vercel.app/api/subscription-feedbacks",
         {
           SubscriptionID: subscriptionId,
           SurveyScores: formattedSurvey,
-          NPSPercentage: npsPercent,
           SurveyScore: surveyScore,
+          NPSPercentage: npsPercent,
           NPSScore: npsScore,
+          Rating: rating,
+          Comment: comment,
         }
       );
       await fetchCustomers();
@@ -190,8 +194,6 @@ const FeedbackTablePage = () => {
                           />
                         </div>
                       ))}
-
-                      {/* NPS Input section */}
                       <div className="question-row">
                         <label>Net Promoter Score (NPS) %</label>
                         <input
@@ -205,30 +207,48 @@ const FeedbackTablePage = () => {
                           max="100"
                           className="nps-input"
                         />
-                        {typeof npsInputs[cust.SubscriptionID] !==
-                          "undefined" && (
-                          <>
-                            <div className="nps-bar-wrapper">
-                              <div
-                                className="nps-bar-fill"
-                                style={{
-                                  width: `${npsInputs[cust.SubscriptionID]}%`,
-                                  backgroundColor: getNpsLabelAndColor(
-                                    npsInputs[cust.SubscriptionID]
-                                  ).color,
-                                }}
-                              ></div>
-                            </div>
-                            <div className="nps-score-text">
-                              {npsInputs[cust.SubscriptionID]}%{" "}
-                              {
-                                getNpsLabelAndColor(
-                                  npsInputs[cust.SubscriptionID]
-                                ).label
-                              }
-                            </div>
-                          </>
-                        )}
+                        <div className="nps-bar-wrapper">
+                          <div
+                            className="nps-bar-fill"
+                            style={{
+                              width: `${npsInputs[cust.SubscriptionID] || 0}%`,
+                              backgroundColor: getNpsLabelAndColor(
+                                npsInputs[cust.SubscriptionID] || 0
+                              ).color,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      <div className="question-row">
+                        <label>Overall Rating (1-5)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="5"
+                          value={ratingInputs[cust.SubscriptionID] || ""}
+                          onChange={(e) =>
+                            setRatingInputs((prev) => ({
+                              ...prev,
+                              [cust.SubscriptionID]: parseInt(e.target.value),
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="question-row">
+                        <label>Comment</label>
+                        <textarea
+                          value={commentInputs[cust.SubscriptionID] || ""}
+                          onChange={(e) =>
+                            setCommentInputs((prev) => ({
+                              ...prev,
+                              [cust.SubscriptionID]: e.target.value,
+                            }))
+                          }
+                          rows={3}
+                          style={{ width: "100%" }}
+                        />
                       </div>
                     </div>
                   </td>

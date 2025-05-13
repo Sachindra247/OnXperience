@@ -44,39 +44,75 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST" || req.method === "PUT") {
-      const { SubscriptionID, SurveyScore, NPSScore } = req.body;
+      const {
+        SubscriptionID,
+        SurveyScore,
+        NPSScore,
+        SurveyScores,
+        NPSPercentage,
+      } = req.body;
 
       if (!SubscriptionID || SurveyScore == null || NPSScore == null) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // Clamp values between 0 and 10
       const clampedSurvey = Math.max(0, Math.min(10, Math.round(SurveyScore)));
       const clampedNPS = Math.max(0, Math.min(10, Math.round(NPSScore)));
 
-      await pool
-        .request()
-        .input("SubscriptionID", sql.VarChar, SubscriptionID)
-        .input("SurveyScore", sql.Int, clampedSurvey)
-        .input("NPSScore", sql.Int, clampedNPS).query(`
-          MERGE INTO Subscription_Feedbacks AS target
-          USING (SELECT @SubscriptionID AS SubscriptionID) AS source
-          ON target.SubscriptionID = source.SubscriptionID
-          WHEN MATCHED THEN
-            UPDATE SET
-              SurveyScore = @SurveyScore,
-              NPSScore = @NPSScore
-          WHEN NOT MATCHED THEN
-            INSERT (SubscriptionID, SurveyScore, NPSScore)
-            VALUES (@SubscriptionID, @SurveyScore, @NPSScore);
-        `);
+      const transaction = new sql.Transaction(pool);
+      await transaction.begin();
 
-      return res
-        .status(200)
-        .json({ message: "Feedback saved", SubscriptionID });
+      try {
+        const request = new sql.Request(transaction);
+
+        await request
+          .input("SubscriptionID", sql.VarChar, SubscriptionID)
+          .input("SurveyScore", sql.Int, clampedSurvey)
+          .input("NPSScore", sql.Int, clampedNPS).query(`
+            MERGE INTO Subscription_Feedbacks AS target
+            USING (SELECT @SubscriptionID AS SubscriptionID) AS source
+            ON target.SubscriptionID = source.SubscriptionID
+            WHEN MATCHED THEN
+              UPDATE SET SurveyScore = @SurveyScore, NPSScore = @NPSScore
+            WHEN NOT MATCHED THEN
+              INSERT (SubscriptionID, SurveyScore, NPSScore)
+              VALUES (@SubscriptionID, @SurveyScore, @NPSScore);
+          `);
+
+        if (Array.isArray(SurveyScores)) {
+          const deleteReq = new sql.Request(transaction);
+          await deleteReq
+            .input("SubscriptionID", sql.VarChar, SubscriptionID)
+            .query(
+              "DELETE FROM Subscription_Feedback_Questions WHERE SubscriptionID = @SubscriptionID"
+            );
+
+          for (const q of SurveyScores) {
+            if (q.question && typeof q.score === "number") {
+              const insertReq = new sql.Request(transaction);
+              await insertReq
+                .input("SubscriptionID", sql.VarChar, SubscriptionID)
+                .input("Question", sql.VarChar, q.question)
+                .input("Score", sql.Int, q.score).query(`
+                  INSERT INTO Subscription_Feedback_Questions (SubscriptionID, Question, Score)
+                  VALUES (@SubscriptionID, @Question, @Score);
+                `);
+            }
+          }
+        }
+
+        await transaction.commit();
+
+        return res
+          .status(200)
+          .json({ message: "Feedback saved", SubscriptionID });
+      } catch (innerErr) {
+        await transaction.rollback();
+        throw innerErr;
+      }
     }
 
-    res.status(405).end(); // Method Not Allowed
+    res.status(405).end();
   } catch (err) {
     console.error("Error in subscription-feedbacks handler:", err);
     res.status(500).json({
