@@ -43,8 +43,10 @@ const FeedbackTablePage = () => {
 
       data.forEach((cust) => {
         nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
+
+        // Extract previous ratings from saved average if possible
         const avg = Math.round(cust.SurveyScore / 2);
-        survey[cust.SubscriptionID] = {
+        survey[cust.SubscriptionID] = surveyInputs[cust.SubscriptionID] || {
           q1: avg,
           q2: avg,
           q3: avg,
@@ -83,11 +85,9 @@ const FeedbackTablePage = () => {
   };
 
   const getNpsCategory = (score) => {
-    if (score >= 0 && score <= 6)
-      return { label: "Detractor", color: "#dc3545" };
-    if (score >= 7 && score <= 8) return { label: "Passive", color: "#ffc107" };
-    if (score >= 9 && score <= 10)
-      return { label: "Promoter", color: "#28a745" };
+    if (score <= 6) return { label: "Detractor", color: "#dc3545" };
+    if (score <= 8) return { label: "Passive", color: "#ffc107" };
+    if (score <= 10) return { label: "Promoter", color: "#28a745" };
     return { label: "", color: "transparent" };
   };
 
@@ -97,12 +97,13 @@ const FeedbackTablePage = () => {
       setError(null);
 
       const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
-      const avg = Math.round(((survey.q1 + survey.q2 + survey.q3) / 3) * 2);
+      const avg = ((survey.q1 + survey.q2 + survey.q3) / 3) * 2;
+      const roundedSurveyScore = Math.round(avg);
 
       const payload = {
         SubscriptionID: id,
         NPSScore: Math.round((npsInputs[id] || 0) / 10),
-        SurveyScore: avg,
+        SurveyScore: roundedSurveyScore,
       };
 
       await axios.put(
@@ -157,6 +158,7 @@ const FeedbackTablePage = () => {
             const isExpanded = expanded === cust.SubscriptionID;
             const npsScore = Math.round(npsInputs[cust.SubscriptionID] / 10);
             const npsInfo = getNpsCategory(npsScore);
+
             const survey = surveyInputs[cust.SubscriptionID] || {
               q1: 0,
               q2: 0,
@@ -217,7 +219,6 @@ const FeedbackTablePage = () => {
                         </div>
 
                         <div className="survey-section">
-                          <label>Survey Questions (Star Ratings)</label>
                           {[
                             "How easy is it to use our platform?",
                             "How satisfied are you with the support?",
@@ -257,11 +258,6 @@ const FeedbackTablePage = () => {
                               </div>
                             );
                           })}
-                          <div
-                            style={{ fontStyle: "italic", marginTop: "4px" }}
-                          >
-                            Average Score: {avgSurvey}/10
-                          </div>
                         </div>
 
                         <div className="form-actions">
