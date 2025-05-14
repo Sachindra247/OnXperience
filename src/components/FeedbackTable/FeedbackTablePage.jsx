@@ -115,7 +115,22 @@ const FeedbackTablePage = () => {
         { timeout: 10000 }
       );
 
-      await fetchFeedbacks();
+      // 🔄 Update the affected customer in state immediately
+      setCustomers((prev) =>
+        prev.map((cust) =>
+          cust.SubscriptionID === id
+            ? {
+                ...cust,
+                NPSScore: payload.NPSScore,
+                SurveyScore: payload.SurveyScore,
+                SurveyQ1: payload.SurveyQ1,
+                SurveyQ2: payload.SurveyQ2,
+                SurveyQ3: payload.SurveyQ3,
+              }
+            : cust
+        )
+      );
+
       setExpanded(null);
     } catch (err) {
       setError(err.message);
@@ -175,7 +190,8 @@ const FeedbackTablePage = () => {
                   <td>{cust.CustomerName}</td>
                   <td>{id}</td>
                   <td>{npsValue}%</td>
-                  <td>{avgSurvey}/10</td>
+                  <td>{cust.SurveyScore}/10</td>
+
                   <td>
                     <button
                       onClick={() => setExpanded(isExpanded ? null : id)}
