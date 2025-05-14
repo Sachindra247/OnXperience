@@ -9,6 +9,7 @@ const FeedbackTablePage = () => {
   const [npsInputs, setNpsInputs] = useState({});
   const [surveyInputs, setSurveyInputs] = useState({});
   const [loading, setLoading] = useState(false);
+  const [savingId, setSavingId] = useState(null); // for per-row loading
   const [error, setError] = useState(null);
   const [retry, setRetry] = useState(0);
 
@@ -39,14 +40,11 @@ const FeedbackTablePage = () => {
           }))
         : [];
 
-      setCustomers(data);
-
       const nps = {};
       const survey = {};
 
       data.forEach((cust) => {
         nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
-
         survey[cust.SubscriptionID] = {
           q1: cust.SurveyQ1,
           q2: cust.SurveyQ2,
@@ -54,6 +52,7 @@ const FeedbackTablePage = () => {
         };
       });
 
+      setCustomers(data);
       setNpsInputs(nps);
       setSurveyInputs(survey);
     } catch (err) {
@@ -94,7 +93,7 @@ const FeedbackTablePage = () => {
 
   const handleSave = async (id) => {
     try {
-      setLoading(true);
+      setSavingId(id);
       setError(null);
 
       const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
@@ -121,7 +120,7 @@ const FeedbackTablePage = () => {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setSavingId(null);
     }
   };
 
@@ -129,7 +128,7 @@ const FeedbackTablePage = () => {
     return <div className="loading">Loading... (Retry {retry}/3)</div>;
   }
 
-  if (error) {
+  if (error && customers.length === 0) {
     return (
       <div className="error">
         <h3>Error Loading Data</h3>
@@ -159,32 +158,28 @@ const FeedbackTablePage = () => {
         </thead>
         <tbody>
           {customers.map((cust) => {
-            const isExpanded = expanded === cust.SubscriptionID;
-            const npsScore = Math.round(npsInputs[cust.SubscriptionID] / 10);
+            const id = cust.SubscriptionID;
+            const isExpanded = expanded === id;
+            const npsValue = npsInputs[id] ?? 0;
+            const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            const survey = surveyInputs[cust.SubscriptionID] || {
-              q1: 0,
-              q2: 0,
-              q3: 0,
-            };
+            const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
             const avgSurvey = Math.round(
               ((survey.q1 + survey.q2 + survey.q3) / 3) * 2
             );
 
             return (
-              <React.Fragment key={cust.SubscriptionID}>
+              <React.Fragment key={id}>
                 <tr>
                   <td>{cust.CustomerName}</td>
-                  <td>{cust.SubscriptionID}</td>
-                  <td>{npsInputs[cust.SubscriptionID]}%</td>
+                  <td>{id}</td>
+                  <td>{npsValue}%</td>
                   <td>{avgSurvey}/10</td>
                   <td>
                     <button
-                      onClick={() =>
-                        setExpanded(isExpanded ? null : cust.SubscriptionID)
-                      }
-                      disabled={loading}
+                      onClick={() => setExpanded(isExpanded ? null : id)}
+                      disabled={savingId === id}
                     >
                       {isExpanded ? "Cancel" : "Edit"}
                     </button>
@@ -203,13 +198,8 @@ const FeedbackTablePage = () => {
                             type="number"
                             min="0"
                             max="100"
-                            value={npsInputs[cust.SubscriptionID] || ""}
-                            onChange={(e) =>
-                              updateNpsInput(
-                                cust.SubscriptionID,
-                                e.target.value
-                              )
-                            }
+                            value={npsValue}
+                            onChange={(e) => updateNpsInput(id, e.target.value)}
                           />
                           <div
                             style={{
@@ -249,11 +239,7 @@ const FeedbackTablePage = () => {
                                             : "#e4e5e9"
                                         }
                                         onClick={() =>
-                                          updateSurveyInput(
-                                            cust.SubscriptionID,
-                                            q,
-                                            starVal
-                                          )
+                                          updateSurveyInput(id, q, starVal)
                                         }
                                       />
                                     );
@@ -266,10 +252,10 @@ const FeedbackTablePage = () => {
 
                         <div className="form-actions">
                           <button
-                            onClick={() => handleSave(cust.SubscriptionID)}
-                            disabled={loading}
+                            onClick={() => handleSave(id)}
+                            disabled={savingId === id}
                           >
-                            {loading ? "Saving..." : "Save Changes"}
+                            {savingId === id ? "Saving..." : "Save Changes"}
                           </button>
                         </div>
                       </div>
