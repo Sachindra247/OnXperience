@@ -33,6 +33,9 @@ const FeedbackTablePage = () => {
             ...item,
             NPSScore: item.NPSScore ?? 0,
             SurveyScore: item.SurveyScore ?? 0,
+            SurveyQ1: item.SurveyQ1 ?? 0,
+            SurveyQ2: item.SurveyQ2 ?? 0,
+            SurveyQ3: item.SurveyQ3 ?? 0,
           }))
         : [];
 
@@ -44,12 +47,10 @@ const FeedbackTablePage = () => {
       data.forEach((cust) => {
         nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
 
-        // Extract previous ratings from saved average if possible
-        const avg = Math.round(cust.SurveyScore / 2);
-        survey[cust.SubscriptionID] = surveyInputs[cust.SubscriptionID] || {
-          q1: avg,
-          q2: avg,
-          q3: avg,
+        survey[cust.SubscriptionID] = {
+          q1: cust.SurveyQ1,
+          q2: cust.SurveyQ2,
+          q3: cust.SurveyQ3,
         };
       });
 
@@ -104,6 +105,9 @@ const FeedbackTablePage = () => {
         SubscriptionID: id,
         NPSScore: Math.round((npsInputs[id] || 0) / 10),
         SurveyScore: roundedSurveyScore,
+        SurveyQ1: survey.q1,
+        SurveyQ2: survey.q2,
+        SurveyQ3: survey.q3,
       };
 
       await axios.put(
