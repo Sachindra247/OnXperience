@@ -9,7 +9,7 @@ const FeedbackTablePage = () => {
   const [npsInputs, setNpsInputs] = useState({});
   const [surveyInputs, setSurveyInputs] = useState({});
   const [loading, setLoading] = useState(false);
-  const [savingId, setSavingId] = useState(null); // for per-row loading
+  const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState(null);
   const [retry, setRetry] = useState(0);
 
@@ -115,7 +115,6 @@ const FeedbackTablePage = () => {
         { timeout: 10000 }
       );
 
-      // 🔄 Update the affected customer in state immediately
       setCustomers((prev) =>
         prev.map((cust) =>
           cust.SubscriptionID === id
@@ -191,7 +190,6 @@ const FeedbackTablePage = () => {
                   <td>{id}</td>
                   <td>{npsValue}%</td>
                   <td>{cust.SurveyScore}/10</td>
-
                   <td>
                     <button
                       onClick={() => setExpanded(isExpanded ? null : id)}
@@ -235,6 +233,7 @@ const FeedbackTablePage = () => {
                             "How likely are you to recommend us?",
                           ].map((label, idx) => {
                             const q = `q${idx + 1}`;
+                            const selected = survey[q] || 0;
                             return (
                               <div key={q} style={{ marginBottom: "8px" }}>
                                 <p style={{ margin: 0 }}>{label}</p>
@@ -250,7 +249,7 @@ const FeedbackTablePage = () => {
                                           marginRight: 4,
                                         }}
                                         color={
-                                          starVal <= (survey[q] || 0)
+                                          starVal <= selected
                                             ? "#ffc107"
                                             : "#e4e5e9"
                                         }
