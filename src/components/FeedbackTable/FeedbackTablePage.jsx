@@ -8,6 +8,7 @@ const FeedbackTablePage = () => {
   const [expanded, setExpanded] = useState(null);
   const [npsInputs, setNpsInputs] = useState({});
   const [surveyInputs, setSurveyInputs] = useState({});
+  const [initialSurveyValues, setInitialSurveyValues] = useState({});
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState(null);
@@ -42,10 +43,16 @@ const FeedbackTablePage = () => {
 
       const nps = {};
       const survey = {};
+      const initialSurvey = {};
 
       data.forEach((cust) => {
         nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
         survey[cust.SubscriptionID] = {
+          q1: cust.SurveyQ1,
+          q2: cust.SurveyQ2,
+          q3: cust.SurveyQ3,
+        };
+        initialSurvey[cust.SubscriptionID] = {
           q1: cust.SurveyQ1,
           q2: cust.SurveyQ2,
           q3: cust.SurveyQ3,
@@ -55,9 +62,7 @@ const FeedbackTablePage = () => {
       setCustomers(data);
       setNpsInputs(nps);
       setSurveyInputs(survey);
-
-      // Store the initial data in localStorage
-      localStorage.setItem("lastSavedFeedbacks", JSON.stringify(data));
+      setInitialSurveyValues(initialSurvey);
     } catch (err) {
       setError(err.message);
       if (retry < 3) {
@@ -69,27 +74,6 @@ const FeedbackTablePage = () => {
   };
 
   useEffect(() => {
-    // Try to load from localStorage first for faster display
-    const savedData = localStorage.getItem("lastSavedFeedbacks");
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setCustomers(parsedData);
-
-      const nps = {};
-      const survey = {};
-      parsedData.forEach((cust) => {
-        nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
-        survey[cust.SubscriptionID] = {
-          q1: cust.SurveyQ1,
-          q2: cust.SurveyQ2,
-          q3: cust.SurveyQ3,
-        };
-      });
-      setNpsInputs(nps);
-      setSurveyInputs(survey);
-    }
-
-    // Then fetch fresh data
     fetchFeedbacks();
   }, [retry]);
 
@@ -99,25 +83,13 @@ const FeedbackTablePage = () => {
   };
 
   const updateSurveyInput = (id, question, value) => {
-    const updatedInputs = {
-      ...surveyInputs,
+    setSurveyInputs((prev) => ({
+      ...prev,
       [id]: {
-        ...surveyInputs[id],
+        ...prev[id],
         [question]: value,
       },
-    };
-    setSurveyInputs(updatedInputs);
-
-    // Update local storage immediately for persistence
-    const updatedCustomers = customers.map((cust) =>
-      cust.SubscriptionID === id
-        ? { ...cust, [`SurveyQ${question.slice(1)}`]: value }
-        : cust
-    );
-    localStorage.setItem(
-      "lastSavedFeedbacks",
-      JSON.stringify(updatedCustomers)
-    );
+    }));
   };
 
   const getNpsCategory = (score) => {
@@ -151,24 +123,31 @@ const FeedbackTablePage = () => {
         { timeout: 10000 }
       );
 
-      const updatedCustomers = customers.map((cust) =>
-        cust.SubscriptionID === id
-          ? {
-              ...cust,
-              NPSScore: payload.NPSScore,
-              SurveyScore: payload.SurveyScore,
-              SurveyQ1: payload.SurveyQ1,
-              SurveyQ2: payload.SurveyQ2,
-              SurveyQ3: payload.SurveyQ3,
-            }
-          : cust
+      setCustomers((prev) =>
+        prev.map((cust) =>
+          cust.SubscriptionID === id
+            ? {
+                ...cust,
+                NPSScore: payload.NPSScore,
+                SurveyScore: payload.SurveyScore,
+                SurveyQ1: payload.SurveyQ1,
+                SurveyQ2: payload.SurveyQ2,
+                SurveyQ3: payload.SurveyQ3,
+              }
+            : cust
+        )
       );
 
-      setCustomers(updatedCustomers);
-      localStorage.setItem(
-        "lastSavedFeedbacks",
-        JSON.stringify(updatedCustomers)
-      );
+      // Update initial values after save
+      setInitialSurveyValues((prev) => ({
+        ...prev,
+        [id]: {
+          q1: payload.SurveyQ1,
+          q2: payload.SurveyQ2,
+          q3: payload.SurveyQ3,
+        },
+      }));
+
       setExpanded(null);
     } catch (err) {
       setError(err.message);
@@ -178,18 +157,15 @@ const FeedbackTablePage = () => {
   };
 
   const handleExpand = (id) => {
-    // Initialize with the latest saved values
-    const customer = customers.find((c) => c.SubscriptionID === id);
-    if (customer) {
-      setSurveyInputs((prev) => ({
-        ...prev,
-        [id]: {
-          q1: customer.SurveyQ1,
-          q2: customer.SurveyQ2,
-          q3: customer.SurveyQ3,
-        },
-      }));
-    }
+    // Reset to initial values when expanding
+    setSurveyInputs((prev) => ({
+      ...prev,
+      [id]: {
+        q1: initialSurveyValues[id]?.q1 || 0,
+        q2: initialSurveyValues[id]?.q2 || 0,
+        q3: initialSurveyValues[id]?.q3 || 0,
+      },
+    }));
     setExpanded(expanded === id ? null : id);
   };
 
@@ -233,11 +209,10 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            // Always use the latest saved values
-            const survey = {
-              q1: cust.SurveyQ1,
-              q2: cust.SurveyQ2,
-              q3: cust.SurveyQ3,
+            const survey = surveyInputs[id] || {
+              q1: initialSurveyValues[id]?.q1 || 0,
+              q2: initialSurveyValues[id]?.q2 || 0,
+              q3: initialSurveyValues[id]?.q3 || 0,
             };
 
             const avgSurvey = Math.round(
@@ -294,16 +269,23 @@ const FeedbackTablePage = () => {
                             "How likely are you to recommend us?",
                           ].map((label, idx) => {
                             const q = `q${idx + 1}`;
-                            const selected =
-                              surveyInputs[id]?.[q] ??
-                              survey[`q${idx + 1}`] ??
-                              0;
+                            const selected = survey[q] || 0;
+                            const initialValue =
+                              initialSurveyValues[id]?.[q] || 0;
+
                             return (
                               <div key={q} style={{ marginBottom: "8px" }}>
                                 <p style={{ margin: 0 }}>{label}</p>
                                 <div className="star-rating">
                                   {[...Array(5)].map((_, i) => {
                                     const starVal = i + 1;
+                                    // Show yellow if:
+                                    // 1. It's part of the initial value (before any edits)
+                                    // 2. OR it's part of the current selection
+                                    const isHighlighted =
+                                      starVal <= initialValue ||
+                                      starVal <= selected;
+
                                     return (
                                       <FaStar
                                         key={starVal}
@@ -313,9 +295,7 @@ const FeedbackTablePage = () => {
                                           marginRight: 4,
                                         }}
                                         color={
-                                          starVal <= selected
-                                            ? "#ffc107"
-                                            : "#e4e5e9"
+                                          isHighlighted ? "#ffc107" : "#e4e5e9"
                                         }
                                         onClick={() =>
                                           updateSurveyInput(id, q, starVal)
