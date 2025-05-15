@@ -55,6 +55,9 @@ const FeedbackTablePage = () => {
       setCustomers(data);
       setNpsInputs(nps);
       setSurveyInputs(survey);
+
+      // Store the initial data in localStorage
+      localStorage.setItem("lastSavedFeedbacks", JSON.stringify(data));
     } catch (err) {
       setError(err.message);
       if (retry < 3) {
@@ -66,6 +69,27 @@ const FeedbackTablePage = () => {
   };
 
   useEffect(() => {
+    // Try to load from localStorage first for faster display
+    const savedData = localStorage.getItem("lastSavedFeedbacks");
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      setCustomers(parsedData);
+
+      const nps = {};
+      const survey = {};
+      parsedData.forEach((cust) => {
+        nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
+        survey[cust.SubscriptionID] = {
+          q1: cust.SurveyQ1,
+          q2: cust.SurveyQ2,
+          q3: cust.SurveyQ3,
+        };
+      });
+      setNpsInputs(nps);
+      setSurveyInputs(survey);
+    }
+
+    // Then fetch fresh data
     fetchFeedbacks();
   }, [retry]);
 
@@ -75,13 +99,25 @@ const FeedbackTablePage = () => {
   };
 
   const updateSurveyInput = (id, question, value) => {
-    setSurveyInputs((prev) => ({
-      ...prev,
+    const updatedInputs = {
+      ...surveyInputs,
       [id]: {
-        ...prev[id],
+        ...surveyInputs[id],
         [question]: value,
       },
-    }));
+    };
+    setSurveyInputs(updatedInputs);
+
+    // Update local storage immediately for persistence
+    const updatedCustomers = customers.map((cust) =>
+      cust.SubscriptionID === id
+        ? { ...cust, [`SurveyQ${question.slice(1)}`]: value }
+        : cust
+    );
+    localStorage.setItem(
+      "lastSavedFeedbacks",
+      JSON.stringify(updatedCustomers)
+    );
   };
 
   const getNpsCategory = (score) => {
@@ -115,21 +151,24 @@ const FeedbackTablePage = () => {
         { timeout: 10000 }
       );
 
-      setCustomers((prev) =>
-        prev.map((cust) =>
-          cust.SubscriptionID === id
-            ? {
-                ...cust,
-                NPSScore: payload.NPSScore,
-                SurveyScore: payload.SurveyScore,
-                SurveyQ1: payload.SurveyQ1,
-                SurveyQ2: payload.SurveyQ2,
-                SurveyQ3: payload.SurveyQ3,
-              }
-            : cust
-        )
+      const updatedCustomers = customers.map((cust) =>
+        cust.SubscriptionID === id
+          ? {
+              ...cust,
+              NPSScore: payload.NPSScore,
+              SurveyScore: payload.SurveyScore,
+              SurveyQ1: payload.SurveyQ1,
+              SurveyQ2: payload.SurveyQ2,
+              SurveyQ3: payload.SurveyQ3,
+            }
+          : cust
       );
 
+      setCustomers(updatedCustomers);
+      localStorage.setItem(
+        "lastSavedFeedbacks",
+        JSON.stringify(updatedCustomers)
+      );
       setExpanded(null);
     } catch (err) {
       setError(err.message);
@@ -139,7 +178,7 @@ const FeedbackTablePage = () => {
   };
 
   const handleExpand = (id) => {
-    // When expanding, ensure we have the latest saved values in surveyInputs
+    // Initialize with the latest saved values
     const customer = customers.find((c) => c.SubscriptionID === id);
     if (customer) {
       setSurveyInputs((prev) => ({
@@ -194,8 +233,8 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            // Always use surveyInputs if available, otherwise fall back to customer data
-            const survey = surveyInputs[id] || {
+            // Always use the latest saved values
+            const survey = {
               q1: cust.SurveyQ1,
               q2: cust.SurveyQ2,
               q3: cust.SurveyQ3,
@@ -255,7 +294,10 @@ const FeedbackTablePage = () => {
                             "How likely are you to recommend us?",
                           ].map((label, idx) => {
                             const q = `q${idx + 1}`;
-                            const selected = survey[q] || 0;
+                            const selected =
+                              surveyInputs[id]?.[q] ??
+                              survey[`q${idx + 1}`] ??
+                              0;
                             return (
                               <div key={q} style={{ marginBottom: "8px" }}>
                                 <p style={{ margin: 0 }}>{label}</p>
