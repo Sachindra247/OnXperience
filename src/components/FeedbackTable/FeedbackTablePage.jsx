@@ -97,7 +97,6 @@ const FeedbackTablePage = () => {
     };
     setSurveyInputs(updatedInputs);
 
-    // Immediately update the display
     setCustomers((prev) =>
       prev.map((cust) =>
         cust.SubscriptionID === id
@@ -317,12 +316,6 @@ const FeedbackTablePage = () => {
                                     );
                                   })}
                                 </div>
-                                <button
-                                  onClick={() => updateSurveyInput(id, q, 0)}
-                                  className="clear-rating"
-                                >
-                                  Clear Rating
-                                </button>
                               </div>
                             );
                           })}
