@@ -17,7 +17,6 @@ const FeedbackTablePage = () => {
     try {
       setLoading(true);
       setError(null);
-
       const res = await axios.get(
         "https://on-xperience.vercel.app/api/subscription-feedbacks",
         {
@@ -44,8 +43,9 @@ const FeedbackTablePage = () => {
       const survey = {};
 
       data.forEach((cust) => {
-        nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
-        survey[cust.SubscriptionID] = {
+        const id = cust.SubscriptionID;
+        nps[id] = Math.round(cust.NPSScore * 10);
+        survey[id] = {
           q1: cust.SurveyQ1,
           q2: cust.SurveyQ2,
           q3: cust.SurveyQ3,
@@ -78,7 +78,7 @@ const FeedbackTablePage = () => {
     setSurveyInputs((prev) => ({
       ...prev,
       [id]: {
-        ...prev[id],
+        ...(prev[id] || { q1: 0, q2: 0, q3: 0 }),
         [question]: value,
       },
     }));
@@ -115,20 +115,8 @@ const FeedbackTablePage = () => {
         { timeout: 10000 }
       );
 
-      setCustomers((prev) =>
-        prev.map((cust) =>
-          cust.SubscriptionID === id
-            ? {
-                ...cust,
-                NPSScore: payload.NPSScore,
-                SurveyScore: payload.SurveyScore,
-                SurveyQ1: payload.SurveyQ1,
-                SurveyQ2: payload.SurveyQ2,
-                SurveyQ3: payload.SurveyQ3,
-              }
-            : cust
-        )
-      );
+      // Re-fetch from backend to reflect saved data properly
+      fetchFeedbacks();
 
       setExpanded(null);
     } catch (err) {
@@ -177,7 +165,6 @@ const FeedbackTablePage = () => {
             const npsValue = npsInputs[id] ?? 0;
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
-
             const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
             const avgSurvey = Math.round(
               ((survey.q1 + survey.q2 + survey.q3) / 3) * 2
