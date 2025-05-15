@@ -268,3 +268,17 @@ button:focus {
         min-width: 180px;
     }
 }
+
+.clear-rating {
+    margin-top: 5px;
+    padding: 2px 8px;
+    font-size: 12px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.clear-rating:hover {
+    background: #e9ecef;
+}

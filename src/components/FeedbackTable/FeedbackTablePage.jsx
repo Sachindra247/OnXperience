@@ -9,7 +9,6 @@ const FeedbackTablePage = () => {
   const [npsInputs, setNpsInputs] = useState({});
   const [surveyInputs, setSurveyInputs] = useState({});
   const [initialSurveyValues, setInitialSurveyValues] = useState(() => {
-    // Load from localStorage if available
     const saved = localStorage.getItem("surveyRatings");
     return saved ? JSON.parse(saved) : {};
   });
@@ -56,7 +55,6 @@ const FeedbackTablePage = () => {
           q2: cust.SurveyQ2,
           q3: cust.SurveyQ3,
         };
-        // Use saved values if available, otherwise use from API
         initialSurvey[cust.SubscriptionID] = {
           q1: initialSurveyValues[cust.SubscriptionID]?.q1 ?? cust.SurveyQ1,
           q2: initialSurveyValues[cust.SubscriptionID]?.q2 ?? cust.SurveyQ2,
@@ -69,7 +67,6 @@ const FeedbackTablePage = () => {
       setSurveyInputs(survey);
       setInitialSurveyValues(initialSurvey);
 
-      // Save to localStorage
       localStorage.setItem("surveyRatings", JSON.stringify(initialSurvey));
     } catch (err) {
       setError(err.message);
@@ -99,6 +96,15 @@ const FeedbackTablePage = () => {
       },
     };
     setSurveyInputs(updatedInputs);
+
+    // Immediately update the display
+    setCustomers((prev) =>
+      prev.map((cust) =>
+        cust.SubscriptionID === id
+          ? { ...cust, [`SurveyQ${question.slice(1)}`]: value }
+          : cust
+      )
+    );
   };
 
   const getNpsCategory = (score) => {
@@ -147,7 +153,6 @@ const FeedbackTablePage = () => {
 
       setCustomers(updatedCustomers);
 
-      // Update initial values after save
       const updatedInitialValues = {
         ...initialSurveyValues,
         [id]: {
@@ -171,7 +176,6 @@ const FeedbackTablePage = () => {
   };
 
   const handleExpand = (id) => {
-    // Reset to initial values when expanding
     setSurveyInputs((prev) => ({
       ...prev,
       [id]: {
@@ -223,11 +227,13 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            const survey = surveyInputs[id] || {
-              q1: initialSurveyValues[id]?.q1 || 0,
-              q2: initialSurveyValues[id]?.q2 || 0,
-              q3: initialSurveyValues[id]?.q3 || 0,
-            };
+            const survey = isExpanded
+              ? surveyInputs[id] || { q1: 0, q2: 0, q3: 0 }
+              : {
+                  q1: initialSurveyValues[id]?.q1 || 0,
+                  q2: initialSurveyValues[id]?.q2 || 0,
+                  q3: initialSurveyValues[id]?.q3 || 0,
+                };
 
             const avgSurvey = Math.round(
               ((survey.q1 + survey.q2 + survey.q3) / 3) * 2
@@ -284,8 +290,6 @@ const FeedbackTablePage = () => {
                           ].map((label, idx) => {
                             const q = `q${idx + 1}`;
                             const selected = survey[q] || 0;
-                            const initialValue =
-                              initialSurveyValues[id]?.[q] || 0;
 
                             return (
                               <div key={q} style={{ marginBottom: "8px" }}>
@@ -293,10 +297,6 @@ const FeedbackTablePage = () => {
                                 <div className="star-rating">
                                   {[...Array(5)].map((_, i) => {
                                     const starVal = i + 1;
-                                    const isHighlighted =
-                                      starVal <= initialValue ||
-                                      starVal <= selected;
-
                                     return (
                                       <FaStar
                                         key={starVal}
@@ -306,7 +306,9 @@ const FeedbackTablePage = () => {
                                           marginRight: 4,
                                         }}
                                         color={
-                                          isHighlighted ? "#ffc107" : "#e4e5e9"
+                                          starVal <= selected
+                                            ? "#ffc107"
+                                            : "#e4e5e9"
                                         }
                                         onClick={() =>
                                           updateSurveyInput(id, q, starVal)
@@ -315,6 +317,12 @@ const FeedbackTablePage = () => {
                                     );
                                   })}
                                 </div>
+                                <button
+                                  onClick={() => updateSurveyInput(id, q, 0)}
+                                  className="clear-rating"
+                                >
+                                  Clear Rating
+                                </button>
                               </div>
                             );
                           })}
