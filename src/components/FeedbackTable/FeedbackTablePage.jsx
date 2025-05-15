@@ -157,7 +157,7 @@ const FeedbackTablePage = () => {
   }
 
   return (
-    <div className="feedback-table-container">
+    <div className="feedback-table-page-container">
       <h2>Customer Feedback</h2>
 
       <table className="feedback-table">
@@ -188,8 +188,16 @@ const FeedbackTablePage = () => {
                 <tr>
                   <td>{cust.CustomerName}</td>
                   <td>{id}</td>
-                  <td>{npsValue}%</td>
-                  <td>{cust.SurveyScore}/10</td>
+                  <td>
+                    <span className="nps-score">{npsValue}%</span>
+                    <span
+                      className="nps-category"
+                      style={{ color: npsInfo.color }}
+                    >
+                      ({npsInfo.label})
+                    </span>
+                  </td>
+                  <td>{avgSurvey}/10</td>
                   <td>
                     <button
                       onClick={() => setExpanded(isExpanded ? null : id)}
@@ -235,8 +243,8 @@ const FeedbackTablePage = () => {
                             const q = `q${idx + 1}`;
                             const selected = survey[q] || 0;
                             return (
-                              <div key={q} style={{ marginBottom: "8px" }}>
-                                <p style={{ margin: 0 }}>{label}</p>
+                              <div key={q} className="survey-question">
+                                <p>{label}</p>
                                 <div className="star-rating">
                                   {[...Array(5)].map((_, i) => {
                                     const starVal = i + 1;
@@ -244,14 +252,10 @@ const FeedbackTablePage = () => {
                                       <FaStar
                                         key={starVal}
                                         size={22}
-                                        style={{
-                                          cursor: "pointer",
-                                          marginRight: 4,
-                                        }}
-                                        color={
+                                        className={
                                           starVal <= selected
-                                            ? "#ffc107"
-                                            : "#e4e5e9"
+                                            ? "filled"
+                                            : "empty"
                                         }
                                         onClick={() =>
                                           updateSurveyInput(id, q, starVal)
