@@ -8,7 +8,11 @@ const FeedbackTablePage = () => {
   const [expanded, setExpanded] = useState(null);
   const [npsInputs, setNpsInputs] = useState({});
   const [surveyInputs, setSurveyInputs] = useState({});
-  const [initialSurveyValues, setInitialSurveyValues] = useState({});
+  const [initialSurveyValues, setInitialSurveyValues] = useState(() => {
+    // Load from localStorage if available
+    const saved = localStorage.getItem("surveyRatings");
+    return saved ? JSON.parse(saved) : {};
+  });
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState(null);
@@ -52,10 +56,11 @@ const FeedbackTablePage = () => {
           q2: cust.SurveyQ2,
           q3: cust.SurveyQ3,
         };
+        // Use saved values if available, otherwise use from API
         initialSurvey[cust.SubscriptionID] = {
-          q1: cust.SurveyQ1,
-          q2: cust.SurveyQ2,
-          q3: cust.SurveyQ3,
+          q1: initialSurveyValues[cust.SubscriptionID]?.q1 ?? cust.SurveyQ1,
+          q2: initialSurveyValues[cust.SubscriptionID]?.q2 ?? cust.SurveyQ2,
+          q3: initialSurveyValues[cust.SubscriptionID]?.q3 ?? cust.SurveyQ3,
         };
       });
 
@@ -63,6 +68,9 @@ const FeedbackTablePage = () => {
       setNpsInputs(nps);
       setSurveyInputs(survey);
       setInitialSurveyValues(initialSurvey);
+
+      // Save to localStorage
+      localStorage.setItem("surveyRatings", JSON.stringify(initialSurvey));
     } catch (err) {
       setError(err.message);
       if (retry < 3) {
@@ -83,13 +91,14 @@ const FeedbackTablePage = () => {
   };
 
   const updateSurveyInput = (id, question, value) => {
-    setSurveyInputs((prev) => ({
-      ...prev,
+    const updatedInputs = {
+      ...surveyInputs,
       [id]: {
-        ...prev[id],
+        ...surveyInputs[id],
         [question]: value,
       },
-    }));
+    };
+    setSurveyInputs(updatedInputs);
   };
 
   const getNpsCategory = (score) => {
@@ -123,30 +132,35 @@ const FeedbackTablePage = () => {
         { timeout: 10000 }
       );
 
-      setCustomers((prev) =>
-        prev.map((cust) =>
-          cust.SubscriptionID === id
-            ? {
-                ...cust,
-                NPSScore: payload.NPSScore,
-                SurveyScore: payload.SurveyScore,
-                SurveyQ1: payload.SurveyQ1,
-                SurveyQ2: payload.SurveyQ2,
-                SurveyQ3: payload.SurveyQ3,
-              }
-            : cust
-        )
+      const updatedCustomers = customers.map((cust) =>
+        cust.SubscriptionID === id
+          ? {
+              ...cust,
+              NPSScore: payload.NPSScore,
+              SurveyScore: payload.SurveyScore,
+              SurveyQ1: payload.SurveyQ1,
+              SurveyQ2: payload.SurveyQ2,
+              SurveyQ3: payload.SurveyQ3,
+            }
+          : cust
       );
 
+      setCustomers(updatedCustomers);
+
       // Update initial values after save
-      setInitialSurveyValues((prev) => ({
-        ...prev,
+      const updatedInitialValues = {
+        ...initialSurveyValues,
         [id]: {
           q1: payload.SurveyQ1,
           q2: payload.SurveyQ2,
           q3: payload.SurveyQ3,
         },
-      }));
+      };
+      setInitialSurveyValues(updatedInitialValues);
+      localStorage.setItem(
+        "surveyRatings",
+        JSON.stringify(updatedInitialValues)
+      );
 
       setExpanded(null);
     } catch (err) {
@@ -279,9 +293,6 @@ const FeedbackTablePage = () => {
                                 <div className="star-rating">
                                   {[...Array(5)].map((_, i) => {
                                     const starVal = i + 1;
-                                    // Show yellow if:
-                                    // 1. It's part of the initial value (before any edits)
-                                    // 2. OR it's part of the current selection
                                     const isHighlighted =
                                       starVal <= initialValue ||
                                       starVal <= selected;
