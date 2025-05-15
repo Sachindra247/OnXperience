@@ -82,6 +82,15 @@ const FeedbackTablePage = () => {
         [question]: value,
       },
     }));
+
+    // Update the customers state immediately for visual feedback
+    setCustomers((prev) =>
+      prev.map((cust) =>
+        cust.SubscriptionID === id
+          ? { ...cust, [`SurveyQ${question.slice(1)}`]: value }
+          : cust
+      )
+    );
   };
 
   const getNpsCategory = (score) => {
@@ -178,7 +187,13 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
+            // Get survey values from both inputs and customer data
+            const survey = {
+              q1: surveyInputs[id]?.q1 ?? cust.SurveyQ1,
+              q2: surveyInputs[id]?.q2 ?? cust.SurveyQ2,
+              q3: surveyInputs[id]?.q3 ?? cust.SurveyQ3,
+            };
+
             const avgSurvey = Math.round(
               ((survey.q1 + survey.q2 + survey.q3) / 3) * 2
             );
@@ -233,7 +248,8 @@ const FeedbackTablePage = () => {
                             "How likely are you to recommend us?",
                           ].map((label, idx) => {
                             const q = `q${idx + 1}`;
-                            const selected = survey[q] || 0;
+                            const surveyKey = `SurveyQ${idx + 1}`;
+                            const selected = survey[q] ?? cust[surveyKey] ?? 0;
                             return (
                               <div key={q} style={{ marginBottom: "8px" }}>
                                 <p style={{ margin: 0 }}>{label}</p>
