@@ -82,15 +82,6 @@ const FeedbackTablePage = () => {
         [question]: value,
       },
     }));
-
-    // Update the customers state immediately for visual feedback
-    setCustomers((prev) =>
-      prev.map((cust) =>
-        cust.SubscriptionID === id
-          ? { ...cust, [`SurveyQ${question.slice(1)}`]: value }
-          : cust
-      )
-    );
   };
 
   const getNpsCategory = (score) => {
@@ -147,6 +138,22 @@ const FeedbackTablePage = () => {
     }
   };
 
+  const handleExpand = (id) => {
+    // When expanding, ensure we have the latest saved values in surveyInputs
+    const customer = customers.find((c) => c.SubscriptionID === id);
+    if (customer) {
+      setSurveyInputs((prev) => ({
+        ...prev,
+        [id]: {
+          q1: customer.SurveyQ1,
+          q2: customer.SurveyQ2,
+          q3: customer.SurveyQ3,
+        },
+      }));
+    }
+    setExpanded(expanded === id ? null : id);
+  };
+
   if (loading && customers.length === 0) {
     return <div className="loading">Loading... (Retry {retry}/3)</div>;
   }
@@ -187,11 +194,11 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            // Get survey values from both inputs and customer data
-            const survey = {
-              q1: surveyInputs[id]?.q1 ?? cust.SurveyQ1,
-              q2: surveyInputs[id]?.q2 ?? cust.SurveyQ2,
-              q3: surveyInputs[id]?.q3 ?? cust.SurveyQ3,
+            // Always use surveyInputs if available, otherwise fall back to customer data
+            const survey = surveyInputs[id] || {
+              q1: cust.SurveyQ1,
+              q2: cust.SurveyQ2,
+              q3: cust.SurveyQ3,
             };
 
             const avgSurvey = Math.round(
@@ -207,7 +214,7 @@ const FeedbackTablePage = () => {
                   <td>{cust.SurveyScore}/10</td>
                   <td>
                     <button
-                      onClick={() => setExpanded(isExpanded ? null : id)}
+                      onClick={() => handleExpand(id)}
                       disabled={savingId === id}
                     >
                       {isExpanded ? "Cancel" : "Edit"}
@@ -248,8 +255,7 @@ const FeedbackTablePage = () => {
                             "How likely are you to recommend us?",
                           ].map((label, idx) => {
                             const q = `q${idx + 1}`;
-                            const surveyKey = `SurveyQ${idx + 1}`;
-                            const selected = survey[q] ?? cust[surveyKey] ?? 0;
+                            const selected = survey[q] || 0;
                             return (
                               <div key={q} style={{ marginBottom: "8px" }}>
                                 <p style={{ margin: 0 }}>{label}</p>
