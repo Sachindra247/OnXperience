@@ -206,8 +206,6 @@ const FeedbackTablePage = () => {
 
   return (
     <div className="feedback-table-container">
-      <h2>Customer Feedback</h2>
-
       <table className="feedback-table">
         <thead>
           <tr>
@@ -215,7 +213,7 @@ const FeedbackTablePage = () => {
             <th>Subscription ID</th>
             <th>NPS Score</th>
             <th>Survey Score</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
