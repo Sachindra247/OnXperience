@@ -274,7 +274,7 @@ const FeedbackTablePage = () => {
                           <div
                             style={{
                               marginTop: "6px",
-                              marginBottom: "6px",
+                              marginBottom: "12px",
                               fontWeight: "bold",
                               color: npsInfo.color,
                             }}
