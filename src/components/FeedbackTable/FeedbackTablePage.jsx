@@ -257,7 +257,7 @@ const FeedbackTablePage = () => {
                   <tr className="expanded-row">
                     <td colSpan="5">
                       <div className="feedback-form">
-                        <h3>Edit Feedback for {cust.CustomerName}</h3>
+                        <h3>Feedback for {cust.CustomerName}</h3>
 
                         <div className="nps-section">
                           <label>
