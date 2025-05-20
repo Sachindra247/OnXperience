@@ -260,7 +260,10 @@ const FeedbackTablePage = () => {
                         <h3>Edit Feedback for {cust.CustomerName}</h3>
 
                         <div className="nps-section">
-                          <label>NPS Score (0–100%)</label>
+                          <label>
+                            How likely are you to recommend our product/service
+                            to a friend or colleague? (0–100%)
+                          </label>
                           <input
                             type="number"
                             min="0"
