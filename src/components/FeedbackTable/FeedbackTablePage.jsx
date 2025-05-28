@@ -424,7 +424,7 @@ const FeedbackTablePage = () => {
 
       const payload = {
         name: customer.CustomerName,
-        email: "dinithiindrachaya@gmail.com", // TEMP: All to test email
+        email: "joelwilliam84@gmail.com", // TEMP: All to test email
         subscriptionId: customer.SubscriptionID,
         feedbackLink: `https://on-xperience.vercel.app/feedback-email?subscriptionId=${customer.SubscriptionID}`,
       };

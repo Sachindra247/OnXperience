@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   const feedbackUrl = `https://on-xperience.vercel.app/feedback-email?subscriptionId=${subscriptionId}`;
 
   const msg = {
-    to: "dinithiindrachaya@gmail.com", // for now still hardcoded
+    to: "joelwilliam84@gmail.com", // for now still hardcoded
     from: process.env.DEV_EMAIL,
     subject: `Feedback Request from On-Xperience`,
     html: `
