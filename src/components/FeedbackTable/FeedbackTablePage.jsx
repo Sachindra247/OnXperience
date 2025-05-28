@@ -348,6 +348,8 @@
 
 //Email survey modification
 
+// Modified JSX for FeedbackTablePage
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./FeedbackTable.css";
@@ -363,7 +365,6 @@ const FeedbackTablePage = () => {
     return saved ? JSON.parse(saved) : {};
   });
   const [loading, setLoading] = useState(false);
-  const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState(null);
   const [retry, setRetry] = useState(0);
 
@@ -432,30 +433,6 @@ const FeedbackTablePage = () => {
     fetchFeedbacks();
   }, [retry]);
 
-  const updateNpsInput = (id, value) => {
-    const safeValue = Math.min(100, Math.max(0, Number(value) || 0));
-    setNpsInputs((prev) => ({ ...prev, [id]: safeValue }));
-  };
-
-  const updateSurveyInput = (id, question, value) => {
-    const updatedInputs = {
-      ...surveyInputs,
-      [id]: {
-        ...surveyInputs[id],
-        [question]: value,
-      },
-    };
-    setSurveyInputs(updatedInputs);
-
-    setCustomers((prev) =>
-      prev.map((cust) =>
-        cust.SubscriptionID === id
-          ? { ...cust, [`SurveyQ${question.slice(1)}`]: value }
-          : cust
-      )
-    );
-  };
-
   const getNpsCategory = (score) => {
     if (score <= 6) return { label: "Detractor", color: "#dc3545" };
     if (score <= 8) return { label: "Passive", color: "#ffc107" };
@@ -463,76 +440,7 @@ const FeedbackTablePage = () => {
     return { label: "", color: "transparent" };
   };
 
-  const handleSave = async (id) => {
-    try {
-      setSavingId(id);
-      setError(null);
-
-      const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
-      const avg = ((survey.q1 + survey.q2 + survey.q3) / 3) * 2;
-      const roundedSurveyScore = Math.round(avg);
-
-      const payload = {
-        SubscriptionID: id,
-        NPSScore: Math.round((npsInputs[id] || 0) / 10),
-        SurveyScore: roundedSurveyScore,
-        SurveyQ1: survey.q1,
-        SurveyQ2: survey.q2,
-        SurveyQ3: survey.q3,
-      };
-
-      await axios.put(
-        "https://on-xperience.vercel.app/api/subscription-feedbacks",
-        payload,
-        { timeout: 10000 }
-      );
-
-      const updatedCustomers = customers.map((cust) =>
-        cust.SubscriptionID === id
-          ? {
-              ...cust,
-              NPSScore: payload.NPSScore,
-              SurveyScore: payload.SurveyScore,
-              SurveyQ1: payload.SurveyQ1,
-              SurveyQ2: payload.SurveyQ2,
-              SurveyQ3: payload.SurveyQ3,
-            }
-          : cust
-      );
-
-      setCustomers(updatedCustomers);
-
-      const updatedInitialValues = {
-        ...initialSurveyValues,
-        [id]: {
-          q1: payload.SurveyQ1,
-          q2: payload.SurveyQ2,
-          q3: payload.SurveyQ3,
-        },
-      };
-      setInitialSurveyValues(updatedInitialValues);
-      localStorage.setItem(
-        "surveyRatings",
-        JSON.stringify(updatedInitialValues)
-      );
-
-      setExpanded(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSavingId(null);
-    }
-  };
-
   const handleExpand = (id) => {
-    setSurveyInputs((prev) => ({
-      ...prev,
-      [id]: {
-        q1: initialSurveyValues[id]?.q1 || 0,
-        q2: initialSurveyValues[id]?.q2 || 0,
-        q3: initialSurveyValues[id]?.q3 || 0,
-      },
-    }));
     setExpanded(expanded === id ? null : id);
   };
 
@@ -545,7 +453,7 @@ const FeedbackTablePage = () => {
 
       const payload = {
         name: customer.CustomerName,
-        email: customer.CustomerEmail, // ensure this field exists
+        email: customer.CustomerEmail,
         subscriptionId: customer.SubscriptionID,
       };
 
@@ -600,13 +508,7 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            const survey = isExpanded
-              ? surveyInputs[id] || { q1: 0, q2: 0, q3: 0 }
-              : {
-                  q1: initialSurveyValues[id]?.q1 || 0,
-                  q2: initialSurveyValues[id]?.q2 || 0,
-                  q3: initialSurveyValues[id]?.q3 || 0,
-                };
+            const survey = initialSurveyValues[id] || { q1: 0, q2: 0, q3: 0 };
 
             return (
               <React.Fragment key={id}>
@@ -616,17 +518,8 @@ const FeedbackTablePage = () => {
                   <td>{npsValue}%</td>
                   <td>{cust.SurveyScore}/10</td>
                   <td>
-                    <button
-                      onClick={() => handleExpand(id)}
-                      disabled={savingId === id}
-                    >
-                      {isExpanded ? "Cancel" : "Edit"}
-                    </button>
-                    <button
-                      onClick={() => handleSendEmail(cust)}
-                      style={{ marginLeft: "8px" }}
-                    >
-                      Send Email
+                    <button onClick={() => handleExpand(id)}>
+                      {isExpanded ? "Collapse" : "View"}
                     </button>
                   </td>
                 </tr>
@@ -642,13 +535,9 @@ const FeedbackTablePage = () => {
                             How likely are you to recommend our product/service
                             to a friend or colleague? (0–100%)
                           </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={npsValue}
-                            onChange={(e) => updateNpsInput(id, e.target.value)}
-                          />
+                          <div style={{ fontWeight: "bold", marginTop: 6 }}>
+                            {npsValue}%
+                          </div>
                           <div
                             style={{
                               marginTop: "6px",
@@ -681,16 +570,12 @@ const FeedbackTablePage = () => {
                                         key={starVal}
                                         size={22}
                                         style={{
-                                          cursor: "pointer",
                                           marginRight: 4,
                                         }}
                                         color={
                                           starVal <= selected
                                             ? "#ffc107"
                                             : "#e4e5e9"
-                                        }
-                                        onClick={() =>
-                                          updateSurveyInput(id, q, starVal)
                                         }
                                       />
                                     );
@@ -703,10 +588,10 @@ const FeedbackTablePage = () => {
 
                         <div className="form-actions">
                           <button
-                            onClick={() => handleSave(id)}
-                            disabled={savingId === id}
+                            onClick={() => handleSendEmail(cust)}
+                            style={{ marginTop: "10px" }}
                           >
-                            {savingId === id ? "Saving..." : "Save Changes"}
+                            Send Email
                           </button>
                         </div>
                       </div>
