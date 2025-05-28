@@ -10,7 +10,8 @@ const FeedbackForm = () => {
   const [customer, setCustomer] = useState(null);
   const [nps, setNps] = useState(0);
   const [survey, setSurvey] = useState({ q1: 0, q2: 0, q3: 0 });
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(""); // for submit status
+  const [loadError, setLoadError] = useState(false); // for loading errors
 
   useEffect(() => {
     if (!subscriptionId) return;
@@ -27,8 +28,9 @@ const FeedbackForm = () => {
           q2: data.SurveyQ2 ?? 0,
           q3: data.SurveyQ3 ?? 0,
         });
+        setLoadError(false);
       } catch (err) {
-        setStatus("Failed to load data.");
+        setLoadError(true);
       }
     };
     fetchData();
@@ -59,52 +61,129 @@ const FeedbackForm = () => {
 
   if (!subscriptionId) return <p>Missing subscription ID.</p>;
 
+  const surveyQuestions = [
+    {
+      key: "q1",
+      question: "How easy was it to use our product?",
+      caption:
+        "Please rate the ease of use from 1 (very difficult) to 5 (very easy).",
+    },
+    {
+      key: "q2",
+      question: "How satisfied are you with our support?",
+      caption:
+        "Rate your satisfaction with our customer support from 1 (very unsatisfied) to 5 (very satisfied).",
+    },
+    {
+      key: "q3",
+      question: "How likely are you to recommend us to others?",
+      caption:
+        "Rate how likely you are to recommend our product/service from 1 (not likely) to 5 (very likely).",
+    },
+  ];
+
   return (
     <div style={{ maxWidth: "500px", margin: "auto", padding: "20px" }}>
       <h2>Feedback</h2>
+
       {customer && <p>Hi {customer.CustomerName}, we’d love your feedback!</p>}
 
-      <label>NPS (0–100%)</label>
-      <input
-        type="number"
-        min="0"
-        max="100"
-        value={nps}
-        onChange={(e) => setNps(Number(e.target.value))}
-        style={{ width: "100%", marginBottom: "20px" }}
-      />
+      <div style={{ marginBottom: "24px" }}>
+        <label
+          htmlFor="nps-input"
+          style={{ fontWeight: "bold", display: "block", marginBottom: "6px" }}
+        >
+          Net Promoter Score (NPS)
+        </label>
+        <p
+          style={{
+            marginTop: 0,
+            marginBottom: "6px",
+            color: "#555",
+            fontSize: "0.9em",
+          }}
+        >
+          On a scale from 0 to 100, how likely are you to recommend us to a
+          friend or colleague?
+        </p>
+        <input
+          id="nps-input"
+          type="number"
+          min="0"
+          max="100"
+          value={nps}
+          onChange={(e) => setNps(Number(e.target.value))}
+          style={{ width: "100%", padding: "8px", fontSize: "1em" }}
+        />
+      </div>
 
-      {["Ease of use?", "Support satisfaction?", "Recommend us?"].map(
-        (q, i) => {
-          const key = `q${i + 1}`;
-          const selected = survey[key];
-          return (
-            <div key={key} style={{ marginBottom: "16px" }}>
-              <p>{q}</p>
-              {[...Array(5)].map((_, j) => {
-                const val = j + 1;
-                return (
-                  <FaStar
-                    key={val}
-                    size={24}
-                    color={val <= selected ? "#ffc107" : "#ccc"}
-                    style={{ cursor: "pointer", marginRight: 5 }}
-                    onClick={() =>
-                      setSurvey((prev) => ({ ...prev, [key]: val }))
-                    }
-                  />
-                );
-              })}
-            </div>
-          );
-        }
-      )}
+      {surveyQuestions.map(({ key, question, caption }) => {
+        const selected = survey[key];
+        return (
+          <div key={key} style={{ marginBottom: "28px" }}>
+            <p
+              style={{
+                fontWeight: "bold",
+                marginBottom: "6px",
+                fontSize: "1.05em",
+              }}
+            >
+              {question}
+            </p>
+            <p
+              style={{
+                marginTop: 0,
+                marginBottom: "8px",
+                color: "#666",
+                fontSize: "0.9em",
+                fontStyle: "italic",
+              }}
+            >
+              {caption}
+            </p>
+            {[...Array(5)].map((_, j) => {
+              const val = j + 1;
+              return (
+                <FaStar
+                  key={val}
+                  size={28}
+                  color={val <= selected ? "#ffc107" : "#ccc"}
+                  style={{ cursor: "pointer", marginRight: 8 }}
+                  onClick={() => setSurvey((prev) => ({ ...prev, [key]: val }))}
+                />
+              );
+            })}
+          </div>
+        );
+      })}
 
-      <button onClick={handleSubmit} style={{ marginTop: 20 }}>
+      <button
+        onClick={handleSubmit}
+        style={{
+          marginTop: 12,
+          padding: "10px 20px",
+          fontSize: "1em",
+          cursor: "pointer",
+          backgroundColor: "#007bff",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+        }}
+      >
         Submit Feedback
       </button>
 
-      {status && <p style={{ marginTop: 20 }}>{status}</p>}
+      {status && (
+        <p
+          style={{
+            marginTop: 20,
+            color: status.includes("Thank") ? "green" : "red",
+            fontWeight: "bold",
+          }}
+        >
+          {status}
+        </p>
+      )}
     </div>
   );
 };
