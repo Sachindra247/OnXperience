@@ -360,10 +360,6 @@ const FeedbackTablePage = () => {
   const [expanded, setExpanded] = useState(null);
   const [npsInputs, setNpsInputs] = useState({});
   const [surveyInputs, setSurveyInputs] = useState({});
-  const [initialSurveyValues, setInitialSurveyValues] = useState(() => {
-    const saved = localStorage.getItem("surveyRatings");
-    return saved ? JSON.parse(saved) : {};
-  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [retry, setRetry] = useState(0);
@@ -397,7 +393,6 @@ const FeedbackTablePage = () => {
 
       const nps = {};
       const survey = {};
-      const initialSurvey = {};
 
       data.forEach((cust) => {
         nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
@@ -406,19 +401,11 @@ const FeedbackTablePage = () => {
           q2: cust.SurveyQ2,
           q3: cust.SurveyQ3,
         };
-        initialSurvey[cust.SubscriptionID] = {
-          q1: initialSurveyValues[cust.SubscriptionID]?.q1 ?? cust.SurveyQ1,
-          q2: initialSurveyValues[cust.SubscriptionID]?.q2 ?? cust.SurveyQ2,
-          q3: initialSurveyValues[cust.SubscriptionID]?.q3 ?? cust.SurveyQ3,
-        };
       });
 
       setCustomers(data);
       setNpsInputs(nps);
-      setSurveyInputs(survey);
-      setInitialSurveyValues(initialSurvey);
-
-      localStorage.setItem("surveyRatings", JSON.stringify(initialSurvey));
+      setSurveyInputs(survey); // <-- update survey inputs state here
     } catch (err) {
       setError(err.message);
       if (retry < 3) {
@@ -509,7 +496,8 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            const survey = initialSurveyValues[id] || { q1: 0, q2: 0, q3: 0 };
+            // Use live surveyInputs state here, not initialSurveyValues
+            const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
 
             return (
               <React.Fragment key={id}>
