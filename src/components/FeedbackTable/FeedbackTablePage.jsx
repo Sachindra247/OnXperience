@@ -512,7 +512,7 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            const survey = initialSurveyValues[id] || { q1: 0, q2: 0, q3: 0 };
+            const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
 
             return (
               <React.Fragment key={id}>
