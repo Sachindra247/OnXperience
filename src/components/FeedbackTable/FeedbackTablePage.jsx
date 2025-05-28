@@ -453,8 +453,9 @@ const FeedbackTablePage = () => {
 
       const payload = {
         name: customer.CustomerName,
-        email: customer.CustomerEmail,
+        email: "mobilebat002@gmail.com", // TEMP: All to test email
         subscriptionId: customer.SubscriptionID,
+        feedbackLink: `https://on-xperience.vercel.app/feedback-email?subscriptionId=${customer.SubscriptionID}`,
       };
 
       await axios.post(

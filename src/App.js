@@ -94,6 +94,7 @@ import Growth from "./components/Growth/GrowthPage";
 import Adoption from "./components/Adoption/AdoptionPage";
 import Engagement from "./components/Engagement/EngagementPage";
 import Feedback from "./components/Feedback/FeedbackPage";
+import FeedbackForm from "./components/FeedbackEmailForm/FeedbackForm";
 import React from "react";
 import {
   BrowserRouter as Router,
@@ -180,6 +181,7 @@ function App() {
             </RouteWrapper>
           }
         />
+        <Route path="/feedback-email" element={<FeedbackForm />} />
       </Routes>
     </Router>
   );
