@@ -93,7 +93,7 @@ const FeedbackForm = () => {
       }}
     >
       <h2 style={{ marginTop: "24px", marginBottom: "24px" }}>
-        Feedback{customer ? ` for ${customer.CustomerName}` : ""}
+        Feedback {customer ? ` for ${customer.CustomerName}` : ""}
       </h2>
 
       {customer && (
