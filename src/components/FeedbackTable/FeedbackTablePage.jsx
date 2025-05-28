@@ -397,15 +397,15 @@ const FeedbackTablePage = () => {
       data.forEach((cust) => {
         nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
         survey[cust.SubscriptionID] = {
-          q1: cust.SurveyQ1,
-          q2: cust.SurveyQ2,
-          q3: cust.SurveyQ3,
+          q1: cust.SurveyQ1 ?? 0,
+          q2: cust.SurveyQ2 ?? 0,
+          q3: cust.SurveyQ3 ?? 0,
         };
       });
 
       setCustomers(data);
       setNpsInputs(nps);
-      setSurveyInputs(survey); // <-- update survey inputs state here
+      setSurveyInputs(survey);
     } catch (err) {
       setError(err.message);
       if (retry < 3) {
@@ -496,7 +496,7 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            // Use live surveyInputs state here, not initialSurveyValues
+            // Use latest surveyInputs here, fallback to zeros
             const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
 
             return (
@@ -505,6 +505,7 @@ const FeedbackTablePage = () => {
                   <td>{cust.CustomerName}</td>
                   <td>{id}</td>
                   <td>{npsValue}%</td>
+                  {/* Show total survey score as sum of q1+q2+q3 or from cust.SurveyScore if preferred */}
                   <td>{cust.SurveyScore}/10</td>
                   <td>
                     <button onClick={() => handleExpand(id)}>
