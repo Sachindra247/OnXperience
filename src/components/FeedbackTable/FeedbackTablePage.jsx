@@ -385,17 +385,14 @@ const FeedbackTablePage = () => {
       );
 
       const data = Array.isArray(res.data)
-        ? res.data
-            .filter((item) => item.SubscriptionID && item.CustomerName) // Ensure required fields exist
-            .map((item) => ({
-              ...item,
-              NPSScore: typeof item.NPSScore === "number" ? item.NPSScore : 0,
-              SurveyScore:
-                typeof item.SurveyScore === "number" ? item.SurveyScore : 0,
-              SurveyQ1: typeof item.SurveyQ1 === "number" ? item.SurveyQ1 : 0,
-              SurveyQ2: typeof item.SurveyQ2 === "number" ? item.SurveyQ2 : 0,
-              SurveyQ3: typeof item.SurveyQ3 === "number" ? item.SurveyQ3 : 0,
-            }))
+        ? res.data.map((item) => ({
+            ...item,
+            NPSScore: item.NPSScore ?? 0,
+            SurveyScore: item.SurveyScore ?? 0,
+            SurveyQ1: item.SurveyQ1 ?? 0,
+            SurveyQ2: item.SurveyQ2 ?? 0,
+            SurveyQ3: item.SurveyQ3 ?? 0,
+          }))
         : [];
 
       const nps = {};
@@ -512,7 +509,7 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
+            const survey = initialSurveyValues[id] || { q1: 0, q2: 0, q3: 0 };
 
             return (
               <React.Fragment key={id}>
