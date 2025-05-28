@@ -10,8 +10,8 @@ const FeedbackForm = () => {
   const [customer, setCustomer] = useState(null);
   const [nps, setNps] = useState(0);
   const [survey, setSurvey] = useState({ q1: 0, q2: 0, q3: 0 });
-  const [status, setStatus] = useState(""); // for submit status
-  const [loadError, setLoadError] = useState(false); // for loading errors
+  const [status, setStatus] = useState("");
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!subscriptionId) return;
@@ -59,7 +59,8 @@ const FeedbackForm = () => {
     }
   };
 
-  if (!subscriptionId) return <p>Missing subscription ID.</p>;
+  if (!subscriptionId)
+    return <p style={{ color: "white" }}>Missing subscription ID.</p>;
 
   const surveyQuestions = [
     {
@@ -83,15 +84,33 @@ const FeedbackForm = () => {
   ];
 
   return (
-    <div style={{ maxWidth: "500px", margin: "auto", padding: "20px" }}>
-      <h2>Feedback</h2>
+    <div
+      style={{
+        maxWidth: "500px",
+        margin: "auto",
+        padding: "20px",
+        color: "white",
+      }}
+    >
+      <h2 style={{ marginTop: "24px", marginBottom: "24px" }}>
+        Feedback{customer ? ` for ${customer.CustomerName}` : ""}
+      </h2>
 
-      {customer && <p>Hi {customer.CustomerName}, we’d love your feedback!</p>}
+      {customer && (
+        <p style={{ color: "white", marginBottom: "24px" }}>
+          Hi {customer.CustomerName}, we’d love your feedback!
+        </p>
+      )}
 
       <div style={{ marginBottom: "24px" }}>
         <label
           htmlFor="nps-input"
-          style={{ fontWeight: "bold", display: "block", marginBottom: "6px" }}
+          style={{
+            fontWeight: "bold",
+            display: "block",
+            marginBottom: "6px",
+            color: "white",
+          }}
         >
           Net Promoter Score (NPS)
         </label>
@@ -99,7 +118,7 @@ const FeedbackForm = () => {
           style={{
             marginTop: 0,
             marginBottom: "6px",
-            color: "#555",
+            color: "#ccc",
             fontSize: "0.9em",
           }}
         >
@@ -113,7 +132,15 @@ const FeedbackForm = () => {
           max="100"
           value={nps}
           onChange={(e) => setNps(Number(e.target.value))}
-          style={{ width: "100%", padding: "8px", fontSize: "1em" }}
+          style={{
+            width: "100%",
+            padding: "8px",
+            fontSize: "1em",
+            backgroundColor: "#222",
+            border: "1px solid #444",
+            color: "white",
+            borderRadius: "4px",
+          }}
         />
       </div>
 
@@ -126,6 +153,7 @@ const FeedbackForm = () => {
                 fontWeight: "bold",
                 marginBottom: "6px",
                 fontSize: "1.05em",
+                color: "white",
               }}
             >
               {question}
@@ -134,7 +162,7 @@ const FeedbackForm = () => {
               style={{
                 marginTop: 0,
                 marginBottom: "8px",
-                color: "#666",
+                color: "#ccc",
                 fontSize: "0.9em",
                 fontStyle: "italic",
               }}
@@ -147,7 +175,7 @@ const FeedbackForm = () => {
                 <FaStar
                   key={val}
                   size={28}
-                  color={val <= selected ? "#ffc107" : "#ccc"}
+                  color={val <= selected ? "#ffc107" : "#444"}
                   style={{ cursor: "pointer", marginRight: 8 }}
                   onClick={() => setSurvey((prev) => ({ ...prev, [key]: val }))}
                 />
@@ -177,7 +205,7 @@ const FeedbackForm = () => {
         <p
           style={{
             marginTop: 20,
-            color: status.includes("Thank") ? "green" : "red",
+            color: status.includes("Thank") ? "#90ee90" : "#ff6b6b",
             fontWeight: "bold",
           }}
         >
