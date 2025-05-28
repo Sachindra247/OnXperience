@@ -5,6 +5,7 @@
   "dependencies": {
     "@azure/msal-browser": "^4.2.0",
     "@azure/msal-react": "^3.0.4",
+    "@sendgrid/mail": "^8.1.5",
     "axios": "^1.8.2",
     "cra-template": "1.2.0",
     "framer-motion": "^12.10.5",
