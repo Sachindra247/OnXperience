@@ -358,12 +358,6 @@ import { FaStar } from "react-icons/fa";
 const FeedbackTablePage = () => {
   const [customers, setCustomers] = useState([]);
   const [expanded, setExpanded] = useState(null);
-  const [npsInputs, setNpsInputs] = useState({});
-  const [surveyInputs, setSurveyInputs] = useState({});
-  const [initialSurveyValues, setInitialSurveyValues] = useState(() => {
-    const saved = localStorage.getItem("surveyRatings");
-    return saved ? JSON.parse(saved) : {};
-  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [retry, setRetry] = useState(0);
@@ -395,30 +389,7 @@ const FeedbackTablePage = () => {
           }))
         : [];
 
-      const nps = {};
-      const survey = {};
-      const initialSurvey = {};
-
-      data.forEach((cust) => {
-        nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
-        survey[cust.SubscriptionID] = {
-          q1: cust.SurveyQ1,
-          q2: cust.SurveyQ2,
-          q3: cust.SurveyQ3,
-        };
-        initialSurvey[cust.SubscriptionID] = {
-          q1: initialSurveyValues[cust.SubscriptionID]?.q1 ?? cust.SurveyQ1,
-          q2: initialSurveyValues[cust.SubscriptionID]?.q2 ?? cust.SurveyQ2,
-          q3: initialSurveyValues[cust.SubscriptionID]?.q3 ?? cust.SurveyQ3,
-        };
-      });
-
       setCustomers(data);
-      setNpsInputs(nps);
-      setSurveyInputs(survey);
-      setInitialSurveyValues(initialSurvey);
-
-      localStorage.setItem("surveyRatings", JSON.stringify(initialSurvey));
     } catch (err) {
       setError(err.message);
       if (retry < 3) {
@@ -505,11 +476,18 @@ const FeedbackTablePage = () => {
           {customers.map((cust) => {
             const id = cust.SubscriptionID;
             const isExpanded = expanded === id;
-            const npsValue = npsInputs[id] ?? 0;
-            const npsScore = Math.round(npsValue / 10);
+
+            // NPS as percentage and category
+            const npsValue = Math.round(cust.NPSScore * 10);
+            const npsScore = Math.round(cust.NPSScore);
             const npsInfo = getNpsCategory(npsScore);
 
-            const survey = initialSurveyValues[id] || { q1: 0, q2: 0, q3: 0 };
+            // Survey Q1-Q3 ratings
+            const survey = {
+              q1: cust.SurveyQ1,
+              q2: cust.SurveyQ2,
+              q3: cust.SurveyQ3,
+            };
 
             return (
               <React.Fragment key={id}>
@@ -553,15 +531,23 @@ const FeedbackTablePage = () => {
 
                         <div className="survey-section">
                           {[
-                            "How easy is it to use our platform?",
-                            "How satisfied are you with the support?",
-                            "How likely are you to recommend us?",
-                          ].map((label, idx) => {
-                            const q = `q${idx + 1}`;
-                            const selected = survey[q] || 0;
+                            {
+                              label: "How easy is it to use our platform?",
+                              key: "q1",
+                            },
+                            {
+                              label: "How satisfied are you with the support?",
+                              key: "q2",
+                            },
+                            {
+                              label: "How likely are you to recommend us?",
+                              key: "q3",
+                            },
+                          ].map(({ label, key }) => {
+                            const selected = survey[key] || 0;
 
                             return (
-                              <div key={q} style={{ marginBottom: "8px" }}>
+                              <div key={key} style={{ marginBottom: "8px" }}>
                                 <p style={{ margin: 0 }}>{label}</p>
                                 <div className="star-rating">
                                   {[...Array(5)].map((_, i) => {
@@ -570,9 +556,7 @@ const FeedbackTablePage = () => {
                                       <FaStar
                                         key={starVal}
                                         size={22}
-                                        style={{
-                                          marginRight: 4,
-                                        }}
+                                        style={{ marginRight: 4 }}
                                         color={
                                           starVal <= selected
                                             ? "#ffc107"
