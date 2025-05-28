@@ -22,7 +22,7 @@ const FeedbackForm = () => {
         );
         const data = res.data;
         setCustomer(data);
-        setNps((data.NPSScore ?? 0) * 10);
+        setNps(data.NPSScore ?? 0);
         setSurvey({
           q1: data.SurveyQ1 ?? 0,
           q2: data.SurveyQ2 ?? 0,
@@ -41,7 +41,7 @@ const FeedbackForm = () => {
       const avg = ((survey.q1 + survey.q2 + survey.q3) / 3) * 2;
       const payload = {
         SubscriptionID: subscriptionId,
-        NPSScore: Math.round(nps / 10),
+        NPSScore: Math.round(nps),
         SurveyScore: Math.round(avg),
         SurveyQ1: survey.q1,
         SurveyQ2: survey.q2,
@@ -122,14 +122,14 @@ const FeedbackForm = () => {
             fontSize: "0.9em",
           }}
         >
-          On a scale from 0 to 100, how likely are you to recommend us to a
+          On a scale from 0 to 10, how likely are you to recommend us to a
           friend or colleague?
         </p>
         <input
           id="nps-input"
           type="number"
           min="0"
-          max="100"
+          max="10"
           value={nps}
           onChange={(e) => setNps(Number(e.target.value))}
           style={{
