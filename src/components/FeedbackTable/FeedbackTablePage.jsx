@@ -360,6 +360,10 @@ const FeedbackTablePage = () => {
   const [expanded, setExpanded] = useState(null);
   const [npsInputs, setNpsInputs] = useState({});
   const [surveyInputs, setSurveyInputs] = useState({});
+  const [initialSurveyValues, setInitialSurveyValues] = useState(() => {
+    const saved = localStorage.getItem("surveyRatings");
+    return saved ? JSON.parse(saved) : {};
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [retry, setRetry] = useState(0);
@@ -381,31 +385,43 @@ const FeedbackTablePage = () => {
       );
 
       const data = Array.isArray(res.data)
-        ? res.data.map((item) => ({
-            ...item,
-            NPSScore: item.NPSScore ?? 0,
-            SurveyScore: item.SurveyScore ?? 0,
-            SurveyQ1: item.SurveyQ1 ?? 0,
-            SurveyQ2: item.SurveyQ2 ?? 0,
-            SurveyQ3: item.SurveyQ3 ?? 0,
-          }))
+        ? res.data
+            .filter((item) => item.SubscriptionID && item.CustomerName) // Ensure required fields exist
+            .map((item) => ({
+              ...item,
+              NPSScore: typeof item.NPSScore === "number" ? item.NPSScore : 0,
+              SurveyScore:
+                typeof item.SurveyScore === "number" ? item.SurveyScore : 0,
+              SurveyQ1: typeof item.SurveyQ1 === "number" ? item.SurveyQ1 : 0,
+              SurveyQ2: typeof item.SurveyQ2 === "number" ? item.SurveyQ2 : 0,
+              SurveyQ3: typeof item.SurveyQ3 === "number" ? item.SurveyQ3 : 0,
+            }))
         : [];
 
       const nps = {};
       const survey = {};
+      const initialSurvey = {};
 
       data.forEach((cust) => {
         nps[cust.SubscriptionID] = Math.round(cust.NPSScore * 10);
         survey[cust.SubscriptionID] = {
-          q1: cust.SurveyQ1 ?? 0,
-          q2: cust.SurveyQ2 ?? 0,
-          q3: cust.SurveyQ3 ?? 0,
+          q1: cust.SurveyQ1,
+          q2: cust.SurveyQ2,
+          q3: cust.SurveyQ3,
+        };
+        initialSurvey[cust.SubscriptionID] = {
+          q1: initialSurveyValues[cust.SubscriptionID]?.q1 ?? cust.SurveyQ1,
+          q2: initialSurveyValues[cust.SubscriptionID]?.q2 ?? cust.SurveyQ2,
+          q3: initialSurveyValues[cust.SubscriptionID]?.q3 ?? cust.SurveyQ3,
         };
       });
 
       setCustomers(data);
       setNpsInputs(nps);
       setSurveyInputs(survey);
+      setInitialSurveyValues(initialSurvey);
+
+      localStorage.setItem("surveyRatings", JSON.stringify(initialSurvey));
     } catch (err) {
       setError(err.message);
       if (retry < 3) {
@@ -496,8 +512,7 @@ const FeedbackTablePage = () => {
             const npsScore = Math.round(npsValue / 10);
             const npsInfo = getNpsCategory(npsScore);
 
-            // Use latest surveyInputs here, fallback to zeros
-            const survey = surveyInputs[id] || { q1: 0, q2: 0, q3: 0 };
+            const survey = initialSurveyValues[id] || { q1: 0, q2: 0, q3: 0 };
 
             return (
               <React.Fragment key={id}>
@@ -505,7 +520,6 @@ const FeedbackTablePage = () => {
                   <td>{cust.CustomerName}</td>
                   <td>{id}</td>
                   <td>{npsValue}%</td>
-                  {/* Show total survey score as sum of q1+q2+q3 or from cust.SurveyScore if preferred */}
                   <td>{cust.SurveyScore}/10</td>
                   <td>
                     <button onClick={() => handleExpand(id)}>
