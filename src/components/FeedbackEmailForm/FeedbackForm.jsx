@@ -93,7 +93,10 @@ const FeedbackForm = () => {
       }}
     >
       <h2 style={{ marginTop: "24px", marginBottom: "24px" }}>
-        Feedbac {customer?.CustomerName ? `for ${customer.CustomerName}` : ""}
+        Feedback{" "}
+        {customer
+          ? `for ${customer.Name || customer.CustomerName || "you"}`
+          : ""}
       </h2>
 
       {customer && (
